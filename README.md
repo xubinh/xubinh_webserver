@@ -14,12 +14,12 @@
 1. `EventLoopThreadPool`: 对线程池的抽象. 是 `EventLoopThread` 类的一个包装类.
 1. `InetAddress`: 对套接字地址 (IP + port) 的抽象.
 1. `TcpServer`: 对服务器的抽象.
-1. `TimerQueue`: [TODO]
-1. `Timer`: [TODO]
-1. `MutexLock`: [TODO]
-1. `MutexLockGuard`: [TODO]
-1. `Condition`: [TODO]
-1. `Atomic`: [TODO]
+1. `TimerQueue`: 对计时器容器的抽象.
+1. `Timer`: 对单个计时器元素的抽象.
+1. `MutexLock`: 对互斥锁的抽象
+1. `MutexLockGuard`: 对互斥锁的 RAII 机制的抽象.
+1. `Condition`: 对信号量机制的抽象.
+1. `Atomic`: 对原子操作的抽象 (但是并不提供内存顺序控制).
 1. `BlockingQueue`: [TODO]
 1. `BoundedBlockingQueue`: [TODO]
 1. `Logger`: [TODO]
