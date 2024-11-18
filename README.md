@@ -8,12 +8,12 @@
 1. `TcpConnection`: 对 connect socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
 1. `Poller`: 对 epoll 机制的抽象.
 1. `EventLoop`: 对事件循环的抽象. 每个循环中不仅需要处理 epoll 事件的监听, 还要处理定时器和外部注册到当前线程中的任务等等.
-1. `ThreadLocal`: [TODO]
-1. `Thread`: [TODO]
+1. `ThreadLocal`: 帮手类, 用于实现 C++11 以前的线程局部存储 (TLS) 机制.
+1. `Thread`: 帮手类, 用于实现 C++11 以前的线程机制 (封装了 Linux 的 pthread 库).
 1. `EventLoopThread`: 对线程 (实际上主要是对工作线程) 的抽象. 是 `EventLoop` 类的一个包装类. 初始化时自动启动一个 `EventLoop`.
 1. `EventLoopThreadPool`: 对线程池的抽象. 是 `EventLoopThread` 类的一个包装类.
-1. `InetAddress`: [TODO]
-1. `TcpServer`: [TODO]
+1. `InetAddress`: 对套接字地址 (IP + port) 的抽象.
+1. `TcpServer`: 对服务器的抽象.
 1. `TimerQueue`: [TODO]
 1. `Timer`: [TODO]
 1. `MutexLock`: [TODO]
