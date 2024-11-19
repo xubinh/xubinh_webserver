@@ -20,19 +20,19 @@
 1. `MutexLockGuard`: 对互斥锁的 RAII 机制的抽象.
 1. `Condition`: 对信号量机制的抽象.
 1. `Atomic`: 对原子操作的抽象 (但是并不提供内存顺序控制).
-1. `BlockingQueue`: [TODO]
-1. `BoundedBlockingQueue`: [TODO]
-1. `Logger`: [TODO]
-1. `AsyncLogging`: [TODO]
-1. `CountDownLatch`: [TODO]
-1. `HttpRequest`: [TODO]
-1. `HttpResponse`: [TODO]
-1. `HttpContext`: [TODO]
+1. `CountDownLatch`: 对倒计时计数器 (或称闭锁) 的抽象.
+1. `BlockingQueue`: 对 (无大小限制的) 阻塞队列的抽象.
+1. `BoundedBlockingQueue`: 对 (固定大小的) 阻塞队列的抽象.
+1. `Logger`: 是 `AsyncLogging` 类的一个包装类.
+1. `AsyncLogging`: 对异步日志系统的抽象.
+1. `HttpRequest`: 对 HTTP 请求报文的抽象.
+1. `HttpResponse`: 对 HTTP 响应报文的抽象.
+1. `HttpContext`: 对 HTTP 请求解析过程的抽象.
 
 ## 大纲 [TODO]
 
 - **通用**: 使用智能指针等 RAII 机制尽可能减少内存泄漏.
-- **线程同步机制包装类**: 对 Linux 中提供的 POSIX 互斥锁和条件变量原语进行封装 (此处不需要包装信号量, 因为信号量完全可以由条件变量进行实现), 并实现 noncopyable 语义.
+- **线程同步机制包装类**: 对 Linux 中提供的 POSIX 互斥锁和条件变量原语进行封装 (此处不需要包装信号量, 因为信号量完全可以由条件变量进行实现).
 - **阻塞队列**: 结合线程同步机制包装类实现 (有限大小的) 阻塞队列.
 - **异步日志模块**: 以单例模式实现, 并结合阻塞队列实现异步输出日志至文件.
 - **线程池**: 结合阻塞队列实现.
