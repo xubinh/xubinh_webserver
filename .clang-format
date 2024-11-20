@@ -1,0 +1,31 @@
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+
+ColumnLimit: 80
+
+DerivePointerAlignment: false
+
+AlignAfterOpenBracket: BlockIndent
+BinPackParameters: false
+BinPackArguments: false
+
+AccessModifierOffset: -4
+
+AlwaysBreakTemplateDeclarations: Yes
+
+AllowShortFunctionsOnASingleLine: None
+
+AllowShortBlocksOnASingleLine: Never
+
+AllowShortCaseLabelsOnASingleLine: false
+
+AllowShortIfStatementsOnASingleLine: Never
+
+AllowShortLambdasOnASingleLine: None
+
+AllowShortLoopsOnASingleLine: false
+
+BreakBeforeBinaryOperators: NonAssignment
+
+AlignConsecutiveAssignments: false
