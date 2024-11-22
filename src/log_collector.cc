@@ -1,0 +1,151 @@
+#include <cassert>
+
+#include "../include/log_collector.h"
+#include "../include/log_file.h"
+#include "../include/utils/datetime.h"
+
+namespace xubinh_server {
+
+LogCollector::LogCollector() = default;
+
+LogCollector::~LogCollector() = default;
+
+void LogCollector::
+    _collect_chunk_buffers_and_write_into_files_in_the_background() {
+    ChunkBufferPtr spare_chunk_buffer_for_current_chunk_buffer =
+        std::make_unique<ChunkBufferPtr::element_type>();
+    ChunkBufferPtr spare_chunk_buffer_for_spare_chunk_buffer =
+        std::make_unique<ChunkBufferPtr::element_type>();
+    BufferVector chunk_buffers_to_be_written;
+
+    LogFile log_file(_base_name);
+
+    while (1) {
+        {
+            std::unique_lock<decltype(_mutex)> lock(_mutex);
+
+            if (_fulled_chunk_buffers.empty()) {
+                // 一直等到前端线程写满一个 buffer 并且新开的另一个 buffer
+                // 也写入了数据:
+                _cond.wait(lock);
+            }
+
+            assert(
+                !_fulled_chunk_buffers.empty()
+                && _current_chunk_buffer_ptr->get_size_of_written_area() > 0
+            );
+
+            _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr)
+            );
+
+            assert(chunk_buffers_to_be_written.empty());
+
+            _fulled_chunk_buffers.swap(chunk_buffers_to_be_written);
+
+            _current_chunk_buffer_ptr =
+                std::move(spare_chunk_buffer_for_current_chunk_buffer);
+
+            if (!_spare_chunk_buffer_ptr) {
+                _spare_chunk_buffer_ptr =
+                    std::move(spare_chunk_buffer_for_spare_chunk_buffer);
+            }
+        }
+
+        assert(chunk_buffers_to_be_written.size() >= 2);
+
+        if (chunk_buffers_to_be_written.size()
+            > _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN) {
+            auto number_of_dropped_buffers = static_cast<int>(
+                chunk_buffers_to_be_written.size()
+                - _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
+            );
+
+            std::string msg = "Dropped "
+                              + std::to_string(number_of_dropped_buffers)
+                              + " chunk buffers at "
+                              + utils::Datetime::get_datetime_string(
+                                  utils::DatetimePurpose::PRINTING
+                              )
+                              + "\n";
+
+            log_file.write(msg.c_str(), msg.length());
+
+            chunk_buffers_to_be_written.resize(
+                _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
+            );
+        }
+
+        assert(
+            chunk_buffers_to_be_written.size()
+            <= _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
+        );
+
+        for (const auto &chunk_buffer_ptr : chunk_buffers_to_be_written) {
+            log_file.write(
+                chunk_buffer_ptr->get_begin_address_of_buffer(),
+                chunk_buffer_ptr->get_size_of_written_area()
+            );
+        }
+
+        chunk_buffers_to_be_written.resize(2);
+
+        if (!spare_chunk_buffer_for_current_chunk_buffer) {
+            spare_chunk_buffer_for_current_chunk_buffer =
+                std::move(chunk_buffers_to_be_written[0]);
+            spare_chunk_buffer_for_current_chunk_buffer->reset();
+        }
+
+        if (!spare_chunk_buffer_for_spare_chunk_buffer) {
+            spare_chunk_buffer_for_spare_chunk_buffer =
+                std::move(chunk_buffers_to_be_written[1]);
+            spare_chunk_buffer_for_spare_chunk_buffer->reset();
+        }
+
+        chunk_buffers_to_be_written.clear();
+
+        log_file.flush();
+    }
+}
+
+void LogCollector::take_this_log(
+    const char *entry_address, std::size_t entry_size
+) {
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃
+    // (一般不会发生, 因为外部缓冲区总是应该比内部缓冲区来得小):
+    if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
+        return;
+    }
+
+    // 如果当前缓冲区还能够容纳得下本条日志:
+    if (entry_size < _current_chunk_buffer_ptr->get_size_of_available_area()) {
+        _current_chunk_buffer_ptr->append(entry_address, entry_size);
+
+        return;
+    }
+
+    // 否则将当前缓冲区放至阻塞队列中:
+    _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
+
+    // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
+    _current_chunk_buffer_ptr =
+        _spare_chunk_buffer_ptr
+            ? std::move(_spare_chunk_buffer_ptr)
+            : std::make_unique<decltype(_current_chunk_buffer_ptr
+            )::element_type>();
+
+    // 写入本条日志:
+    _current_chunk_buffer_ptr->append(entry_address, entry_size);
+
+    // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
+    _cond.notify_one();
+}
+
+LogCollector &LogCollector::get_instance() {
+    static LogCollector instance;
+
+    return instance;
+}
+
+} // namespace xubinh_server
