@@ -1,16 +1,52 @@
 #include <cassert>
 
+#include "../../include/utils/current_thread.h"
 #include "../../include/utils/thread.h"
 
 namespace xubinh_server {
 
 namespace utils {
 
+namespace {
+
+// 定义在未命名的命名空间中, 对外界隐藏
+struct _MainThreadInitializer {
+    // 只在主进程的主线程中执行一次
+    _MainThreadInitializer() {
+        CurrentThread::get_tid();
+
+        CurrentThread::set_thread_name("main");
+
+        pthread_atfork(
+            nullptr,
+            nullptr,
+            _MainThreadInitializer::execute_in_child_after_fork
+        );
+    }
+
+    // 在每个新 fork 出来的子进程的主线程中均会执行一次
+    static void execute_in_child_after_fork() {
+        CurrentThread::_tid = 0;
+        CurrentThread::get_tid();
+
+        CurrentThread::set_thread_name("main");
+    }
+};
+
+// 只在主进程的主线程中初始化一次
+_MainThreadInitializer _thread_name_initializer;
+
+} // namespace
+
 void Thread::_wrapper_of_worker_function() {
     {
         std::lock_guard<std::mutex> lock(_mutex_for_thread_info);
 
-        _tid = Thread::_get_tid();
+        _tid = CurrentThread::get_tid();
+
+        // 这里字符串的生命周期等于线程对象的生命周期,
+        // 因而等于线程本身的生命周期:
+        CurrentThread::set_thread_name(_thread_name.c_str());
 
         _cond_for_thread_info.notify_all();
     }
@@ -45,7 +81,7 @@ void Thread::_do_start(std::unique_lock<std::mutex> lock) {
 void Thread::_do_join(std::unique_lock<std::mutex> lock) {
     assert(!is_joined());
 
-    pthread_join(_pthread_id, nullptr);
+    _join_result = pthread_join(_pthread_id, nullptr);
 
     _is_joined = 1;
 }
@@ -96,23 +132,23 @@ pid_t Thread::get_tid() {
     return _tid;
 }
 
-void Thread::join() {
+int Thread::join() {
     // 确保处于已启动的状态:
     start();
 
     if (is_joined()) {
-        return;
+        return _join_result;
     }
 
     std::unique_lock<std::mutex> lock_for_doing_start(_mutex_for_thread_state);
 
     if (is_joined()) {
-        return;
+        return _join_result;
     }
 
     _do_join(std::move(lock_for_doing_start));
 
-    return;
+    return _join_result;
 }
 
 } // namespace utils

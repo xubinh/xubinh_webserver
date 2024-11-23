@@ -6,7 +6,6 @@
 #include <functional>
 #include <mutex>
 #include <string>
-#include <sys/syscall.h>
 #include <unistd.h>
 
 namespace xubinh_server {
@@ -20,6 +19,7 @@ public:
 private:
     bool _is_started = 0;
     bool _is_joined = 0;
+    int _join_result = 0;
     pthread_t _pthread_id = std::numeric_limits<pthread_t>::max();
     pid_t _tid = -1;
     WorkerFunctionType _worker_function;
@@ -38,10 +38,6 @@ private:
     void _do_start(std::unique_lock<std::mutex> lock);
 
     void _do_join(std::unique_lock<std::mutex> lock);
-
-    static pid_t _get_tid() {
-        return static_cast<pid_t>(syscall(SYS_gettid));
-    }
 
     static void *_adaptor_function_for_pthread_create(void *arg);
 
@@ -71,7 +67,7 @@ public:
 
     pid_t get_tid();
 
-    void join();
+    int join();
 };
 
 } // namespace utils
