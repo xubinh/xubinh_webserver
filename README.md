@@ -32,8 +32,13 @@
    - C++11 下的等价设施: `std::atomic<T>`
 1. `BlockingQueue`: 对 (无大小限制的) 阻塞队列的抽象.
 1. `BoundedBlockingQueue`: 对 (固定大小的) 阻塞队列的抽象.
-1. `Logger`: 是 `AsyncLogging` 类的一个包装类.
-1. `AsyncLogging`: 对异步日志系统的抽象.
+1. `AppendFile`: [TODO]
+1. `LogFile`: [TODO]
+1. `AsyncLogging`: [TODO]
+1. `LogStream`: [TODO]
+1. `Logger::SourceFile`: [TODO]
+1. `Logger::Impl`: [TODO]
+1. `Logger`: [TODO]
 1. `HttpRequest`: 对 HTTP 请求报文的抽象.
 1. `HttpResponse`: 对 HTTP 响应报文的抽象.
 1. `HttpContext`: 对 HTTP 请求解析过程的抽象.
