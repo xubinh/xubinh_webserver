@@ -6,9 +6,26 @@
 
 namespace xubinh_server {
 
-LogCollector::LogCollector() = default;
+LogCollector::LogCollector()
+    : _background_thread(
+        std::move(std::bind(
+            _collect_chunk_buffers_and_write_into_files_in_the_background, this
+        )),
+        "log collector background thread"
+    ) {
 
-LogCollector::~LogCollector() = default;
+    _background_thread.start();
+}
+
+LogCollector::~LogCollector() {
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        _need_stop = 1;
+    }
+
+    _background_thread.join();
+}
 
 void LogCollector::
     _collect_chunk_buffers_and_write_into_files_in_the_background() {
@@ -20,14 +37,34 @@ void LogCollector::
 
     LogFile log_file(_base_name);
 
+    std::unique_lock<decltype(_mutex)> lock_hook;
+
     while (1) {
         {
             std::unique_lock<decltype(_mutex)> lock(_mutex);
 
+            // 如果还未积累足够多的日志:
             if (_fulled_chunk_buffers.empty()) {
-                // 一直等到前端线程写满一个 buffer 并且新开的另一个 buffer
-                // 也写入了数据:
-                _cond.wait(lock);
+                // 暂时等待一段时间:
+                _cond.wait_for(
+                    lock, std::chrono::seconds(_COLLECT_LOOP_TIMEOUT_IN_SECONDS)
+                );
+            }
+
+            // 如果仍然没有积累足够多的日志:
+            if (_fulled_chunk_buffers.empty()) {
+                // 如果是因为日志系统即将退出:
+                if (_need_stop) {
+                    // 退出循环并进行善后处理:
+                    lock_hook = std::move(lock);
+
+                    break;
+                }
+
+                // 否则继续等待:
+                else {
+                    continue;
+                }
             }
 
             assert(
@@ -105,6 +142,17 @@ void LogCollector::
 
         log_file.flush();
     }
+
+    assert(_need_stop && _fulled_chunk_buffers.empty());
+
+    if (_current_chunk_buffer_ptr->get_size_of_written_area()) {
+        log_file.write(
+            _current_chunk_buffer_ptr->get_begin_address_of_buffer(),
+            _current_chunk_buffer_ptr->get_size_of_written_area()
+        );
+    }
+
+    return;
 }
 
 void LogCollector::take_this_log(
@@ -139,7 +187,7 @@ void LogCollector::take_this_log(
     _current_chunk_buffer_ptr->append(entry_address, entry_size);
 
     // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
-    _cond.notify_one();
+    _cond.notify_all();
 }
 
 LogCollector &LogCollector::get_instance() {

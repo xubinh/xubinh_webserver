@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "log_buffer.h"
+#include "utils/thread.h"
 
 namespace xubinh_server {
 
@@ -23,11 +24,14 @@ private:
         std::make_unique<ChunkBufferPtr::element_type>();
     BufferVector _fulled_chunk_buffers;
 
-    //  mutex for writing and moving buffers
+    // 为内部的缓冲区和阻塞队列提供保护
     std::mutex _mutex;
 
-    //  condition variable for mutex for writing and moving buffers
+    // 在前台后台两个线程之间关于阻塞队列建立同步关系
     std::condition_variable _cond;
+
+    utils::Thread _background_thread;
+    bool _need_stop = 0;
 
     LogCollector();
 
@@ -35,7 +39,8 @@ private:
 
     void _collect_chunk_buffers_and_write_into_files_in_the_background();
 
-    static constexpr std::chrono::seconds::rep _COLLECT_INTERVAL_IN_SECONDS = 3;
+    static constexpr std::chrono::seconds::rep
+        _COLLECT_LOOP_TIMEOUT_IN_SECONDS = 3;
 
     static constexpr decltype(BufferVector().size()
     ) _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
