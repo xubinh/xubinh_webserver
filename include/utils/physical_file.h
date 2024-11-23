@@ -15,15 +15,15 @@ private:
     std::size_t _total_number_of_bytes_written;
 
 public:
-    // 一个对象负责维护一个文件, 不允许拷贝:
+    // 一个对象负责维护一个文件, 不允许拷贝
     AppendOnlyPhysicalFile(const AppendOnlyPhysicalFile &) = delete;
     AppendOnlyPhysicalFile &operator=(const AppendOnlyPhysicalFile &) = delete;
 
-    // 可以移动但没必要:
+    // 可以移动但没必要
     AppendOnlyPhysicalFile(AppendOnlyPhysicalFile &&) = delete;
     AppendOnlyPhysicalFile &operator=(AppendOnlyPhysicalFile &&) = delete;
 
-    // 禁用默认构造函数, 禁用隐式转换:
+    // 禁用默认构造函数, 禁用隐式转换
     explicit AppendOnlyPhysicalFile(const std::string &base_name);
 
     ~AppendOnlyPhysicalFile();

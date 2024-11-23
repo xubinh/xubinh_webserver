@@ -1,22 +1,13 @@
 #include <cerrno> // errno
 #include <cstdio> // std::fopen, setbuffer, std::fflush, std::fclose, fwrite_unlocked, std::fprintf, stderr, std::ferror
-#include <cstring>   // strerror_r
 #include <stdexcept> // std::runtime_error
 
+#include "../../include/utils/errno.h"
 #include "../../include/utils/physical_file.h"
 
 namespace xubinh_server {
 
 namespace utils {
-
-thread_local char strerror_buffer_tl[512];
-
-std::string strerror_tl(int saved_errno) {
-    // 使用的是 GNU 版本, 在提供的缓冲区空间不够的时候会退化为线程不安全的版本:
-    return ::strerror_r(
-        saved_errno, strerror_buffer_tl, sizeof strerror_buffer_tl
-    );
-}
 
 AppendOnlyPhysicalFile::AppendOnlyPhysicalFile(const std::string &base_name)
     // `ae` 中的 `e` 表示 `O_CLOEXEC` 标志, 即禁止在创建子进程的时候被复制:
