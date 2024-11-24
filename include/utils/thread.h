@@ -50,10 +50,8 @@ public:
     Thread(Thread &&) = delete;
     Thread &operator=(Thread &&) = delete;
 
-    // 禁用默认构造函数, 禁用隐式转换
-    explicit Thread(
-        WorkerFunctionType worker_function, const std::string &thread_name
-    );
+    // 禁用默认构造函数
+    Thread(WorkerFunctionType worker_function, const std::string &thread_name);
 
     bool is_started() const {
         return _is_started;
