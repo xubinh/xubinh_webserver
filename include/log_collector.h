@@ -16,8 +16,6 @@ private:
     using ChunkBufferPtr = std::unique_ptr<LogChunkBuffer>;
     using BufferVector = std::vector<ChunkBufferPtr>;
 
-    const std::string _base_name;
-
     ChunkBufferPtr _current_chunk_buffer_ptr =
         std::make_unique<ChunkBufferPtr::element_type>();
     ChunkBufferPtr _spare_chunk_buffer_ptr =
@@ -45,6 +43,8 @@ private:
     static constexpr decltype(BufferVector().size()
     ) _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
 
+    static std::string _base_name;
+
 public:
     LogCollector(const LogCollector &) = delete;
     LogCollector &operator=(const LogCollector &) = delete;
@@ -53,6 +53,8 @@ public:
     LogCollector &operator=(LogCollector &&) = delete;
 
     void take_this_log(const char *data, std::size_t data_size);
+
+    static void set_base_name(const std::string &base_name);
 
     static LogCollector &get_instance();
 };

@@ -11,7 +11,7 @@ LogCollector::LogCollector()
         std::move(std::bind(
             _collect_chunk_buffers_and_write_into_files_in_the_background, this
         )),
-        "log collector background thread"
+        "logging"
     ) {
 
     _background_thread.start();
@@ -35,7 +35,7 @@ void LogCollector::
         std::make_unique<ChunkBufferPtr::element_type>();
     BufferVector chunk_buffers_to_be_written;
 
-    LogFile log_file(_base_name);
+    LogFile log_file(LogCollector::_base_name);
 
     std::unique_lock<decltype(_mutex)> lock_hook;
 
@@ -155,6 +155,8 @@ void LogCollector::
     return;
 }
 
+std::string LogCollector::_base_name = "log_collector";
+
 void LogCollector::take_this_log(
     const char *entry_address, std::size_t entry_size
 ) {
@@ -188,6 +190,10 @@ void LogCollector::take_this_log(
 
     // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
     _cond.notify_all();
+}
+
+void LogCollector::set_base_name(const std::string &base_name) {
+    LogCollector::_base_name = base_name;
 }
 
 LogCollector &LogCollector::get_instance() {
