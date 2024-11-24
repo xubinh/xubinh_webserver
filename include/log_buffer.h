@@ -13,11 +13,12 @@ static constexpr std::size_t LOG_CHUNK_BUFFER_SIZE =
 
 template <size_t LOG_BUFFER_SIZE>
 class LogBuffer {
-    static_assert(
-        LOG_BUFFER_SIZE == LOG_ENTRY_BUFFER_SIZE
-            || LOG_BUFFER_SIZE == LOG_CHUNK_BUFFER_SIZE,
-        "Invalid log buffer size"
-    );
+    // static_assert(
+    //     LOG_BUFFER_SIZE == LOG_ENTRY_BUFFER_SIZE
+    //         || LOG_BUFFER_SIZE == LOG_CHUNK_BUFFER_SIZE,
+    //     "Invalid log buffer size"
+    // );
+    // 将模板分离编译就已经足以用来限制模板实参的取值了
 
 private:
     char _buffer[LOG_BUFFER_SIZE];
@@ -31,12 +32,12 @@ public:
 
     ~LogBuffer();
 
-    // 无需拷贝, 想要新的缓冲区直接创建即可:
+    // 无需拷贝, 想要新的缓冲区直接创建即可
     LogBuffer(const LogBuffer &) = delete;
     LogBuffer &operator=(const LogBuffer &) = delete;
 
     // 因为总是配合 `std::unique_ptr` 进行移动, 无需移动对象本身,
-    // 因此定义为删除的:
+    // 因此定义为删除的
     LogBuffer(const LogBuffer &&) = delete;
     LogBuffer &operator=(const LogBuffer &&) = delete;
 
@@ -63,7 +64,7 @@ public:
     }
 };
 
-// explicit instantiation:
+// explicit instantiation
 extern template class LogBuffer<LOG_ENTRY_BUFFER_SIZE>;
 extern template class LogBuffer<LOG_CHUNK_BUFFER_SIZE>;
 
