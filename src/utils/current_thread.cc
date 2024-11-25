@@ -26,8 +26,7 @@ static inline pid_t _get_tid() {
 
 static void _cache_tid() {
     _tid = _get_tid();
-    _tid_string_length =
-        snprintf(_tid_string, sizeof _tid_string, "%5d ", _tid);
+    _tid_string_length = snprintf(_tid_string, sizeof _tid_string, "%5d", _tid);
 }
 
 pid_t get_tid() {
