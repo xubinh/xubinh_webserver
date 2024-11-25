@@ -1,6 +1,6 @@
 #include <cstring> // strerror_r
 
-#include "../../include/utils/errno.h"
+#include "utils/errno.h"
 
 namespace xubinh_server {
 
