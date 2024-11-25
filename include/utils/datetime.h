@@ -10,7 +10,7 @@ namespace xubinh_server {
 
 namespace utils {
 
-enum class DatetimePurpose { RENAMING, PRINTING };
+enum class DatetimePurpose { RENAMING, PRINTING, NUMBER_OF_ALL_PURPOSES };
 
 class Datetime {
 public:
@@ -20,6 +20,10 @@ public:
 
     static std::string
     get_datetime_string(const DatetimePurpose &datetime_purpose);
+
+    static constexpr size_t DATETIME_STRING_LENGTHES[static_cast<size_t>(
+        DatetimePurpose::NUMBER_OF_ALL_PURPOSES
+    )]{19, 19};
 };
 
 } // namespace utils
