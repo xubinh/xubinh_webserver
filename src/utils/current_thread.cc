@@ -45,6 +45,14 @@ const char *get_tid_string() {
     return _tid_string;
 }
 
+int get_tid_string_length() {
+    if (UNLIKELY(_tid == 0)) {
+        _cache_tid();
+    }
+
+    return _tid_string_length;
+}
+
 static inline void _set_linux_thread_name(const char *thread_name) {
     ::prctl(PR_SET_NAME, thread_name);
 }
