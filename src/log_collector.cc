@@ -1,8 +1,8 @@
 #include <cassert>
 
-#include "../include/log_collector.h"
-#include "../include/log_file.h"
-#include "../include/utils/datetime.h"
+#include "log_collector.h"
+#include "log_file.h"
+#include "utils/datetime.h"
 
 namespace xubinh_server {
 
@@ -69,7 +69,7 @@ void LogCollector::
 
             assert(
                 !_fulled_chunk_buffers.empty()
-                && _current_chunk_buffer_ptr->get_size_of_written_area() > 0
+                && _current_chunk_buffer_ptr->length() > 0
             );
 
             _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr)
@@ -119,8 +119,8 @@ void LogCollector::
 
         for (const auto &chunk_buffer_ptr : chunk_buffers_to_be_written) {
             log_file.write(
-                chunk_buffer_ptr->get_begin_address_of_buffer(),
-                chunk_buffer_ptr->get_size_of_written_area()
+                chunk_buffer_ptr->get_start_address_of_buffer(),
+                chunk_buffer_ptr->length()
             );
         }
 
@@ -145,10 +145,10 @@ void LogCollector::
 
     assert(_need_stop && _fulled_chunk_buffers.empty());
 
-    if (_current_chunk_buffer_ptr->get_size_of_written_area()) {
+    if (_current_chunk_buffer_ptr->length()) {
         log_file.write(
-            _current_chunk_buffer_ptr->get_begin_address_of_buffer(),
-            _current_chunk_buffer_ptr->get_size_of_written_area()
+            _current_chunk_buffer_ptr->get_start_address_of_buffer(),
+            _current_chunk_buffer_ptr->length()
         );
     }
 
@@ -169,7 +169,7 @@ void LogCollector::take_this_log(
     }
 
     // 如果当前缓冲区还能够容纳得下本条日志:
-    if (entry_size < _current_chunk_buffer_ptr->get_size_of_available_area()) {
+    if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
         _current_chunk_buffer_ptr->append(entry_address, entry_size);
 
         return;
