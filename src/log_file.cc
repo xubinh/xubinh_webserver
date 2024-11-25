@@ -1,7 +1,7 @@
 #include <stdexcept>
 
-#include "../include/log_file.h"
-#include "../include/utils/datetime.h"
+#include "log_file.h"
+#include "utils/datetime.h"
 
 namespace xubinh_server {
 

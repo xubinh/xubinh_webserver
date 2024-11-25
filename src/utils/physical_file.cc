@@ -2,8 +2,8 @@
 #include <cstdio> // std::fopen, setbuffer, std::fflush, std::fclose, fwrite_unlocked, std::fprintf, stderr, std::ferror
 #include <stdexcept> // std::runtime_error
 
-#include "../../include/utils/errno.h"
-#include "../../include/utils/physical_file.h"
+#include "utils/errno.h"
+#include "utils/physical_file.h"
 
 namespace xubinh_server {
 

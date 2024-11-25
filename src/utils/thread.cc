@@ -1,7 +1,7 @@
 #include <cassert>
 
-#include "../../include/utils/current_thread.h"
-#include "../../include/utils/thread.h"
+#include "utils/current_thread.h"
+#include "utils/thread.h"
 
 namespace xubinh_server {
 
