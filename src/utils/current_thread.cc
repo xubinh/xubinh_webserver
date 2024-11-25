@@ -1,6 +1,6 @@
 #include <sys/prctl.h>
 
-#include "../../include/utils/current_thread.h"
+#include "utils/current_thread.h"
 
 namespace xubinh_server {
 
@@ -13,8 +13,11 @@ namespace CurrentThread {
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 thread_local pid_t _tid = 0;
+
+// 用于加快日志消息的构建:
 thread_local char _tid_string[32]{};
 thread_local size_t _tid_string_length = 0;
+
 thread_local const char *_thread_name = "unknown";
 
 static inline pid_t _get_tid() {
@@ -43,6 +46,10 @@ void set_thread_name(const char *thread_name) {
     _thread_name = thread_name;
 
     _set_linux_thread_name(_thread_name);
+}
+
+inline const char *get_thread_name() {
+    return _thread_name;
 }
 
 } // namespace CurrentThread
