@@ -38,6 +38,14 @@ pid_t get_tid() {
     return _tid;
 }
 
+const char *get_tid_string() {
+    if (UNLIKELY(_tid == 0)) {
+        _cache_tid();
+    }
+
+    return _tid_string;
+}
+
 static inline void _set_linux_thread_name(const char *thread_name) {
     ::prctl(PR_SET_NAME, thread_name);
 }
