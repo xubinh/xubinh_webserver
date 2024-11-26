@@ -90,7 +90,7 @@ LogFile::LogFile(const std::string &base_name) : _base_name(base_name) {
 
 LogFile::~LogFile() = default;
 
-void LogFile::write(const char *data, std::size_t data_size) {
+void LogFile::write(const char *data, size_t data_size) {
     _physical_file_ptr->append(data, data_size);
 
     _do_normal_check();

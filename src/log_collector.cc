@@ -157,9 +157,7 @@ void LogCollector::
 
 std::string LogCollector::_base_name = "log_collector";
 
-void LogCollector::take_this_log(
-    const char *entry_address, std::size_t entry_size
-) {
+void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     std::lock_guard<decltype(_mutex)> lock(_mutex);
 
     // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃

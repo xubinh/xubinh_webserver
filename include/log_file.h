@@ -27,8 +27,7 @@ private:
     void _do_normal_check();
 
     // 一个日志文件的大致的大小上限
-    static constexpr std::size_t _PHYSICAL_FILE_SIZE_THRESHOLD =
-        500 * 1000 * 1000;
+    static constexpr size_t _PHYSICAL_FILE_SIZE_THRESHOLD = 500 * 1000 * 1000;
 
     // 刷新底层文件的缓冲区的时间间隔
     static constexpr std::time_t _FLUSH_INTERVAL_IN_SECONDS = 3;
@@ -51,7 +50,7 @@ public:
 
     ~LogFile();
 
-    void write(const char *data, std::size_t data_size);
+    void write(const char *data, size_t data_size);
 
     void flush();
 };

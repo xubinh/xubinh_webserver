@@ -6,9 +6,8 @@
 
 namespace xubinh_server {
 
-static constexpr std::size_t LOG_ENTRY_BUFFER_SIZE =
-    4 * 1000; // 4 KB 的普通缓冲区
-static constexpr std::size_t LOG_CHUNK_BUFFER_SIZE =
+static constexpr size_t LOG_ENTRY_BUFFER_SIZE = 4 * 1000; // 4 KB 的普通缓冲区
+static constexpr size_t LOG_CHUNK_BUFFER_SIZE =
     4 * 1000 * 1000; // 4 MB 的大缓冲区
 
 // declaration
@@ -43,21 +42,21 @@ public:
         return _start_address_of_spare;
     }
 
-    std::size_t length() {
+    size_t length() {
         return static_cast<size_t>(_start_address_of_spare - _buffer);
     }
 
-    std::size_t increment_length(const size_t &delta) {
+    size_t increment_length(const size_t &delta) {
         return _start_address_of_spare += delta;
     }
 
-    std::size_t length_of_spare() {
+    size_t length_of_spare() {
         return static_cast<size_t>(
             _end_address_of_buffer - _start_address_of_spare
         );
     }
 
-    void append(const char *data, std::size_t data_size);
+    void append(const char *data, size_t data_size);
 
     void reset() {
         _start_address_of_spare = _buffer;

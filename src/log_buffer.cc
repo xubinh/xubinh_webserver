@@ -5,9 +5,7 @@
 namespace xubinh_server {
 
 template <size_t LOG_BUFFER_SIZE>
-void LogBuffer<LOG_BUFFER_SIZE>::append(
-    const char *data, std::size_t data_size
-) {
+void LogBuffer<LOG_BUFFER_SIZE>::append(const char *data, size_t data_size) {
     // 如果大小不够则直接丢弃:
     if (data_size > length_of_spare()) {
         return;

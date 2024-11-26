@@ -52,7 +52,7 @@ public:
     LogCollector(LogCollector &&) = delete;
     LogCollector &operator=(LogCollector &&) = delete;
 
-    void take_this_log(const char *data, std::size_t data_size);
+    void take_this_log(const char *data, size_t data_size);
 
     static void set_base_name(const std::string &base_name);
 

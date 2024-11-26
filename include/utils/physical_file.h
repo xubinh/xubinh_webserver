@@ -12,7 +12,7 @@ class AppendOnlyPhysicalFile {
 private:
     std::FILE *_file_ptr;
     char _buffer[64 * 1000]; // 用于替换 `_file_ptr` 默认的缓冲区
-    std::size_t _total_number_of_bytes_written;
+    size_t _total_number_of_bytes_written;
 
 public:
     // 一个对象负责维护一个文件, 不允许拷贝
@@ -28,12 +28,12 @@ public:
 
     ~AppendOnlyPhysicalFile();
 
-    void append(const char *data, std::size_t data_size);
+    void append(const char *data, size_t data_size);
 
     // 因为在用户空间维护了一个缓冲区, 因此需要提供一个 flush 函数
     void flush();
 
-    std::size_t get_total_number_of_bytes_written() {
+    size_t get_total_number_of_bytes_written() {
         return _total_number_of_bytes_written;
     }
 };

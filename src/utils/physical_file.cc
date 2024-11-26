@@ -31,7 +31,7 @@ AppendOnlyPhysicalFile::~AppendOnlyPhysicalFile() {
     std::fclose(_file_ptr);
 }
 
-void AppendOnlyPhysicalFile::append(const char *data, std::size_t data_size) {
+void AppendOnlyPhysicalFile::append(const char *data, size_t data_size) {
     auto current_number_of_bytes_written =
         ::fwrite_unlocked(data, sizeof(char), data_size, _file_ptr);
 
