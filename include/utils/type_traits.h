@@ -19,35 +19,35 @@ struct is_one_of_8_integer_types {};
 
 template <>
 struct is_one_of_8_integer_types<short> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<int> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<long> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<long long> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<unsigned short> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<unsigned int> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<unsigned long> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 template <>
 struct is_one_of_8_integer_types<unsigned long long> {
-    bool value = true;
+    static constexpr bool value = true;
 };
 
 // little helper
