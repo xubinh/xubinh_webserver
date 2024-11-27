@@ -48,8 +48,8 @@ LogBuilder::LogBuilder(
     _entry_buffer.append(" | ", 3);
 
     _entry_buffer.append(
-        utils::CurrentThread::get_tid_string(),
-        utils::CurrentThread::get_tid_string_length()
+        utils::current_thread::get_tid_string(),
+        utils::current_thread::get_tid_string_length()
     );
 
     _entry_buffer.append(" | ", 3);

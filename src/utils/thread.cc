@@ -13,9 +13,9 @@ namespace {
 struct _MainThreadInitializer {
     // 只在主进程的主线程中执行一次
     _MainThreadInitializer() {
-        CurrentThread::get_tid();
+        current_thread::get_tid();
 
-        CurrentThread::set_thread_name("main");
+        current_thread::set_thread_name("main");
 
         pthread_atfork(
             nullptr,
@@ -26,10 +26,10 @@ struct _MainThreadInitializer {
 
     // 在每个新 fork 出来的子进程的主线程中均会执行一次
     static void execute_in_child_after_fork() {
-        CurrentThread::_tid = 0;
-        CurrentThread::get_tid();
+        current_thread::_tid = 0;
+        current_thread::get_tid();
 
-        CurrentThread::set_thread_name("main");
+        current_thread::set_thread_name("main");
     }
 };
 
@@ -42,11 +42,11 @@ void Thread::_wrapper_of_worker_function() {
     {
         std::lock_guard<std::mutex> lock(_mutex_for_thread_info);
 
-        _tid = CurrentThread::get_tid();
+        _tid = current_thread::get_tid();
 
         // 这里字符串的生命周期等于线程对象的生命周期,
         // 因而等于线程本身的生命周期:
-        CurrentThread::set_thread_name(_thread_name.c_str());
+        current_thread::set_thread_name(_thread_name.c_str());
 
         _cond_for_thread_info.notify_all();
     }

@@ -6,7 +6,7 @@ namespace xubinh_server {
 
 namespace utils {
 
-namespace CurrentThread {
+namespace current_thread {
 
 // 用于优化编译器分支预判:
 #define LIKELY(x) __builtin_expect(!!(x), 1)
@@ -67,7 +67,7 @@ inline const char *get_thread_name() {
     return _thread_name;
 }
 
-} // namespace CurrentThread
+} // namespace current_thread
 
 } // namespace utils
 

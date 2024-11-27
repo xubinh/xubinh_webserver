@@ -10,7 +10,7 @@ namespace xubinh_server {
 
 namespace utils {
 
-namespace CurrentThread {
+namespace current_thread {
 
 pid_t get_tid();
 
@@ -22,7 +22,7 @@ void set_thread_name(const char *thread_name);
 
 inline const char *get_thread_name();
 
-} // namespace CurrentThread
+} // namespace current_thread
 
 } // namespace utils
 
