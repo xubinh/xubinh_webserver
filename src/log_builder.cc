@@ -1,16 +1,16 @@
 #include "log_builder.h"
 #include "log_collector.h"
-#include "utils/current_thread.h"
-#include "utils/datetime.h"
-#include "utils/errno.h"
-#include "utils/format.h"
+#include "util/current_thread.h"
+#include "util/datetime.h"
+#include "util/errno.h"
+#include "util/format.h"
 
 namespace {
 
 // alias
 template <typename T>
 constexpr size_t _get_number_of_chars() {
-    return xubinh_server::utils::Format::
+    return xubinh_server::util::Format::
         get_min_number_of_chars_required_to_represent_value_of_type<T>::value;
 }
 
@@ -39,17 +39,17 @@ LogBuilder::LogBuilder(
     }
 
     _entry_buffer.append(
-        utils::Datetime::get_datetime_string(utils::DatetimePurpose::PRINTING)
+        util::Datetime::get_datetime_string(util::DatetimePurpose::PRINTING)
             .c_str(),
-        utils::Datetime::DATETIME_STRING_LENGTHES
-            [static_cast<size_t>(utils::DatetimePurpose::PRINTING)]
+        util::Datetime::DATETIME_STRING_LENGTHES
+            [static_cast<size_t>(util::DatetimePurpose::PRINTING)]
     );
 
     _entry_buffer.append(" | ", 3);
 
     _entry_buffer.append(
-        utils::current_thread::get_tid_string(),
-        utils::current_thread::get_tid_string_length()
+        util::current_thread::get_tid_string(),
+        util::current_thread::get_tid_string_length()
     );
 
     _entry_buffer.append(" | ", 3);
@@ -84,7 +84,7 @@ LogBuilder::~LogBuilder() {
     if (_saved_errno) {
         _entry_buffer.append(" | ", 3);
 
-        *this << utils::strerror_tl(_saved_errno);
+        *this << util::strerror_tl(_saved_errno);
 
         _entry_buffer.append(" (errno=", 8);
 
@@ -105,7 +105,7 @@ template <typename T, typename = LogBuilder::enable_for_integer_types<T>>
 LogBuilder &LogBuilder::operator<<(T integer) {
     if (_entry_buffer.length_of_spare() > _get_number_of_chars<T>()) {
         _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_decimal_string(
+            util::Format::convert_integer_to_decimal_string(
                 _entry_buffer.get_start_address_of_spare(), integer
             )
         );
@@ -139,7 +139,7 @@ LogBuilder &LogBuilder::operator<<(double floating_point) {
 
 LogBuilder &LogBuilder::operator<<(const void *pointer) {
     if (_entry_buffer.length_of_spare() > _get_number_of_chars<void *>()) {
-        utils::Format::convert_pointer_to_hex_string(
+        util::Format::convert_pointer_to_hex_string(
             _entry_buffer.get_start_address_of_spare(), pointer
         );
 

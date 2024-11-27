@@ -2,12 +2,12 @@
 #include <cstdio> // std::fopen, setbuffer, std::fflush, std::fclose, fwrite_unlocked, std::fprintf, stderr, std::ferror
 #include <stdexcept> // std::runtime_error
 
-#include "utils/errno.h"
-#include "utils/physical_file.h"
+#include "util/errno.h"
+#include "util/physical_file.h"
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 AppendOnlyPhysicalFile::AppendOnlyPhysicalFile(const std::string &base_name)
     // `ae` 中的 `e` 表示 `O_CLOEXEC` 标志, 即禁止在创建子进程的时候被复制:
@@ -53,6 +53,6 @@ void AppendOnlyPhysicalFile::flush() {
     std::fflush(_file_ptr);
 }
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server

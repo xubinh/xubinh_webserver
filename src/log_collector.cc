@@ -2,8 +2,8 @@
 
 #include "log_collector.h"
 #include "log_file.h"
-#include "utils/datetime.h"
-#include "utils/format.h"
+#include "util/datetime.h"
+#include "util/format.h"
 
 namespace xubinh_server {
 
@@ -103,8 +103,8 @@ void LogCollector::
             std::string msg = "Dropped "
                               + std::to_string(number_of_dropped_buffers)
                               + " chunk buffers at "
-                              + utils::Datetime::get_datetime_string(
-                                  utils::DatetimePurpose::PRINTING
+                              + util::Datetime::get_datetime_string(
+                                  util::DatetimePurpose::PRINTING
                               )
                               + "\n";
 
@@ -193,7 +193,7 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
 
 void LogCollector::set_base_name(const std::string &path) {
     LogCollector::_base_name =
-        utils::Format::get_base_name_of_path(path.c_str(), path.length());
+        util::Format::get_base_name_of_path(path.c_str(), path.length());
 }
 
 LogCollector &LogCollector::get_instance() {

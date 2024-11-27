@@ -5,16 +5,16 @@
 #include <memory>
 #include <string>
 
-#include "utils/physical_file.h"
+#include "util/physical_file.h"
 
 namespace xubinh_server {
 
-class utils::AppendOnlyPhysicalFile;
+class util::AppendOnlyPhysicalFile;
 
 class LogFile {
 private:
     const std::string _base_name;
-    std::unique_ptr<utils::AppendOnlyPhysicalFile> _physical_file_ptr;
+    std::unique_ptr<util::AppendOnlyPhysicalFile> _physical_file_ptr;
     std::time_t _time_of_last_major_check_from_epoch_in_seconds = 0;
     int _number_of_normal_checks_since_last_major_check = 0;
 

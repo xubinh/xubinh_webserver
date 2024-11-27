@@ -1,11 +1,11 @@
-#ifndef XUBINH_SERVER_UTILS_FILE
-#define XUBINH_SERVER_UTILS_FILE
+#ifndef XUBINH_SERVER_UTIL_FILE
+#define XUBINH_SERVER_UTIL_FILE
 
 #include <string>
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 // 对单个物理文件的抽象, 并且是线程不安全的
 class AppendOnlyPhysicalFile {
@@ -38,7 +38,7 @@ public:
     }
 };
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

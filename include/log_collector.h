@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "log_buffer.h"
-#include "utils/thread.h"
+#include "util/thread.h"
 
 namespace xubinh_server {
 
@@ -27,7 +27,7 @@ private:
     // 在前台后台两个线程之间关于阻塞队列建立同步关系
     std::condition_variable _cond;
 
-    utils::Thread _background_thread;
+    util::Thread _background_thread;
     bool _need_stop = 0;
 
     LogCollector();

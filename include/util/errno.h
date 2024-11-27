@@ -1,15 +1,15 @@
-#ifndef XUBINH_SERVER_UTILS_ERRNO
-#define XUBINH_SERVER_UTILS_ERRNO
+#ifndef XUBINH_SERVER_UTIL_ERRNO
+#define XUBINH_SERVER_UTIL_ERRNO
 
 #include <string>
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 std::string strerror_tl(int saved_errno);
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

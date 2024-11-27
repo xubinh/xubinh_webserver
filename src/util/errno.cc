@@ -1,10 +1,10 @@
 #include <cstring> // strerror_r
 
-#include "utils/errno.h"
+#include "util/errno.h"
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 thread_local char strerror_buffer_tl[512];
 
@@ -15,6 +15,6 @@ std::string strerror_tl(int saved_errno) {
     );
 }
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server

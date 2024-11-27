@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "utils/type_traits.h"
+#include "util/type_traits.h"
 
 namespace xubinh_server {
 
@@ -20,9 +20,8 @@ struct LogBufferSizeConfig {
 
     // SFINAE
     template <size_t LOG_BUFFER_SIZE>
-    using enable_if_is_valid_log_buffer_size_t =
-        utils::type_traits::enable_if_t<
-            is_valid_log_buffer_size<LOG_BUFFER_SIZE>::value>;
+    using enable_if_is_valid_log_buffer_size_t = util::type_traits::enable_if_t<
+        is_valid_log_buffer_size<LOG_BUFFER_SIZE>::value>;
 
     static constexpr size_t LOG_ENTRY_BUFFER_SIZE = 4 * 1000;        // 4 KB
     static constexpr size_t LOG_CHUNK_BUFFER_SIZE = 4 * 1000 * 1000; // 4 MB

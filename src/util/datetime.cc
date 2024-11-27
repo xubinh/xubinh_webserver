@@ -1,8 +1,8 @@
-#include "utils/datetime.h"
+#include "util/datetime.h"
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 std::string
 Datetime::get_datetime_string(const DatetimePurpose &datetime_purpose) {
@@ -26,6 +26,6 @@ Datetime::get_datetime_string(const DatetimePurpose &datetime_purpose) {
     return buffer;
 }
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server

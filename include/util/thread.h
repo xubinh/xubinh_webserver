@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTILS_THREAD
-#define XUBINH_SERVER_UTILS_THREAD
+#ifndef XUBINH_SERVER_UTIL_THREAD
+#define XUBINH_SERVER_UTIL_THREAD
 
 #include <condition_variable>
 #include <cstdint>
@@ -10,7 +10,7 @@
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 class Thread {
 public:
@@ -68,7 +68,7 @@ public:
     int join();
 };
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

@@ -1,11 +1,11 @@
-#ifndef XUBINH_SERVER_UTILS_TYPE_TRAITS
-#define XUBINH_SERVER_UTILS_TYPE_TRAITS
+#ifndef XUBINH_SERVER_UTIL_TYPE_TRAITS
+#define XUBINH_SERVER_UTIL_TYPE_TRAITS
 
 #include <type_traits>
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 namespace type_traits {
 
@@ -15,7 +15,7 @@ using enable_if_t = typename std::enable_if<C, T>::type;
 
 } // namespace type_traits
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

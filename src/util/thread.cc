@@ -1,11 +1,11 @@
 #include <cassert>
 
-#include "utils/current_thread.h"
-#include "utils/thread.h"
+#include "util/current_thread.h"
+#include "util/thread.h"
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 namespace {
 
@@ -151,6 +151,6 @@ int Thread::join() {
     return _join_result;
 }
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server

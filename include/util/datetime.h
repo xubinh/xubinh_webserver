@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTILS_DATETIME
-#define XUBINH_SERVER_UTILS_DATETIME
+#ifndef XUBINH_SERVER_UTIL_DATETIME
+#define XUBINH_SERVER_UTIL_DATETIME
 
 #include <cstring> // std::memset
 #include <ctime>
@@ -8,7 +8,7 @@
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 enum class DatetimePurpose { RENAMING, PRINTING, NUMBER_OF_ALL_PURPOSES };
 
@@ -26,7 +26,7 @@ public:
     )]{19, 19};
 };
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

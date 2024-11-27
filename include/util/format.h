@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTILS_FORMAT
-#define XUBINH_SERVER_UTILS_FORMAT
+#ifndef XUBINH_SERVER_UTIL_FORMAT
+#define XUBINH_SERVER_UTIL_FORMAT
 
 #include <algorithm>
 #include <array>
@@ -10,7 +10,7 @@
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 class Format {
 public:
@@ -170,7 +170,7 @@ struct Format::
     static constexpr size_t value = 19;
 };
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTILS_CURRENT_THREAD
-#define XUBINH_SERVER_UTILS_CURRENT_THREAD
+#ifndef XUBINH_SERVER_UTIL_CURRENT_THREAD
+#define XUBINH_SERVER_UTIL_CURRENT_THREAD
 
 #include <stdio.h>
 #include <string>
@@ -8,7 +8,7 @@
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 namespace current_thread {
 
@@ -24,7 +24,7 @@ inline const char *get_thread_name();
 
 } // namespace current_thread
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
 

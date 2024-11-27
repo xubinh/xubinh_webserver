@@ -1,14 +1,14 @@
 #include <stdexcept>
 
 #include "log_file.h"
-#include "utils/datetime.h"
+#include "util/datetime.h"
 
 namespace xubinh_server {
 
 std::string LogFile::_get_name_for_a_new_physical_file() {
     std::string file_name;
     auto datetime_string =
-        utils::Datetime::get_datetime_string(utils::DatetimePurpose::RENAMING);
+        util::Datetime::get_datetime_string(util::DatetimePurpose::RENAMING);
 
     file_name.reserve(_base_name.length() + 32);
 
@@ -23,12 +23,12 @@ std::string LogFile::_get_name_for_a_new_physical_file() {
 void LogFile::_switch_to_a_new_physical_file() {
     auto new_file_name = _get_name_for_a_new_physical_file();
 
-    _physical_file_ptr.reset(new utils::AppendOnlyPhysicalFile(new_file_name));
+    _physical_file_ptr.reset(new util::AppendOnlyPhysicalFile(new_file_name));
 }
 
 void LogFile::_do_major_check() {
     auto current_time_from_epoch_in_seconds =
-        utils::Datetime::get_current_time_from_epoch_in_seconds();
+        util::Datetime::get_current_time_from_epoch_in_seconds();
 
     // 如果进入新的物理文件切换周期:
     if (_is_in_a_new_switch_interval(
@@ -47,7 +47,7 @@ void LogFile::_do_major_check() {
 
     // 因为上述操作可能会比较耗时, 因此索性重新获取一次时间戳:
     _time_of_last_major_check_from_epoch_in_seconds =
-        utils::Datetime::get_current_time_from_epoch_in_seconds();
+        util::Datetime::get_current_time_from_epoch_in_seconds();
 }
 
 void LogFile::_do_normal_check() {

@@ -1,10 +1,10 @@
 #include <sys/prctl.h>
 
-#include "utils/current_thread.h"
+#include "util/current_thread.h"
 
 namespace xubinh_server {
 
-namespace utils {
+namespace util {
 
 namespace current_thread {
 
@@ -69,6 +69,6 @@ inline const char *get_thread_name() {
 
 } // namespace current_thread
 
-} // namespace utils
+} // namespace util
 
 } // namespace xubinh_server
