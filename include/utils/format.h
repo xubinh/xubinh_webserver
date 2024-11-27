@@ -51,7 +51,8 @@ private:
 public:
     template <typename T, typename = enable_for_integer_types<T>>
     static constexpr int get_max_number_of_decimal_digits_of_integer_type() {
-        return _log10_floor(std::numeric_limits<T>::max()) + 1;
+        return _log10_floor(std::numeric_limits<T>::max()) + 1
+               + 1; // for possible leading minus sign `-`
     }
 
     template <typename T, typename Enable = void>
