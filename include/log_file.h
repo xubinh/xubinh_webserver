@@ -9,31 +9,25 @@
 
 namespace xubinh_server {
 
-class util::AppendOnlyPhysicalFile;
-
 class LogFile {
+public:
+    explicit LogFile(const std::string &base_name);
+
+    ~LogFile();
+
+    void write(const char *data, size_t data_size);
+
+    void flush();
+
 private:
-    const std::string _base_name;
-    std::unique_ptr<util::AppendOnlyPhysicalFile> _physical_file_ptr;
-    std::time_t _time_of_last_major_check_from_epoch_in_seconds = 0;
-    int _number_of_normal_checks_since_last_major_check = 0;
-
-    std::string _get_name_for_a_new_physical_file();
-
-    void _switch_to_a_new_physical_file();
-
-    void _do_major_check();
-
-    void _do_normal_check();
-
     // 一个日志文件的大致的大小上限
     static constexpr size_t _PHYSICAL_FILE_SIZE_THRESHOLD = 500 * 1000 * 1000;
 
     // 刷新底层文件的缓冲区的时间间隔
-    static constexpr std::time_t _FLUSH_INTERVAL_IN_SECONDS = 3;
+    static constexpr time_t _FLUSH_INTERVAL_IN_SECONDS = 3;
 
     // 强制切换新文件的时间间隔
-    static constexpr std::time_t _SWITCH_INTERVAL_IN_SECONDS = 24 * 60 * 60;
+    static constexpr time_t _SWITCH_INTERVAL_IN_SECONDS = 24 * 60 * 60;
 
     // 检查操作的执行频率
     static constexpr int _MAJOR_CHECK_FREQUENCY = 1024;
@@ -45,14 +39,18 @@ private:
                != (time_from_epoch_in_seconds_2 / _SWITCH_INTERVAL_IN_SECONDS);
     }
 
-public:
-    explicit LogFile(const std::string &base_name);
+    std::string _get_name_for_a_new_physical_file();
 
-    ~LogFile();
+    void _switch_to_a_new_physical_file();
 
-    void write(const char *data, size_t data_size);
+    void _do_major_check();
 
-    void flush();
+    void _do_normal_check();
+
+    const std::string _base_name;
+    std::unique_ptr<util::AppendOnlyPhysicalFile> _physical_file_ptr;
+    time_t _time_of_last_major_check_from_epoch_in_seconds = 0;
+    int _number_of_normal_checks_since_last_major_check = 0;
 };
 
 } // namespace xubinh_server

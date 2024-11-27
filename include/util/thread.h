@@ -16,7 +16,42 @@ class Thread {
 public:
     using WorkerFunctionType = std::function<void()>;
 
+    // 禁用默认构造函数
+    Thread(WorkerFunctionType worker_function, const std::string &thread_name);
+
+    // 每个线程都应该从头开始维护自己的上下文, 因此不允许拷贝
+    Thread(const Thread &) = delete;
+    Thread &operator=(const Thread &) = delete;
+
+    // 虽然可以移动但没必要
+    Thread(Thread &&) = delete;
+    Thread &operator=(Thread &&) = delete;
+
+    ~Thread() = default;
+
+    bool is_started() const {
+        return _is_started;
+    }
+
+    bool is_joined() const {
+        return _is_joined;
+    }
+
+    void start();
+
+    pid_t get_tid();
+
+    int join();
+
 private:
+    static void *_adaptor_function_for_pthread_create(void *arg);
+
+    void _wrapper_of_worker_function();
+
+    void _do_start(std::unique_lock<std::mutex> lock);
+
+    void _do_join(std::unique_lock<std::mutex> lock);
+
     bool _is_started = 0;
     bool _is_joined = 0;
     int _join_result = 0;
@@ -32,40 +67,6 @@ private:
     // 之间提供同步机制
     std::mutex _mutex_for_thread_info;
     std::condition_variable _cond_for_thread_info;
-
-    void _wrapper_of_worker_function();
-
-    void _do_start(std::unique_lock<std::mutex> lock);
-
-    void _do_join(std::unique_lock<std::mutex> lock);
-
-    static void *_adaptor_function_for_pthread_create(void *arg);
-
-public:
-    // 每个线程都应该从头开始维护自己的上下文, 因此不允许拷贝
-    Thread(const Thread &) = delete;
-    Thread &operator=(const Thread &) = delete;
-
-    // 虽然可以移动但没必要
-    Thread(Thread &&) = delete;
-    Thread &operator=(Thread &&) = delete;
-
-    // 禁用默认构造函数
-    Thread(WorkerFunctionType worker_function, const std::string &thread_name);
-
-    bool is_started() const {
-        return _is_started;
-    }
-
-    bool is_joined() const {
-        return _is_joined;
-    }
-
-    void start();
-
-    pid_t get_tid();
-
-    int join();
 };
 
 } // namespace util

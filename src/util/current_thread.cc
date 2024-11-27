@@ -29,6 +29,10 @@ static void _cache_tid() {
     _tid_string_length = snprintf(_tid_string, sizeof _tid_string, "%5d", _tid);
 }
 
+void reset_tid() {
+    _tid = 0;
+}
+
 pid_t get_tid() {
     if (UNLIKELY(_tid == 0)) {
         _cache_tid();
@@ -54,7 +58,7 @@ int get_tid_string_length() {
 }
 
 static inline void _set_linux_thread_name(const char *thread_name) {
-    ::prctl(PR_SET_NAME, thread_name);
+    prctl(PR_SET_NAME, thread_name);
 }
 
 void set_thread_name(const char *thread_name) {

@@ -18,50 +18,6 @@ constexpr size_t _get_number_of_chars() {
 
 namespace xubinh_server {
 
-LogLevel LogBuilder::_log_level_mask = LogLevel::INFO;
-
-LogBuilder::LogBuilder(
-    LogLevel log_level,
-    const char *source_file_base_name,
-    int line_number,
-    const char *function_name,
-    int saved_errno
-)
-    : _source_file_base_name(source_file_base_name), _line_number(line_number),
-      _function_name(function_name), _saved_errno(saved_errno) {
-
-    if (source_file_base_name) {
-        _source_file_base_name_length = strlen(source_file_base_name);
-    }
-
-    if (function_name) {
-        _function_name_length = strlen(function_name);
-    }
-
-    _entry_buffer.append(
-        util::Datetime::get_datetime_string(util::DatetimePurpose::PRINTING)
-            .c_str(),
-        util::Datetime::DATETIME_STRING_LENGTHES
-            [static_cast<size_t>(util::DatetimePurpose::PRINTING)]
-    );
-
-    _entry_buffer.append(" | ", 3);
-
-    _entry_buffer.append(
-        util::current_thread::get_tid_string(),
-        util::current_thread::get_tid_string_length()
-    );
-
-    _entry_buffer.append(" | ", 3);
-
-    _entry_buffer.append(
-        _LOG_LEVEL_STRINGS[static_cast<size_t>(log_level)],
-        _LENGTH_OF_LOG_LEVEL_STRINGS
-    );
-
-    _entry_buffer.append(" | ", 3);
-}
-
 LogBuilder::~LogBuilder() {
     if (_source_file_base_name) {
         _entry_buffer.append(" | ", 3);
@@ -147,6 +103,54 @@ LogBuilder &LogBuilder::operator<<(const void *pointer) {
     }
 
     return *this;
+}
+
+LogLevel LogBuilder::_log_level_mask = LogLevel::INFO;
+
+const char *LogBuilder::_LOG_LEVEL_STRINGS[static_cast<size_t>(
+    LogLevel::NUMBER_OF_ALL_LEVELS
+)]{"TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
+
+LogBuilder::LogBuilder(
+    LogLevel log_level,
+    const char *source_file_base_name,
+    int line_number,
+    const char *function_name,
+    int saved_errno
+)
+    : _source_file_base_name(source_file_base_name), _line_number(line_number),
+      _function_name(function_name), _saved_errno(saved_errno) {
+
+    if (source_file_base_name) {
+        _source_file_base_name_length = strlen(source_file_base_name);
+    }
+
+    if (function_name) {
+        _function_name_length = strlen(function_name);
+    }
+
+    _entry_buffer.append(
+        util::Datetime::get_datetime_string(util::DatetimePurpose::PRINTING)
+            .c_str(),
+        util::Datetime::DATETIME_STRING_LENGTHES
+            [static_cast<size_t>(util::DatetimePurpose::PRINTING)]
+    );
+
+    _entry_buffer.append(" | ", 3);
+
+    _entry_buffer.append(
+        util::current_thread::get_tid_string(),
+        util::current_thread::get_tid_string_length()
+    );
+
+    _entry_buffer.append(" | ", 3);
+
+    _entry_buffer.append(
+        _LOG_LEVEL_STRINGS[static_cast<size_t>(log_level)],
+        _LENGTH_OF_LOG_LEVEL_STRINGS
+    );
+
+    _entry_buffer.append(" | ", 3);
 }
 
 } // namespace xubinh_server

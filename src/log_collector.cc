@@ -7,11 +7,60 @@
 
 namespace xubinh_server {
 
+void LogCollector::set_base_name(const std::string &path) {
+    LogCollector::_base_name =
+        util::Format::get_base_name_of_path(path.c_str(), path.length());
+}
+
+LogCollector &LogCollector::get_instance() {
+    static LogCollector instance;
+
+    return instance;
+}
+
+void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃
+    // (一般不会发生, 因为外部缓冲区总是应该比内部缓冲区来得小):
+    if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
+        return;
+    }
+
+    // 如果当前缓冲区还能够容纳得下本条日志:
+    if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
+        _current_chunk_buffer_ptr->append(entry_address, entry_size);
+
+        return;
+    }
+
+    // 否则将当前缓冲区放至阻塞队列中:
+    _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
+
+    // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
+    _current_chunk_buffer_ptr = _spare_chunk_buffer_ptr
+                                    ? std::move(_spare_chunk_buffer_ptr)
+                                    : ChunkBufferPtr(new LogChunkBuffer);
+
+    // 写入本条日志:
+    _current_chunk_buffer_ptr->append(entry_address, entry_size);
+
+    // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
+    _cond.notify_all();
+}
+
+std::string LogCollector::_base_name = "log_collector";
+
+constexpr std::chrono::seconds::rep
+    LogCollector::_COLLECT_LOOP_TIMEOUT_IN_SECONDS;
+
 LogCollector::LogCollector()
     : _background_thread(
-        std::move(std::bind(
-            _collect_chunk_buffers_and_write_into_files_in_the_background, this
-        )),
+        std::bind(
+            &LogCollector::
+                _collect_chunk_buffers_and_write_into_files_in_the_background,
+            this
+        ),
         "logging"
     ) {
 
@@ -156,50 +205,6 @@ void LogCollector::
     }
 
     return;
-}
-
-std::string LogCollector::_base_name = "log_collector";
-
-void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
-
-    // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃
-    // (一般不会发生, 因为外部缓冲区总是应该比内部缓冲区来得小):
-    if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
-        return;
-    }
-
-    // 如果当前缓冲区还能够容纳得下本条日志:
-    if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
-        _current_chunk_buffer_ptr->append(entry_address, entry_size);
-
-        return;
-    }
-
-    // 否则将当前缓冲区放至阻塞队列中:
-    _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
-
-    // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
-    _current_chunk_buffer_ptr = _spare_chunk_buffer_ptr
-                                    ? std::move(_spare_chunk_buffer_ptr)
-                                    : ChunkBufferPtr(new LogChunkBuffer);
-
-    // 写入本条日志:
-    _current_chunk_buffer_ptr->append(entry_address, entry_size);
-
-    // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
-    _cond.notify_all();
-}
-
-void LogCollector::set_base_name(const std::string &path) {
-    LogCollector::_base_name =
-        util::Format::get_base_name_of_path(path.c_str(), path.length());
-}
-
-LogCollector &LogCollector::get_instance() {
-    static LogCollector instance;
-
-    return instance;
 }
 
 } // namespace xubinh_server

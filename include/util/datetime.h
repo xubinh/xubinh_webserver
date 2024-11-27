@@ -1,7 +1,7 @@
 #ifndef XUBINH_SERVER_UTIL_DATETIME
 #define XUBINH_SERVER_UTIL_DATETIME
 
-#include <cstring> // std::memset
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <string>
@@ -14,8 +14,8 @@ enum class DatetimePurpose { RENAMING, PRINTING, NUMBER_OF_ALL_PURPOSES };
 
 class Datetime {
 public:
-    static std::time_t get_current_time_from_epoch_in_seconds() {
-        return std::time(nullptr);
+    static time_t get_current_time_from_epoch_in_seconds() {
+        return time(nullptr);
     }
 
     static std::string

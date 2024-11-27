@@ -2,6 +2,7 @@
 #define XUBINH_SERVER_LOG_BUFFER
 
 #include <cstddef>
+#include <cstring>
 #include <type_traits>
 
 #include "util/type_traits.h"
@@ -9,22 +10,21 @@
 namespace xubinh_server {
 
 struct LogBufferSizeConfig {
+    static constexpr size_t LOG_ENTRY_BUFFER_SIZE = 4 * 1000;        // 4 KB
+    static constexpr size_t LOG_CHUNK_BUFFER_SIZE = 4 * 1000 * 1000; // 4 MB
+
     // value dispatcher
     template <size_t LOG_BUFFER_SIZE>
     struct is_valid_log_buffer_size
         : std::integral_constant<
               bool,
-              LOG_BUFFER_SIZE == LogBufferSizeConfig::LOG_ENTRY_BUFFER_SIZE
-                  || LOG_BUFFER_SIZE
-                         == LogBufferSizeConfig::LOG_CHUNK_BUFFER_SIZE> {};
+              LOG_BUFFER_SIZE == LOG_ENTRY_BUFFER_SIZE
+                  || LOG_BUFFER_SIZE == LOG_CHUNK_BUFFER_SIZE> {};
 
-    // SFINAE
+    // SFINAE type alias
     template <size_t LOG_BUFFER_SIZE>
     using enable_if_is_valid_log_buffer_size_t = util::type_traits::enable_if_t<
         is_valid_log_buffer_size<LOG_BUFFER_SIZE>::value>;
-
-    static constexpr size_t LOG_ENTRY_BUFFER_SIZE = 4 * 1000;        // 4 KB
-    static constexpr size_t LOG_CHUNK_BUFFER_SIZE = 4 * 1000 * 1000; // 4 MB
 };
 
 // declaration
@@ -33,14 +33,13 @@ template <
     typename = LogBufferSizeConfig::enable_if_is_valid_log_buffer_size_t<
         LOG_BUFFER_SIZE>>
 class FixedSizeLogBuffer {
-private:
-    char _buffer[LOG_BUFFER_SIZE];
-    const char *_end_address_of_buffer = _buffer + LOG_BUFFER_SIZE - 1; // `\0`
-    char *_start_address_of_spare = _buffer;
-
-    static constexpr size_t _MAX_BUFFER_SIZE = LOG_BUFFER_SIZE;
-
 public:
+    static constexpr size_t capacity() {
+        return _MAX_BUFFER_SIZE;
+    }
+
+    FixedSizeLogBuffer() = default;
+
     // 无需拷贝, 想要新的缓冲区直接创建即可
     FixedSizeLogBuffer(const FixedSizeLogBuffer &) = delete;
     FixedSizeLogBuffer &operator=(const FixedSizeLogBuffer &) = delete;
@@ -49,8 +48,6 @@ public:
     // 因此定义为删除的
     FixedSizeLogBuffer(const FixedSizeLogBuffer &&) = delete;
     FixedSizeLogBuffer &operator=(const FixedSizeLogBuffer &&) = delete;
-
-    FixedSizeLogBuffer() = default;
 
     ~FixedSizeLogBuffer() = default;
 
@@ -66,8 +63,8 @@ public:
         return static_cast<size_t>(_start_address_of_spare - _buffer);
     }
 
-    size_t increment_length(size_t delta) {
-        return _start_address_of_spare += delta;
+    void increment_length(size_t delta) {
+        _start_address_of_spare += delta;
     }
 
     size_t length_of_spare() {
@@ -82,7 +79,7 @@ public:
             return;
         }
 
-        std::memcpy(_start_address_of_spare, data, data_size);
+        memcpy(_start_address_of_spare, data, data_size);
 
         _start_address_of_spare += data_size;
     }
@@ -91,9 +88,12 @@ public:
         _start_address_of_spare = _buffer;
     }
 
-    static constexpr size_t capacity() const {
-        return _MAX_BUFFER_SIZE;
-    }
+private:
+    static constexpr size_t _MAX_BUFFER_SIZE = LOG_BUFFER_SIZE;
+
+    char _buffer[LOG_BUFFER_SIZE];
+    const char *_end_address_of_buffer = _buffer + LOG_BUFFER_SIZE - 1; // `\0`
+    char *_start_address_of_spare = _buffer;
 };
 
 // explicit instantiation

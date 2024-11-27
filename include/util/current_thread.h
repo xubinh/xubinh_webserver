@@ -12,6 +12,8 @@ namespace util {
 
 namespace current_thread {
 
+void reset_tid();
+
 pid_t get_tid();
 
 const char *get_tid_string();

@@ -5,6 +5,27 @@
 
 namespace xubinh_server {
 
+LogFile::LogFile(const std::string &base_name) : _base_name(base_name) {
+    // 如果文件路径包含斜杠, 有可能会造成安全隐患, 因此需要抛出异常:
+    if (base_name.find('/') != std::string::npos) {
+        throw std::runtime_error("File name contains slash which is unsafe");
+    }
+
+    _switch_to_a_new_physical_file();
+}
+
+LogFile::~LogFile() = default;
+
+void LogFile::write(const char *data, size_t data_size) {
+    _physical_file_ptr->append(data, data_size);
+
+    _do_normal_check();
+}
+
+void LogFile::flush() {
+    _physical_file_ptr->flush();
+}
+
 std::string LogFile::_get_name_for_a_new_physical_file() {
     std::string file_name;
     auto datetime_string =
@@ -74,27 +95,6 @@ void LogFile::_do_normal_check() {
     _do_major_check();
 
     _number_of_normal_checks_since_last_major_check = 0;
-}
-
-LogFile::LogFile(const std::string &base_name) : _base_name(base_name) {
-    // 如果文件路径包含斜杠, 有可能会造成安全隐患, 因此需要抛出异常:
-    if (base_name.find('/') != std::string::npos) {
-        throw std::runtime_error("File name contains slash which is unsafe");
-    }
-
-    _switch_to_a_new_physical_file();
-}
-
-LogFile::~LogFile() = default;
-
-void LogFile::write(const char *data, size_t data_size) {
-    _physical_file_ptr->append(data, data_size);
-
-    _do_normal_check();
-}
-
-void LogFile::flush() {
-    _physical_file_ptr->flush();
 }
 
 } // namespace xubinh_server

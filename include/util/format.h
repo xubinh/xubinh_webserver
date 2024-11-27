@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <type_traits>
 
 #include "type_traits.h"
@@ -27,28 +29,6 @@ public:
     template <typename T>
     using enable_for_integer_types = enable_if_is_one_of_8_integer_types_t<T>;
 
-private:
-    static constexpr const char _HEX_ALPHABET_TABLE[] = "0123456789abcdef";
-    static constexpr size_t _NUMBER_OF_LETTERS_OF_POINTER_IN_HEX =
-        sizeof(uintptr_t) * 2;
-
-    template <typename T, typename = enable_for_integer_types<T>>
-    static constexpr int _log10_floor(T integer_value) {
-        return (integer_value < 10) ? 0 : 1 + _log10_floor(integer_value / 10);
-    }
-
-    static constexpr const char *_get_base_name_of_path(
-        const char *path, size_t reverse_traversal_position
-    ) {
-        return (reverse_traversal_position <= 0) ? path
-               : (path[reverse_traversal_position - 1] == '/')
-                   ? path + reverse_traversal_position
-                   : _get_base_name_of_path(
-                       path, reverse_traversal_position - 1
-                   );
-    }
-
-public:
     template <typename T, typename = enable_for_integer_types<T>>
     static constexpr int get_max_number_of_decimal_digits_of_integer_type() {
         return _log10_floor(std::numeric_limits<T>::max()) + 1
@@ -124,8 +104,29 @@ public:
     }
 
     template <size_t N>
-    static constexpr const char *get_base_name_of_path(const char path[N]) {
+    static constexpr const char *get_base_name_of_path(const char (&path)[N]) {
         return _get_base_name_of_path(path, N);
+    }
+
+private:
+    static const char _HEX_ALPHABET_TABLE[];
+    static constexpr size_t _NUMBER_OF_LETTERS_OF_POINTER_IN_HEX =
+        sizeof(uintptr_t) * 2;
+
+    template <typename T, typename = enable_for_integer_types<T>>
+    static constexpr int _log10_floor(T integer_value) {
+        return (integer_value < 10) ? 0 : 1 + _log10_floor(integer_value / 10);
+    }
+
+    static constexpr const char *_get_base_name_of_path(
+        const char *path, size_t reverse_traversal_position
+    ) {
+        return (reverse_traversal_position <= 0) ? path
+               : (path[reverse_traversal_position - 1] == '/')
+                   ? path + reverse_traversal_position
+                   : _get_base_name_of_path(
+                       path, reverse_traversal_position - 1
+                   );
     }
 };
 

@@ -1,5 +1,3 @@
-#include <cstring> // std::memcpy
-
 #include "log_buffer.h"
 
 namespace xubinh_server {
