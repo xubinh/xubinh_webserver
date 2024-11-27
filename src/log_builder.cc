@@ -7,6 +7,7 @@
 
 namespace {
 
+// alias
 template <typename T>
 constexpr size_t _get_number_of_chars() {
     return xubinh_server::utils::Format::

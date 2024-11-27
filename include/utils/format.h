@@ -14,9 +14,18 @@ namespace utils {
 
 class Format {
 public:
+    // type dispatcher
     template <typename T>
-    using enable_for_integer_types =
-        type_traits::enable_if_is_one_of_8_integer_types_t<T>;
+    struct is_one_of_8_integer_types {};
+
+    // SFINAE
+    template <typename T>
+    using enable_if_is_one_of_8_integer_types_t =
+        type_traits::enable_if_t<is_one_of_8_integer_types<T>::value>;
+
+    // alias
+    template <typename T>
+    using enable_for_integer_types = enable_if_is_one_of_8_integer_types_t<T>;
 
 private:
     static constexpr const char _HEX_ALPHABET_TABLE[] = "0123456789abcdef";
@@ -60,7 +69,7 @@ public:
     struct get_min_number_of_chars_required_to_represent_value_of_type<
         T *,
         void> {
-        static constexpr size_t value = sizeof(T *) * 2 + 2; // `0x` prefix;
+        static constexpr size_t value = sizeof(T *) * 2 + 2; // for `0x` prefix
     };
 
     template <typename T, typename = enable_for_integer_types<T>>
@@ -117,6 +126,40 @@ public:
     static constexpr const char *get_base_name_of_path(const char path[N]) {
         return _get_base_name_of_path(path, N);
     }
+};
+
+// type dispatcher
+template <>
+struct Format::is_one_of_8_integer_types<short> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<int> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<long> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<long long> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<unsigned short> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<unsigned int> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<unsigned long> {
+    static constexpr bool value = true;
+};
+template <>
+struct Format::is_one_of_8_integer_types<unsigned long long> {
+    static constexpr bool value = true;
 };
 
 // `%.12g`: -1.23456789012e+308

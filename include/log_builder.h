@@ -88,6 +88,7 @@ public:
     ~LogBuilder();
 
 private:
+    // alias
     template <typename T>
     using enable_for_integer_types = utils::Format::enable_for_integer_types<T>;
 

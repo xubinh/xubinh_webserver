@@ -4,15 +4,36 @@
 #include <cstddef>
 #include <type_traits>
 
+#include "utils/type_traits.h"
+
 namespace xubinh_server {
 
-static constexpr size_t LOG_ENTRY_BUFFER_SIZE = 4 * 1000; // 4 KB 的普通缓冲区
-static constexpr size_t LOG_CHUNK_BUFFER_SIZE =
-    4 * 1000 * 1000; // 4 MB 的大缓冲区
+struct LogBufferSizeConfig {
+    // value dispatcher
+    template <size_t LOG_BUFFER_SIZE>
+    struct is_valid_log_buffer_size
+        : std::integral_constant<
+              bool,
+              LOG_BUFFER_SIZE == LogBufferSizeConfig::LOG_ENTRY_BUFFER_SIZE
+                  || LOG_BUFFER_SIZE
+                         == LogBufferSizeConfig::LOG_CHUNK_BUFFER_SIZE> {};
+
+    // SFINAE
+    template <size_t LOG_BUFFER_SIZE>
+    using enable_if_is_valid_log_buffer_size_t =
+        utils::type_traits::enable_if_t<
+            is_valid_log_buffer_size<LOG_BUFFER_SIZE>::value>;
+
+    static constexpr size_t LOG_ENTRY_BUFFER_SIZE = 4 * 1000;        // 4 KB
+    static constexpr size_t LOG_CHUNK_BUFFER_SIZE = 4 * 1000 * 1000; // 4 MB
+};
 
 // declaration
-template <size_t LOG_BUFFER_SIZE>
-class LogBuffer {
+template <
+    size_t LOG_BUFFER_SIZE,
+    typename = LogBufferSizeConfig::enable_if_is_valid_log_buffer_size_t<
+        LOG_BUFFER_SIZE>>
+class FixedSizeLogBuffer {
 private:
     char _buffer[LOG_BUFFER_SIZE];
     const char *_end_address_of_buffer = _buffer + LOG_BUFFER_SIZE - 1; // `\0`
@@ -22,17 +43,17 @@ private:
 
 public:
     // 无需拷贝, 想要新的缓冲区直接创建即可
-    LogBuffer(const LogBuffer &) = delete;
-    LogBuffer &operator=(const LogBuffer &) = delete;
+    FixedSizeLogBuffer(const FixedSizeLogBuffer &) = delete;
+    FixedSizeLogBuffer &operator=(const FixedSizeLogBuffer &) = delete;
 
     // 因为总是配合 `std::unique_ptr` 进行移动, 无需移动对象本身,
     // 因此定义为删除的
-    LogBuffer(const LogBuffer &&) = delete;
-    LogBuffer &operator=(const LogBuffer &&) = delete;
+    FixedSizeLogBuffer(const FixedSizeLogBuffer &&) = delete;
+    FixedSizeLogBuffer &operator=(const FixedSizeLogBuffer &&) = delete;
 
-    LogBuffer() = default;
+    FixedSizeLogBuffer() = default;
 
-    ~LogBuffer() = default;
+    ~FixedSizeLogBuffer() = default;
 
     const char *get_start_address_of_buffer() const {
         return _buffer;
@@ -56,7 +77,16 @@ public:
         );
     }
 
-    void append(const char *data, size_t data_size);
+    void append(const char *data, size_t data_size) {
+        // 如果大小不够则直接丢弃:
+        if (data_size > length_of_spare()) {
+            return;
+        }
+
+        std::memcpy(_start_address_of_spare, data, data_size);
+
+        _start_address_of_spare += data_size;
+    }
 
     void reset() {
         _start_address_of_spare = _buffer;
@@ -67,9 +97,17 @@ public:
     }
 };
 
-// helper declarations
-using LogEntryBuffer = LogBuffer<LOG_ENTRY_BUFFER_SIZE>;
-using LogChunkBuffer = LogBuffer<LOG_CHUNK_BUFFER_SIZE>;
+// explicit instantiation
+extern template class FixedSizeLogBuffer<
+    LogBufferSizeConfig::LOG_ENTRY_BUFFER_SIZE>;
+extern template class FixedSizeLogBuffer<
+    LogBufferSizeConfig::LOG_CHUNK_BUFFER_SIZE>;
+
+// helper declaration
+using LogEntryBuffer =
+    FixedSizeLogBuffer<LogBufferSizeConfig::LOG_ENTRY_BUFFER_SIZE>;
+using LogChunkBuffer =
+    FixedSizeLogBuffer<LogBufferSizeConfig::LOG_CHUNK_BUFFER_SIZE>;
 
 } // namespace xubinh_server
 
