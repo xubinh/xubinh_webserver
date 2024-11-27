@@ -46,7 +46,7 @@ public:
         return static_cast<size_t>(_start_address_of_spare - _buffer);
     }
 
-    size_t increment_length(const size_t &delta) {
+    size_t increment_length(size_t delta) {
         return _start_address_of_spare += delta;
     }
 

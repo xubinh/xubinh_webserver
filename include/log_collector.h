@@ -16,10 +16,9 @@ private:
     using ChunkBufferPtr = std::unique_ptr<LogChunkBuffer>;
     using BufferVector = std::vector<ChunkBufferPtr>;
 
-    ChunkBufferPtr _current_chunk_buffer_ptr =
-        std::make_unique<ChunkBufferPtr::element_type>();
-    ChunkBufferPtr _spare_chunk_buffer_ptr =
-        std::make_unique<ChunkBufferPtr::element_type>();
+    ChunkBufferPtr _current_chunk_buffer_ptr{new LogChunkBuffer};
+    ChunkBufferPtr _spare_chunk_buffer_ptr{new LogChunkBuffer};
+
     BufferVector _fulled_chunk_buffers;
 
     // 为内部的缓冲区和阻塞队列提供保护
@@ -37,13 +36,13 @@ private:
 
     void _collect_chunk_buffers_and_write_into_files_in_the_background();
 
+    static std::string _base_name;
+
     static constexpr std::chrono::seconds::rep
         _COLLECT_LOOP_TIMEOUT_IN_SECONDS = 3;
 
     static constexpr decltype(BufferVector().size()
     ) _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
-
-    static std::string _base_name;
 
 public:
     LogCollector(const LogCollector &) = delete;
@@ -54,7 +53,7 @@ public:
 
     void take_this_log(const char *data, size_t data_size);
 
-    static void set_base_name(const std::string &base_name);
+    static void set_base_name(const std::string &path);
 
     static LogCollector &get_instance();
 };

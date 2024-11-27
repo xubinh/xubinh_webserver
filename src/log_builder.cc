@@ -5,31 +5,32 @@
 #include "utils/errno.h"
 #include "utils/format.h"
 
-namespace xubinh_server {
-
 namespace {
 
-constexpr char
-    *_LOG_LEVEL_STRINGS[static_cast<size_t>(LogLevel::NUMBER_OF_ALL_LEVELS)]{
-        "TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
-constexpr size_t _LENGTH_OF_LOG_LEVEL_STRINGS = 5;
+template <typename T>
+constexpr size_t _get_number_of_chars() {
+    return xubinh_server::utils::Format::
+        get_min_number_of_chars_required_to_represent_value_of_type<T>::value;
+}
 
 } // namespace
+
+namespace xubinh_server {
 
 LogLevel LogBuilder::_log_level_mask = LogLevel::INFO;
 
 LogBuilder::LogBuilder(
     LogLevel log_level,
-    const char *source_file_name, // [TODO]: compile-time base name getter
+    const char *source_file_base_name,
     int line_number,
     const char *function_name,
     int saved_errno
 )
-    : _source_file_base_name(source_file_name), _line_number(line_number),
+    : _source_file_base_name(source_file_base_name), _line_number(line_number),
       _function_name(function_name), _saved_errno(saved_errno) {
 
-    if (source_file_name) {
-        _source_file_base_name_length = strlen(source_file_name);
+    if (source_file_base_name) {
+        _source_file_base_name_length = strlen(source_file_base_name);
     }
 
     if (function_name) {
@@ -98,11 +99,12 @@ LogBuilder::~LogBuilder() {
     );
 }
 
-LogBuilder &LogBuilder::operator<<(short integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_SHORT) {
+// definition
+template <typename T, typename = LogBuilder::enable_for_integer_types<T>>
+LogBuilder &LogBuilder::operator<<(T integer) {
+    if (_entry_buffer.length_of_spare() > _get_number_of_chars<T>()) {
         _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
+            utils::Format::convert_integer_to_decimal_string(
                 _entry_buffer.get_start_address_of_spare(), integer
             )
         );
@@ -111,103 +113,21 @@ LogBuilder &LogBuilder::operator<<(short integer) {
     return *this;
 }
 
-LogBuilder &LogBuilder::operator<<(unsigned short integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_SHORT) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
-
-LogBuilder &LogBuilder::operator<<(int integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_INT) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
-
-LogBuilder &LogBuilder::operator<<(unsigned int integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_INT) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
-
-LogBuilder &LogBuilder::operator<<(long integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_LONG) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
-
-LogBuilder &LogBuilder::operator<<(unsigned long integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_LONG) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
-
-LogBuilder &LogBuilder::operator<<(long long integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_LONG_LONG) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
-
-LogBuilder &LogBuilder::operator<<(unsigned long long integer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_LONG_LONG) {
-        _entry_buffer.increment_length(
-            utils::Format::convert_integer_to_string_base_10(
-                _entry_buffer.get_start_address_of_spare(), integer
-            )
-        );
-    }
-
-    return *this;
-}
+// explicit instantiation
+template LogBuilder &LogBuilder::operator<<(short integer);
+template LogBuilder &LogBuilder::operator<<(unsigned short integer);
+template LogBuilder &LogBuilder::operator<<(int integer);
+template LogBuilder &LogBuilder::operator<<(unsigned int integer);
+template LogBuilder &LogBuilder::operator<<(long integer);
+template LogBuilder &LogBuilder::operator<<(unsigned long integer);
+template LogBuilder &LogBuilder::operator<<(long long integer);
+template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 
 LogBuilder &LogBuilder::operator<<(double floating_point) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_DOUBLE) {
+    if (_entry_buffer.length_of_spare() > _get_number_of_chars<double>()) {
         _entry_buffer.increment_length(snprintf(
             _entry_buffer.get_start_address_of_spare(),
-            NUMBER_OF_DIGITS_OF_TYPE_DOUBLE,
+            _get_number_of_chars<double>(),
             "%.12g",
             floating_point
         ));
@@ -217,41 +137,15 @@ LogBuilder &LogBuilder::operator<<(double floating_point) {
 }
 
 LogBuilder &LogBuilder::operator<<(const void *pointer) {
-    if (_entry_buffer.length_of_spare()
-        > LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_POINTER) {
+    if (_entry_buffer.length_of_spare() > _get_number_of_chars<void *>()) {
         utils::Format::convert_pointer_to_hex_string(
             _entry_buffer.get_start_address_of_spare(), pointer
         );
 
-        _entry_buffer.increment_length(
-            LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_POINTER
-        );
+        _entry_buffer.increment_length(_get_number_of_chars<void *>());
     }
 
     return *this;
 }
-
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_SHORT =
-    utils::Format::get_number_of_digits_of_type<short>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_SHORT =
-    utils::Format::get_number_of_digits_of_type<unsigned short>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_INT =
-    utils::Format::get_number_of_digits_of_type<int>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_INT =
-    utils::Format::get_number_of_digits_of_type<unsigned int>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_LONG =
-    utils::Format::get_number_of_digits_of_type<long>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_LONG =
-    utils::Format::get_number_of_digits_of_type<unsigned long>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_LONG_LONG =
-    utils::Format::get_number_of_digits_of_type<long long>();
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_LONG_LONG =
-    utils::Format::get_number_of_digits_of_type<unsigned long long>();
-
-// `%.12g`: -1.23456789012e+308
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_DOUBLE = 19;
-
-int LogBuilder::NUMBER_OF_DIGITS_OF_TYPE_POINTER =
-    sizeof(uintptr_t) * 2 + 2; // `0x` prefix
 
 } // namespace xubinh_server

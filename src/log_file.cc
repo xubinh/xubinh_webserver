@@ -23,10 +23,7 @@ std::string LogFile::_get_name_for_a_new_physical_file() {
 void LogFile::_switch_to_a_new_physical_file() {
     auto new_file_name = _get_name_for_a_new_physical_file();
 
-    _physical_file_ptr =
-        std::make_unique<decltype(_physical_file_ptr)::element_type>(
-            new_file_name
-        );
+    _physical_file_ptr.reset(new utils::AppendOnlyPhysicalFile(new_file_name));
 }
 
 void LogFile::_do_major_check() {

@@ -37,7 +37,7 @@ private:
 
     LogBuilder(
         LogLevel log_level,
-        const char *source_file_name,
+        const char *source_file_base_name,
         int line_number,
         const char *function_name,
         int saved_errno
@@ -45,54 +45,56 @@ private:
 
     static LogLevel _log_level_mask;
 
+    static constexpr char *
+        _LOG_LEVEL_STRINGS[static_cast<size_t>(LogLevel::NUMBER_OF_ALL_LEVELS)]{
+            "TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL"};
+
+    static constexpr size_t _LENGTH_OF_LOG_LEVEL_STRINGS = 5;
+
 public:
     // TRACE | DEBUG
     LogBuilder(
         LogLevel log_level,
-        const char *source_file_name,
+        const char *source_file_base_name,
         int line_number,
         const char *function_name
     )
         : LogBuilder(
-            log_level, source_file_name, line_number, function_name, 0
+            log_level, source_file_base_name, line_number, function_name, 0
         ) {
     }
 
     // INFO | WARN | ERROR | FATAL
     LogBuilder(
-        LogLevel log_level, const char *source_file_name, int line_number
+        LogLevel log_level, const char *source_file_base_name, int line_number
     )
-        : LogBuilder(log_level, source_file_name, line_number, nullptr, 0) {
+        : LogBuilder(
+            log_level, source_file_base_name, line_number, nullptr, 0
+        ) {
     }
 
     // SYS_ERROR | SYS_FATAL
     LogBuilder(
         LogLevel log_level,
-        const char *source_file_name,
+        const char *source_file_base_name,
         int line_number,
         int saved_errno
     )
         : LogBuilder(
-            log_level, source_file_name, line_number, nullptr, saved_errno
+            log_level, source_file_base_name, line_number, nullptr, saved_errno
         ) {
     }
 
     ~LogBuilder();
 
-    // has to be non-template since the type information is lost when caching
-    // the numbers of digits as static members
-    LogBuilder &operator<<(short integer);
-    LogBuilder &operator<<(unsigned short integer);
-    LogBuilder &operator<<(int integer);
-    LogBuilder &operator<<(unsigned int integer);
-    LogBuilder &operator<<(long integer);
-    LogBuilder &operator<<(unsigned long integer);
-    LogBuilder &operator<<(long long integer);
-    LogBuilder &operator<<(unsigned long long integer);
+private:
+    template <typename T>
+    using enable_for_integer_types = utils::Format::enable_for_integer_types<T>;
 
-    LogBuilder &operator<<(float floating_point) {
-        return *this << static_cast<double>(floating_point);
-    }
+public:
+    // declaration
+    template <typename T, typename = enable_for_integer_types<T>>
+    LogBuilder &operator<<(T integer);
 
     LogBuilder &operator<<(double floating_point);
 
@@ -125,19 +127,6 @@ public:
         return *this << a_string.c_str();
     }
 
-    static int NUMBER_OF_DIGITS_OF_TYPE_SHORT;
-    static int NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_SHORT;
-    static int NUMBER_OF_DIGITS_OF_TYPE_INT;
-    static int NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_INT;
-    static int NUMBER_OF_DIGITS_OF_TYPE_LONG;
-    static int NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_LONG;
-    static int NUMBER_OF_DIGITS_OF_TYPE_LONG_LONG;
-    static int NUMBER_OF_DIGITS_OF_TYPE_UNSIGNED_LONG_LONG;
-
-    static int NUMBER_OF_DIGITS_OF_TYPE_DOUBLE;
-
-    static int NUMBER_OF_DIGITS_OF_TYPE_POINTER;
-
     static LogLevel get_log_level() {
         return _log_level_mask;
     }
@@ -146,6 +135,16 @@ public:
         _log_level_mask = log_level;
     }
 };
+
+// explicit instantiation
+extern template LogBuilder &LogBuilder::operator<<(short integer);
+extern template LogBuilder &LogBuilder::operator<<(unsigned short integer);
+extern template LogBuilder &LogBuilder::operator<<(int integer);
+extern template LogBuilder &LogBuilder::operator<<(unsigned int integer);
+extern template LogBuilder &LogBuilder::operator<<(long integer);
+extern template LogBuilder &LogBuilder::operator<<(unsigned long integer);
+extern template LogBuilder &LogBuilder::operator<<(long long integer);
+extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 
 #define ENABLE_TRACE                                                           \
     (xubinh_server::LogLevel::TRACE                                            \
@@ -159,23 +158,62 @@ public:
 
 #define LOG_TRACE                                                              \
     if (ENABLE_TRACE)                                                          \
-    LogBuilder(xubinh_server::LogLevel::TRACE, __FILE__, __LINE__, __FUNCTION__)
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::TRACE,                                        \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__,                                                              \
+        __FUNCTION__                                                           \
+    )
 #define LOG_DEBUG                                                              \
     if (ENABLE_DEBUG)                                                          \
-    LogBuilder(xubinh_server::LogLevel::DEBUG, __FILE__, __LINE__, __FUNCTION__)
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::DEBUG,                                        \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__,                                                              \
+        __FUNCTION__                                                           \
+    )
 #define LOG_INFO                                                               \
     if (ENABLE_INFO)                                                           \
-    LogBuilder(xubinh_server::LogLevel::INFO, __FILE__, __LINE__)
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::INFO,                                         \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__                                                               \
+    )
 
-#define LOG_WARN LogBuilder(xubinh_server::LogLevel::WARN, __FILE__, __LINE__)
+#define LOG_WARN                                                               \
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::WARN,                                         \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__                                                               \
+    )
 
-#define LOG_ERROR LogBuilder(xubinh_server::LogLevel::ERROR, __FILE__, __LINE__)
-#define LOG_FATAL LogBuilder(xubinh_server::LogLevel::FATAL, __FILE__, __LINE__)
+#define LOG_ERROR                                                              \
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::ERROR,                                        \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__                                                               \
+    )
+#define LOG_FATAL                                                              \
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::FATAL,                                        \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__                                                               \
+    )
 
 #define LOG_SYS_ERROR                                                          \
-    LogBuilder(xubinh_server::LogLevel::ERROR, __FILE__, __LINE__, errno)
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::ERROR,                                        \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__,                                                              \
+        errno                                                                  \
+    )
 #define LOG_SYS_FATAL                                                          \
-    LogBuilder(xubinh_server::LogLevel::FATAL, __FILE__, __LINE__, errno)
+    LogBuilder(                                                                \
+        xubinh_server::LogLevel::FATAL,                                        \
+        utils::Format::get_base_name_of_path(__FILE__),                        \
+        __LINE__,                                                              \
+        errno                                                                  \
+    )
 
 } // namespace xubinh_server
 

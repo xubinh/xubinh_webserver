@@ -13,12 +13,12 @@ namespace xubinh_server {
 namespace utils {
 
 class Format {
-
-private:
+public:
     template <typename T>
     using enable_for_integer_types =
         type_traits::enable_if_is_one_of_8_integer_types_t<T>;
 
+private:
     static constexpr const char _HEX_ALPHABET_TABLE[] = "0123456789abcdef";
     static constexpr size_t _NUMBER_OF_LETTERS_OF_POINTER_IN_HEX =
         sizeof(uintptr_t) * 2;
@@ -44,6 +44,24 @@ public:
     static constexpr int get_max_number_of_decimal_digits_of_integer_type() {
         return _log10_floor(std::numeric_limits<T>::max()) + 1;
     }
+
+    template <typename T, typename Enable = void>
+    struct get_min_number_of_chars_required_to_represent_value_of_type {};
+
+    template <typename T>
+    struct get_min_number_of_chars_required_to_represent_value_of_type<
+        T,
+        enable_for_integer_types<T>> {
+        static constexpr size_t value =
+            get_max_number_of_decimal_digits_of_integer_type<T>();
+    };
+
+    template <typename T>
+    struct get_min_number_of_chars_required_to_represent_value_of_type<
+        T *,
+        void> {
+        static constexpr size_t value = sizeof(T *) * 2 + 2; // `0x` prefix;
+    };
 
     template <typename T, typename = enable_for_integer_types<T>>
     static size_t
@@ -99,6 +117,13 @@ public:
     static constexpr const char *get_base_name_of_path(const char path[N]) {
         return _get_base_name_of_path(path, N);
     }
+};
+
+// `%.12g`: -1.23456789012e+308
+template <>
+struct Format::
+    get_min_number_of_chars_required_to_represent_value_of_type<double, void> {
+    static constexpr size_t value = 19;
 };
 
 } // namespace utils

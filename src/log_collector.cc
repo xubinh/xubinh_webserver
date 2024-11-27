@@ -3,6 +3,7 @@
 #include "log_collector.h"
 #include "log_file.h"
 #include "utils/datetime.h"
+#include "utils/format.h"
 
 namespace xubinh_server {
 
@@ -29,10 +30,12 @@ LogCollector::~LogCollector() {
 
 void LogCollector::
     _collect_chunk_buffers_and_write_into_files_in_the_background() {
-    ChunkBufferPtr spare_chunk_buffer_for_current_chunk_buffer =
-        std::make_unique<ChunkBufferPtr::element_type>();
-    ChunkBufferPtr spare_chunk_buffer_for_spare_chunk_buffer =
-        std::make_unique<ChunkBufferPtr::element_type>();
+    ChunkBufferPtr spare_chunk_buffer_for_current_chunk_buffer(
+        new LogChunkBuffer
+    );
+    ChunkBufferPtr spare_chunk_buffer_for_spare_chunk_buffer(new LogChunkBuffer
+    );
+
     BufferVector chunk_buffers_to_be_written;
 
     LogFile log_file(LogCollector::_base_name);
@@ -177,11 +180,9 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
 
     // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
-    _current_chunk_buffer_ptr =
-        _spare_chunk_buffer_ptr
-            ? std::move(_spare_chunk_buffer_ptr)
-            : std::make_unique<decltype(_current_chunk_buffer_ptr
-            )::element_type>();
+    _current_chunk_buffer_ptr = _spare_chunk_buffer_ptr
+                                    ? std::move(_spare_chunk_buffer_ptr)
+                                    : ChunkBufferPtr(new LogChunkBuffer);
 
     // 写入本条日志:
     _current_chunk_buffer_ptr->append(entry_address, entry_size);
@@ -190,8 +191,9 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     _cond.notify_all();
 }
 
-void LogCollector::set_base_name(const std::string &base_name) {
-    LogCollector::_base_name = base_name;
+void LogCollector::set_base_name(const std::string &path) {
+    LogCollector::_base_name =
+        utils::Format::get_base_name_of_path(path.c_str(), path.length());
 }
 
 LogCollector &LogCollector::get_instance() {
