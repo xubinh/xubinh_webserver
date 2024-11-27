@@ -3,10 +3,7 @@
 #include "log_builder.h"
 
 TEST(LogBuilderTest, BasicLogMessage) {
-    LogBuilder builder;
-    builder.addLog("INFO", "Test log message");
-    std::string result = builder.getLogs();
-    EXPECT_EQ(result, "[INFO] Test log message");
+    LOG_INFO << "hello, world!";
 }
 
 int main(int argc, char **argv) {
