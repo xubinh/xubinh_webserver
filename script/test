@@ -20,6 +20,6 @@ echo "Building project..."
 make -j"$(nproc)"
 
 echo "Running tests..."
-ctest --output-on-failure
+ctest --output-on-failure --verbose
 
 echo "All tests passed. ✔️"

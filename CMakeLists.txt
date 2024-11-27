@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-# for enabling recursie parsing
+# for enabling recursive parsing
 add_subdirectory(src)
+
+enable_testing()
+
 add_subdirectory(test)
