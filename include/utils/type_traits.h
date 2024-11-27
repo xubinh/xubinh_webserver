@@ -10,7 +10,7 @@ namespace utils {
 namespace type_traits {
 
 // introduced later in C++14
-template <bool C, typename T>
+template <bool C, typename T = void>
 using enable_if_t = typename std::enable_if<C, T>::type;
 
 // SFINAE
