@@ -147,6 +147,8 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long integer);
 extern template LogBuilder &LogBuilder::operator<<(long long integer);
 extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 
+} // namespace xubinh_server
+
 #define ENABLE_TRACE                                                           \
     (xubinh_server::LogLevel::TRACE                                            \
      >= xubinh_server::LogBuilder::get_log_level())
@@ -159,63 +161,61 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 
 #define LOG_TRACE                                                              \
     if (ENABLE_TRACE)                                                          \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::TRACE,                                        \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__,                                                              \
         __FUNCTION__                                                           \
     )
 #define LOG_DEBUG                                                              \
     if (ENABLE_DEBUG)                                                          \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::DEBUG,                                        \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__,                                                              \
         __FUNCTION__                                                           \
     )
 #define LOG_INFO                                                               \
     if (ENABLE_INFO)                                                           \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::INFO,                                         \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__                                                               \
     )
 
 #define LOG_WARN                                                               \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::WARN,                                         \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__                                                               \
     )
 
 #define LOG_ERROR                                                              \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::ERROR,                                        \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__                                                               \
     )
 #define LOG_FATAL                                                              \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::FATAL,                                        \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__                                                               \
     )
 
 #define LOG_SYS_ERROR                                                          \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::ERROR,                                        \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__,                                                              \
         errno                                                                  \
     )
 #define LOG_SYS_FATAL                                                          \
-    LogBuilder(                                                                \
+    xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::FATAL,                                        \
-        util::Format::get_base_name_of_path(__FILE__),                         \
+        xubinh_server::util::Format::get_base_name_of_path(__FILE__),          \
         __LINE__,                                                              \
         errno                                                                  \
     )
-
-} // namespace xubinh_server
 
 #endif
