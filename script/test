@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Exit immediately if any command fails
+set -e
+
+BUILD_DIR=build
+
+if [ -d "$BUILD_DIR" ]; then
+    echo "Cleaning build directory..."
+    rm -rf "$BUILD_DIR"
+fi
+
+mkdir "$BUILD_DIR"
+cd "$BUILD_DIR"
+
+echo "Configuring project with CMake..."
+cmake ..
+
+echo "Building project..."
+make -j"$(nproc)"
+
+echo "Running tests..."
+ctest --output-on-failure
+
+echo "All tests passed. ✔️"
