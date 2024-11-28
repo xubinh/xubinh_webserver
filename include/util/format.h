@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <limits>
 #include <type_traits>
 
@@ -18,7 +19,9 @@ class Format {
 public:
     // type dispatcher
     template <typename T>
-    struct is_one_of_8_integer_types {};
+    struct is_one_of_8_integer_types {
+        static constexpr bool value = false;
+    };
 
     // SFINAE
     template <typename T>
@@ -78,10 +81,10 @@ public:
 
     static void
     convert_pointer_to_hex_string(char *output_buffer, const void *pointer) {
-        uintptr_t value = reinterpret_cast<uintptr_t>(pointer);
-
         output_buffer[0] = '0';
         output_buffer[1] = 'x';
+
+        uintptr_t value = reinterpret_cast<uintptr_t>(pointer);
 
         auto buffer_ptr = output_buffer + 2;
 
@@ -90,7 +93,7 @@ public:
 
             *buffer_ptr++ = _HEX_ALPHABET_TABLE[nibble];
 
-            value >>= (i * 4);
+            value >>= 4;
         }
 
         *buffer_ptr = '\0';
@@ -105,6 +108,8 @@ public:
 
     template <size_t N>
     static constexpr const char *get_base_name_of_path(const char (&path)[N]) {
+        // the argument must be reference to disable the implicit`const char []`
+        // -> `const char *` conversion
         return _get_base_name_of_path(path, N);
     }
 
