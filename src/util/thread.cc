@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "log_builder.h"
 #include "util/current_thread.h"
 #include "util/thread.h"
 
@@ -122,9 +123,7 @@ void Thread::_wrapper_of_worker_function() {
 void Thread::_do_start(std::unique_lock<std::mutex> lock) {
     assert(!is_started());
 
-    std::unique_lock<std::mutex> lock_for_initializing_state(
-        _mutex_for_thread_info
-    );
+    std::unique_lock<std::mutex> lock_for_thread_info(_mutex_for_thread_info);
 
     if (pthread_create(
             &_pthread_id,
@@ -133,14 +132,14 @@ void Thread::_do_start(std::unique_lock<std::mutex> lock) {
             this
         )) {
 
-        /* [TODO]: make some log first before aborting */
+        LOG_SYS_FATAL << "Failed to create new thread";
 
         abort();
     }
 
     _is_started = 1;
 
-    _cond_for_thread_info.wait(lock_for_initializing_state);
+    _cond_for_thread_info.wait(lock_for_thread_info);
 }
 
 void Thread::_do_join(std::unique_lock<std::mutex> lock) {
