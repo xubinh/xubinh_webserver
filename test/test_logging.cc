@@ -9,6 +9,22 @@ TEST(LogBuilderTest, BasicLogMessage) {
     LOG_INFO << "hello, world!";
 }
 
+TEST(LogBuilderTest, BasicLogMessage2) {
+    xubinh_server::LogCollector::set_base_name("hello_world");
+
+    int i = 65535;
+
+    double d = 3.14;
+
+    char *a = new char[32];
+
+    LOG_INFO << i;
+    LOG_INFO << d;
+    LOG_INFO << a;
+
+    delete a;
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
