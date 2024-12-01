@@ -1,1 +1,5 @@
+# cmake
 build/
+
+# local example only for development
+_example/
