@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <functional>
-#include <map>
 
 #include "util/time_point.h"
 
@@ -47,17 +46,6 @@ private:
     TimeInterval _repetition_time_interval; // 0 for one-off timer
     int _number_of_repetitions_left;        // -1 for infinite repetition
     TimerCallbackType _callback;
-};
-
-class TimerIdentifier {
-public:
-    TimerIdentifier(Timer *timer) : _timer(timer) {
-    }
-
-    friend class TimerContainer;
-
-private:
-    Timer *_timer;
 };
 
 } // namespace xubinh_server
