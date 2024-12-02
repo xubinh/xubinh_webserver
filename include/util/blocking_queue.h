@@ -23,11 +23,11 @@ public:
 
     // no copying
     BlockingQueue(const BlockingQueue &) = delete;
-    BlockingQueue &operator(const BlockingQueue &) = delete;
+    BlockingQueue &operator=(const BlockingQueue &) = delete;
 
     // no moving
     BlockingQueue(BlockingQueue &&) = delete;
-    BlockingQueue &operator(BlockingQueue &&) = delete;
+    BlockingQueue &operator=(BlockingQueue &&) = delete;
 
     void push(const T &element);
 
