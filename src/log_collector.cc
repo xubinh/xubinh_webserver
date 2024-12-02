@@ -19,31 +19,33 @@ LogCollector &LogCollector::get_instance() {
 }
 
 void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    {
+        std::lock_guard<decltype(_mutex)> lock(_mutex);
 
-    // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃
-    // (一般不会发生, 因为外部缓冲区总是应该比内部缓冲区来得小):
-    if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
-        return;
-    }
+        // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃
+        // (一般不会发生, 因为外部缓冲区总是应该比内部缓冲区来得小):
+        if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
+            return;
+        }
 
-    // 如果当前缓冲区还能够容纳得下本条日志:
-    if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
+        // 如果当前缓冲区还能够容纳得下本条日志:
+        if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
+            _current_chunk_buffer_ptr->append(entry_address, entry_size);
+
+            return;
+        }
+
+        // 否则将当前缓冲区放至阻塞队列中:
+        _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
+
+        // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
+        _current_chunk_buffer_ptr = _spare_chunk_buffer_ptr
+                                        ? std::move(_spare_chunk_buffer_ptr)
+                                        : ChunkBufferPtr(new LogChunkBuffer);
+
+        // 写入本条日志:
         _current_chunk_buffer_ptr->append(entry_address, entry_size);
-
-        return;
     }
-
-    // 否则将当前缓冲区放至阻塞队列中:
-    _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
-
-    // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
-    _current_chunk_buffer_ptr = _spare_chunk_buffer_ptr
-                                    ? std::move(_spare_chunk_buffer_ptr)
-                                    : ChunkBufferPtr(new LogChunkBuffer);
-
-    // 写入本条日志:
-    _current_chunk_buffer_ptr->append(entry_address, entry_size);
 
     // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
     _cond.notify_all();

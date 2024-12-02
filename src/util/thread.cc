@@ -113,9 +113,9 @@ void Thread::_wrapper_of_worker_function() {
         // 这里字符串的生命周期等于线程对象的生命周期,
         // 因而等于线程本身的生命周期:
         current_thread::set_thread_name(_thread_name.c_str());
-
-        _cond_for_thread_info.notify_all();
     }
+
+    _cond_for_thread_info.notify_all();
 
     _worker_function();
 }
