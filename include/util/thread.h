@@ -16,14 +16,7 @@ class Thread {
 public:
     using WorkerFunctionType = std::function<void()>;
 
-    Thread(
-        const WorkerFunctionType &worker_function,
-        const std::string &thread_name
-    )
-        : _worker_function(worker_function), _thread_name(thread_name) {
-    }
-
-    Thread(WorkerFunctionType &&worker_function, const std::string &thread_name)
+    Thread(WorkerFunctionType worker_function, const std::string &thread_name)
         : _worker_function(std::move(worker_function)),
           _thread_name(thread_name) {
     }

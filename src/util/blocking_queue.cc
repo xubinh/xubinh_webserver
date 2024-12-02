@@ -5,7 +5,7 @@ namespace xubinh_server {
 namespace util {
 
 template <typename T>
-void BlockingQueue<T>::push(const T &element) {
+void BlockingQueue<T>::push(T element) {
     {
         std::unique_lock<std::mutex> lock(_mutex);
 
@@ -16,25 +16,7 @@ void BlockingQueue<T>::push(const T &element) {
             })
         }
 
-        _queue.push_back(element);
-    }
-
-    _cond_queue_not_empty.notify_one();
-}
-
-template <typename T>
-void BlockingQueue<T>::push(T &&element) {
-    {
-        std::unique_lock<std::mutex> lock(_mutex);
-
-        if (_queue.size() >= _capacity) {
-            // [TODO]: add timeout
-            _cond_queue_not_full.wait(lock, [this]() {
-                return _queue.size() < _capacity;
-            })
-        }
-
-        _queue.push_back(std::move(element));
+        _queue.push_back(std::move(element)); // move whenever possible
     }
 
     _cond_queue_not_empty.notify_one();
@@ -52,12 +34,12 @@ T BlockingQueue<T>::pop() {
             })
         }
 
-        auto popped_element = std::move(_queue.pop_front());
+        auto popped_element = _queue.pop_front(); // RVO, no need to move
     }
 
     _cond_queue_not_full.notify_one();
 
-    return popped_element;
+    return popped_element; // RVO, no need to move
 }
 
 } // namespace util

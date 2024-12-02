@@ -29,9 +29,7 @@ public:
     BlockingQueue(BlockingQueue &&) = delete;
     BlockingQueue &operator=(BlockingQueue &&) = delete;
 
-    void push(const T &element);
-
-    void push(T &&element);
+    void push(T element);
 
     T pop();
 
