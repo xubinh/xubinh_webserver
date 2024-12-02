@@ -16,6 +16,10 @@ struct TimeInterval {
     TimeInterval(int64_t nanoseconds_input) : nanoseconds(nanoseconds_input) {
     }
 
+    operator bool() const {
+        return static_cast<bool>(nanoseconds);
+    }
+
     TimeInterval &operator+=(const TimeInterval &other) {
         nanoseconds += other.nanoseconds;
 
