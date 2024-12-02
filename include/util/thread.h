@@ -16,8 +16,17 @@ class Thread {
 public:
     using WorkerFunctionType = std::function<void()>;
 
-    // 禁用默认构造函数
-    Thread(WorkerFunctionType worker_function, const std::string &thread_name);
+    Thread(
+        const WorkerFunctionType &worker_function,
+        const std::string &thread_name
+    )
+        : _worker_function(worker_function), _thread_name(thread_name) {
+    }
+
+    Thread(WorkerFunctionType &&worker_function, const std::string &thread_name)
+        : _worker_function(std::move(worker_function)),
+          _thread_name(thread_name) {
+    }
 
     // 每个线程都应该从头开始维护自己的上下文, 因此不允许拷贝
     Thread(const Thread &) = delete;
