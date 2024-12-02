@@ -139,7 +139,9 @@ void Thread::_do_start(std::unique_lock<std::mutex> lock) {
 
     _is_started = 1;
 
-    _cond_for_thread_info.wait(lock_for_thread_info);
+    _cond_for_thread_info.wait(lock_for_thread_info, [this]() {
+        return _tid > 0;
+    });
 }
 
 void Thread::_do_join(std::unique_lock<std::mutex> lock) {
