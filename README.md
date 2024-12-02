@@ -84,7 +84,7 @@
     - 另一种实现方式是使用树, 通过维护有序的树形结构来支持随机删除, 用空间省时间, 其他方面和堆相同.
       - 定时器容器至少需要对定时器关于时间点进行排序. 由于多个不同的定时器可能在同一个时间点下超时, 并且一般情况下不需要关于定时器本身定义全序关系, 所以内部实现选择 `std::multimap` 会比较合适. 
       - muduo 选择 `std::set<std::pair<K, V>>` (实际上就是 `std::map<K, V>`) 作为内部实现, 这就涉及到对定时器指针类型 (`V`) 的排序, 虽然从硬件的角度看这是完全没问题的 (指针的值就是一个无符号整型, 因此比较是肯定可以比较的), 但是从逻辑上 (不论是 [C++11 标准](https://stackoverflow.com/questions/9086372/how-do-you-check-if-two-pointers-point-to-the-same-object)还是定时器容器的抽象本身) 来看是没必要的.
-  - 内部实现为以 `TimePoint` 时间点为 key, `Timer` 对象指针为值的
+  - 内部实现为以 `TimePoint` 时间点为 key, `Timer` 对象指针为 value 的 `std::multimap`.
   - 提供的 API:
     - 注册一个定时器.
     - 取消一个定时器.
