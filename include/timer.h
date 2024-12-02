@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <map>
 
 #include "util/time_point.h"
 
@@ -20,21 +21,7 @@ public:
         TimePoint expiration_time_point,
         TimeInterval repetition_time_interval,
         int number_of_repetitions_left,
-        const TimerCallbackType &callback
-    )
-        : _expiration_time_point(expiration_time_point),
-          _repetition_time_interval(std::max(
-              static_cast<int64_t>(0), repetition_time_interval.nanoseconds
-          )),
-          _number_of_repetitions_left(std::max(-1, number_of_repetitions_left)),
-          _callback(callback) {
-    }
-
-    Timer(
-        TimePoint expiration_time_point,
-        TimeInterval repetition_time_interval,
-        int number_of_repetitions_left,
-        TimerCallbackType &&callback
+        TimerCallbackType callback
     )
         : _expiration_time_point(expiration_time_point),
           _repetition_time_interval(std::max(
@@ -60,6 +47,17 @@ private:
     TimeInterval _repetition_time_interval; // 0 for one-off timer
     int _number_of_repetitions_left;        // -1 for infinite repetition
     TimerCallbackType _callback;
+};
+
+class TimerIdentifier {
+public:
+    TimerIdentifier(Timer *timer) : _timer(timer) {
+    }
+
+    friend class TimerContainer;
+
+private:
+    Timer *_timer;
 };
 
 } // namespace xubinh_server
