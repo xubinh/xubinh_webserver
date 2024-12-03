@@ -41,6 +41,10 @@ public:
     // not thread-safe
     bool expire_once();
 
+    TimePoint get_expiration_time_point() const {
+        return _expiration_time_point;
+    }
+
 private:
     TimePoint _expiration_time_point;
     TimeInterval _repetition_time_interval; // 0 for one-off timer
