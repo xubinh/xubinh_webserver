@@ -7,19 +7,21 @@
 namespace xubinh_server {
 
 class TimerIdentifier {
+private:
+    using TimePoint = util::TimePoint;
+
 public:
-    TimerIdentifier(Timer *timer_ptr)
-        : _timer_ptr(timer_ptr),
-          _expiration_time_point(_timer_ptr->get_expiration_time_point()) {
+    TimerIdentifier(
+        const TimePoint &expiration_time_point, const Timer *timer_ptr
+    )
+        : _expiration_time_point(expiration_time_point), _timer_ptr(timer_ptr) {
     }
 
     friend class TimerContainer;
 
 private:
-    using TimePoint = util::TimePoint;
-
-    Timer *_timer_ptr;
     TimePoint _expiration_time_point;
+    const Timer *_timer_ptr;
 };
 
 } // namespace xubinh_server
