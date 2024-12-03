@@ -32,31 +32,31 @@ struct TimeInterval {
         return *this;
     }
 
-    TimeInterval operator+(const TimeInterval &other) {
+    TimeInterval operator+(const TimeInterval &other) const {
         return TimeInterval(*this) += other;
     }
 
-    TimeInterval operator-(const TimeInterval &other) {
+    TimeInterval operator-(const TimeInterval &other) const {
         return TimeInterval(*this) -= other;
     }
 
-    bool operator<(const TimeInterval &other) {
+    bool operator<(const TimeInterval &other) const {
         return nanoseconds < other.nanoseconds;
     }
 
-    bool operator<=(const TimeInterval &other) {
+    bool operator<=(const TimeInterval &other) const {
         return nanoseconds <= other.nanoseconds;
     }
 
-    bool operator>(const TimeInterval &other) {
+    bool operator>(const TimeInterval &other) const {
         return nanoseconds > other.nanoseconds;
     }
 
-    bool operator>=(const TimeInterval &other) {
+    bool operator>=(const TimeInterval &other) const {
         return nanoseconds >= other.nanoseconds;
     }
 
-    bool operator==(const TimeInterval &other) {
+    bool operator==(const TimeInterval &other) const {
         return nanoseconds == other.nanoseconds;
     }
 
@@ -85,35 +85,35 @@ struct TimePoint {
         return *this;
     }
 
-    TimePoint operator+(const TimeInterval &time_interval) {
+    TimePoint operator+(const TimeInterval &time_interval) const {
         return TimePoint(*this) += time_interval;
     }
 
-    TimePoint operator-(const TimeInterval &time_interval) {
+    TimePoint operator-(const TimeInterval &time_interval) const {
         return TimePoint(*this) -= time_interval;
     }
 
-    TimeInterval operator-(const TimePoint &time_point) {
+    TimeInterval operator-(const TimePoint &time_point) const {
         return nanoseconds_from_epoch - time_point.nanoseconds_from_epoch;
     }
 
-    bool operator<(const TimePoint &other) {
+    bool operator<(const TimePoint &other) const {
         return nanoseconds_from_epoch < other.nanoseconds_from_epoch;
     }
 
-    bool operator<=(const TimePoint &other) {
+    bool operator<=(const TimePoint &other) const {
         return nanoseconds_from_epoch <= other.nanoseconds_from_epoch;
     }
 
-    bool operator>(const TimePoint &other) {
+    bool operator>(const TimePoint &other) const {
         return nanoseconds_from_epoch > other.nanoseconds_from_epoch;
     }
 
-    bool operator>=(const TimePoint &other) {
+    bool operator>=(const TimePoint &other) const {
         return nanoseconds_from_epoch >= other.nanoseconds_from_epoch;
     }
 
-    bool operator==(const TimePoint &other) {
+    bool operator==(const TimePoint &other) const {
         return nanoseconds_from_epoch == other.nanoseconds_from_epoch;
     }
 
