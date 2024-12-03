@@ -100,10 +100,10 @@
   
     框架内部不使用信号描述符, 而是留给用户自己注册想要的回调. 唯一的例外是 `SIGPIPE` 信号, 框架内部必须屏蔽该信号以便后续将其整合到事件循环的处理逻辑中 (即写入错误码 `EPIPE`).
   
-  - 由于事件的注册需要用到 `epoll_event` 类型的一个对象, 因此内部需要维护一个类型为 `uint32_t` 的名为 `epoll_event_config` 的成员用于存储当前注册的事件集合. 等到构建 `epoll_event` 类型的对象的时候再现场令该对象的 `data.ptr` 成员指向 `EventDispatcher` 对象自身, 这样就建立起从活跃事件 `active_events` 到 `EventDispatcher` 对象的映射, 以便 `EventPoller` 返回活跃对象 (而不是活跃事件) 的列表.
+  - 由于事件的注册需要用到 `epoll_event` 类型的一个对象, 因此内部需要维护一个类型为 `uint32_t` 的成员用于存储当前注册的事件集合. 等到构建 `epoll_event` 类型的对象的时候再现场令该 `epoll_event` 对象的 `data.ptr` 成员指向 `EventDispatcher` 对象自身, 这样就建立起从 `epoll_wait` 所返回的活跃事件对象到 `EventDispatcher` 对象的映射.
   - 成员包括:
-    - `epoll_event_config`: 当前监听事件集.
-    - `active_events`: 活跃事件集, 由 `EventPoller` 进行设置.
+    - 当前监听事件集.
+    - 活跃事件集.
     - 各个事件对应的回调.
   - 提供的 API 包括:
     1. 注册处理各种事件的 (无参数且无返回值的) 回调函数.
