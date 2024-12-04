@@ -14,6 +14,8 @@ namespace util {
 template <typename T>
 class BlockingQueue {
 public:
+    using ContainerType = std::deque<T>;
+
     // no default constructor
     BlockingQueue() = delete;
 
@@ -32,6 +34,8 @@ public:
     void push(T element);
 
     T pop();
+
+    ContainerType pop_all();
 
 private:
     std::deque<T> _queue;

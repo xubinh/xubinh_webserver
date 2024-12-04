@@ -42,6 +42,19 @@ T BlockingQueue<T>::pop() {
     return popped_element; // RVO, no need to move
 }
 
+template <typename T>
+BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
+    ContainerType queue;
+
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        queue = std::swap(_queue);
+    }
+
+    return queue;
+}
+
 } // namespace util
 
 } // namespace xubinh_server
