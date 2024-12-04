@@ -21,6 +21,9 @@ AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 
 AllowShortIfStatementsOnASingleLine: Never
+BreakBeforeBraces: Custom
+BraceWrapping:
+  BeforeElse: true
 
 AllowShortLambdasOnASingleLine: None
 
