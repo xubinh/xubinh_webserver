@@ -12,10 +12,8 @@ class EventLoop;
 
 class Eventfd : public EventFileDescriptor {
 public:
-    Eventfd(EventLoop *event_loop, unsigned int initial_value)
-        : EventFileDescriptor(
-            eventfd(initial_value, _EVENTFD_FLAGS), event_loop
-        ) {
+    Eventfd(EventLoop *event_loop)
+        : EventFileDescriptor(eventfd(0, _EVENTFD_FLAGS), event_loop) {
 
         if (_fd == -1) {
             LOG_SYS_FATAL << "eventfd failed";
@@ -31,7 +29,7 @@ public:
     uint64_t retrieve_the_sum();
 
 private:
-    // must be zero before Linux v2.6.26
+    // must be zero before (and including) Linux v2.6.26
     static constexpr int _EVENTFD_FLAGS = EFD_CLOEXEC | EFD_NONBLOCK;
 };
 
