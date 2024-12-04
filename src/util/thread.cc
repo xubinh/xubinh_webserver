@@ -127,8 +127,6 @@ void Thread::_do_start(std::unique_lock<std::mutex> lock) {
         )) {
 
         LOG_SYS_FATAL << "Failed to create new thread";
-
-        abort();
     }
 
     _is_started = 1;

@@ -30,8 +30,10 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
 
         // 如果当前缓冲区还能够容纳得下本条日志:
         if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
+            // 写入本条日志:
             _current_chunk_buffer_ptr->append(entry_address, entry_size);
 
+            // 然后直接返回:
             return;
         }
 
@@ -49,6 +51,16 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
 
     // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
     _cond.notify_all();
+}
+
+void LogCollector::abort() {
+    {
+        std::lock_guard<std::mutex> lock(_mutex_for_abortion);
+
+        _stop();
+
+        ::abort();
+    }
 }
 
 std::string LogCollector::_base_name = "log_collector";
@@ -70,13 +82,7 @@ LogCollector::LogCollector()
 }
 
 LogCollector::~LogCollector() {
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-
-        _need_stop = 1;
-    }
-
-    _background_thread.join();
+    _stop();
 }
 
 void LogCollector::
@@ -207,6 +213,16 @@ void LogCollector::
     }
 
     return;
+}
+
+void LogCollector::_stop() {
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        _need_stop = 1;
+    }
+
+    _background_thread.join();
 }
 
 } // namespace xubinh_server

@@ -25,6 +25,8 @@ public:
 
     void take_this_log(const char *data, size_t data_size);
 
+    void abort();
+
 private:
     using ChunkBufferPtr = std::unique_ptr<LogChunkBuffer>;
     using BufferVector = std::vector<ChunkBufferPtr>;
@@ -43,6 +45,8 @@ private:
 
     void _collect_chunk_buffers_and_write_into_files_in_the_background();
 
+    void _stop();
+
     ChunkBufferPtr _current_chunk_buffer_ptr{new LogChunkBuffer};
     ChunkBufferPtr _spare_chunk_buffer_ptr{new LogChunkBuffer};
 
@@ -50,6 +54,8 @@ private:
 
     // 为内部的缓冲区和阻塞队列提供保护
     std::mutex _mutex;
+
+    std::mutex _mutex_for_abortion;
 
     // 在前台后台两个线程之间关于阻塞队列建立同步关系
     std::condition_variable _cond;

@@ -54,6 +54,10 @@ LogBuilder::~LogBuilder() {
     LogCollector::get_instance().take_this_log(
         _entry_buffer.get_start_address_of_buffer(), _entry_buffer.length()
     );
+
+    if (_log_level == LogLevel::FATAL) {
+        LogCollector::get_instance().abort();
+    }
 }
 
 // definition
@@ -118,8 +122,9 @@ LogBuilder::LogBuilder(
     const char *function_name,
     int saved_errno
 )
-    : _source_file_base_name(source_file_base_name), _line_number(line_number),
-      _function_name(function_name), _saved_errno(saved_errno) {
+    : _log_level(log_level), _source_file_base_name(source_file_base_name),
+      _line_number(line_number), _function_name(function_name),
+      _saved_errno(saved_errno) {
 
     if (source_file_base_name) {
         _source_file_base_name_length = strlen(source_file_base_name);

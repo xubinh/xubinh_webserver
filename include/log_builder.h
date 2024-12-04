@@ -120,6 +120,8 @@ private:
         int saved_errno
     );
 
+    LogLevel _log_level; // only for determining abortion in destructor
+
     // not unique_ptr but stack directly
     LogEntryBuffer _entry_buffer;
 
