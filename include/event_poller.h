@@ -37,6 +37,13 @@ public:
 private:
     static constexpr int _MAX_SIZE_OF_EVENT_ARRAY = 65536;
 
+    // - ignored but still must be greater than zero since Linux 2.6.8
+    // - only used by `epoll_create`
+    static constexpr int _SIZE_ARGUMENT_FOR_EPOLL_CREATE = 1;
+
+    // - only used by `epoll_create1` (added to the kernel in version 2.6.27)
+    static constexpr int _EPOLL_CREATE1_FLAGS = EPOLL_CLOEXEC;
+
     int _epoll_fd;
     epoll_event _event_array[_MAX_SIZE_OF_EVENT_ARRAY];
     std::unordered_set<int> _fds_that_are_listening_on;

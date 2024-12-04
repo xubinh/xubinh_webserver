@@ -5,7 +5,8 @@
 
 namespace xubinh_server {
 
-EventPoller::EventPoller() : _epoll_fd(epoll_create1(0)) {
+EventPoller::EventPoller() : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
+
     if (_epoll_fd == -1) {
         LOG_SYS_FATAL << "epoll_create1 failed";
     }
