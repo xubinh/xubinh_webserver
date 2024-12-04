@@ -20,7 +20,7 @@ public:
         _event.data.ptr = this;
         _event.events |= EPOLLET;
 
-        FileDescriptor::set_fd_as_nonblocking(_hosted_fd);
+        EventFileDescriptor::set_fd_as_nonblocking(_hosted_fd);
     }
 
     ~EventDispatcher() = default;

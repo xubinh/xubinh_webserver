@@ -7,15 +7,16 @@ namespace xubinh_server {
 
 class EventLoop;
 
-class FileDescriptor {
+// edge-triggered non-blocking file descriptors
+class EventFileDescriptor {
 public:
     static void set_fd_as_nonblocking(int fd);
 
-    FileDescriptor(int fd, EventLoop *event_loop)
+    EventFileDescriptor(int fd, EventLoop *event_loop)
         : _fd(fd), _event_dispatcher(fd, event_loop) {
     }
 
-    ~FileDescriptor() = default;
+    ~EventFileDescriptor() = default;
 
     int get_fd() {
         return _fd;

@@ -5,7 +5,7 @@
 
 namespace xubinh_server {
 
-void FileDescriptor::set_fd_as_nonblocking(int fd) {
+void EventFileDescriptor::set_fd_as_nonblocking(int fd) {
     auto flags = fcntl(fd, F_GETFL, 0);
 
     if (flags == -1) {
