@@ -16,7 +16,7 @@ public:
         : EventFileDescriptor(eventfd(0, _EVENTFD_FLAGS), event_loop) {
 
         if (_fd == -1) {
-            LOG_SYS_FATAL << "eventfd failed";
+            LOG_SYS_FATAL << "failed creating eventfd";
         }
     }
 

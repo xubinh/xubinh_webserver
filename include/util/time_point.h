@@ -2,6 +2,7 @@
 #define XUBINH_SERVER_UTIL_TIME_POINT
 
 #include <cstdint>
+#include <sys/timerfd.h>
 
 namespace xubinh_server {
 
@@ -76,6 +77,8 @@ struct TimePoint {
     TimePoint(int64_t nanoseconds_from_epoch_input)
         : nanoseconds_from_epoch(nanoseconds_from_epoch_input) {
     }
+
+    void to_timespec(timespec *time_specification);
 
     TimePoint &operator+=(const TimeInterval &time_interval) {
         nanoseconds_from_epoch += time_interval.nanoseconds;
