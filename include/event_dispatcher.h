@@ -49,6 +49,10 @@ public:
 
     void disable_write_event();
 
+    void enable_all_event();
+
+    void disable_all_event();
+
     void renew_active_events(uint32_t active_events) {
         _active_events = active_events;
     }
@@ -56,6 +60,8 @@ public:
     void dispatch_active_events();
 
 private:
+    void _register_event();
+
     int _hosted_fd;
     EventLoop *_hosted_event_loop;
     epoll_event _event{};
