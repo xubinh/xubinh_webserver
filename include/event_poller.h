@@ -38,7 +38,7 @@ private:
     static constexpr int _MAX_SIZE_OF_EVENT_ARRAY = 65536;
 
     int _epoll_fd;
-    epoll_event _event_array[_MAX_SIZE_OF_EVENT_ARRAY]{};
+    epoll_event _event_array[_MAX_SIZE_OF_EVENT_ARRAY];
     std::unordered_set<int> _fds_that_are_listening_on;
 };
 
