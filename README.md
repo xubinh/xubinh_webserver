@@ -125,7 +125,7 @@
     1. 为文件描述符注册事件.
     1. 对 `epoll_wait` 进行封装, 返回活跃的 `EventDispatcher` 对象 (的裸指针) 的列表. 之后会由事件循环 `EventLoop` 内部负责遍历这一列表并逐一分发活跃事件.
 - [x] `EventFileDescriptor`: 对文件描述符的抽象, 作为各个分化的文件描述符类型的公共基类. 其成员仅包含一个文件描述符 `_fd` 和一个 `EventDispatcher` 类型的对象.
-- [ ] `Eventfd`: 对 eventfd 的抽象.
+- [x] `Eventfd`: 对 eventfd 的抽象.
 - [ ] `Timerfd`: 对 timerfd 的抽象.
 - [ ] `EventLoop`: 用于收纳事件循环相关的代码.
   - 成员包括:
