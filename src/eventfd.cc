@@ -18,18 +18,25 @@ void Eventfd::increment_by_value(uint64_t value) {
 uint64_t Eventfd::retrieve_the_sum() {
     uint64_t sum;
 
-    ssize_t bytes_read = ::read(_fd, &sum, sizeof(sum));
+    auto bytes_read = ::read(_fd, &sum, sizeof(sum));
 
     if (bytes_read == -1) {
-        LOG_SYS_ERROR << "failed reading from eventfd";
+        if (errno == EAGAIN) {
+            LOG_WARN << "eventfd is read before being notified";
+        }
 
-        sum = 0;
+        else {
+
+            LOG_SYS_ERROR << "failed reading from eventfd";
+        }
+
+        return 0;
     }
 
     else if (bytes_read < sizeof(sum)) {
         LOG_WARN << "incomplete eventfd read operation";
 
-        sum = 0;
+        return 0;
     }
 
     return sum;
