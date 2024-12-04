@@ -78,7 +78,7 @@ struct TimePoint {
         : nanoseconds_from_epoch(nanoseconds_from_epoch_input) {
     }
 
-    void to_timespec(timespec *time_specification);
+    void to_timespec(timespec *time_specification) const;
 
     TimePoint &operator+=(const TimeInterval &time_interval) {
         nanoseconds_from_epoch += time_interval.nanoseconds;

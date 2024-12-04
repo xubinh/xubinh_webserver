@@ -17,7 +17,7 @@ int64_t TimePoint::get_nanoseconds_from_epoch() {
            + static_cast<int64_t>(ts.tv_nsec);
 }
 
-void TimePoint::to_timespec(timespec *time_specification) {
+void TimePoint::to_timespec(timespec *time_specification) const {
     time_specification->tv_sec =
         static_cast<decltype(time_specification->tv_sec)>(
             nanoseconds_from_epoch / static_cast<int64_t>(1000000000)
