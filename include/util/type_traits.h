@@ -23,6 +23,10 @@ struct is_same_type<T, T> {
     static constexpr bool value = true;
 };
 
+// introduced in C++14
+template <typename T>
+using underlying_type_t = typename std::underlying_type<T>::type;
+
 } // namespace type_traits
 
 } // namespace util
