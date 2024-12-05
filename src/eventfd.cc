@@ -10,6 +10,7 @@ void Eventfd::increment_by_value(uint64_t value) {
         LOG_SYS_ERROR << "failed writing to eventfd";
     }
 
+    // [TODO]: delete this branch
     else if (bytes_written < sizeof(value)) {
         LOG_WARN << "incomplete eventfd write operation";
     }
@@ -33,6 +34,7 @@ uint64_t Eventfd::retrieve_the_sum() {
         return 0;
     }
 
+    // [TODO]: delete this branch
     else if (bytes_read < sizeof(sum)) {
         LOG_WARN << "incomplete eventfd read operation";
 
