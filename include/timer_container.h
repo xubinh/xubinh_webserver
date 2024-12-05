@@ -11,22 +11,26 @@
 
 namespace xubinh_server {
 
+// thread-safe
 class TimerContainer {
 private:
     using TimePoint = util::TimePoint;
 
 public:
+    // thread-safe
     TimerIdentifier insert_a_timer(
         const TimePoint &expiration_time_point,
         const Timer *timer_ptr,
         TimePoint &earliest_expiration_time_point_before_insertion
     );
 
+    // thread-safe
     bool remove_a_timer(
         const TimerIdentifier &timer_identifier,
         TimePoint &earliest_expiration_time_point_after_removal
     );
 
+    // thread-safe
     std::vector<Timer *> move_out_all_timers_expire_at_this_time_point(
         const TimePoint &expiration_time_point,
         TimePoint &earliest_expiration_time_point_after_moving_out
