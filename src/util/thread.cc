@@ -10,9 +10,9 @@ namespace util {
 
 namespace {
 
-// 定义在未命名的命名空间中, 对外界隐藏
+// initializar for main thread's TID and thread name
 struct _MainThreadInitializer {
-    // 在每个新 fork 出来的子进程的主线程中均会执行一次
+    // make sure child process's main thread is initialized, too
     static void execute_in_child_after_fork() {
         current_thread::reset_tid();
         current_thread::get_tid();
@@ -20,7 +20,9 @@ struct _MainThreadInitializer {
         current_thread::set_thread_name("main");
     }
 
-    // 只在主进程的主线程中执行一次
+    // put initialization code inside the constructor of a static life-time
+    // object for it to be executed before anything starts and to be executed
+    // only once
     _MainThreadInitializer() {
         current_thread::get_tid();
 
@@ -34,60 +36,52 @@ struct _MainThreadInitializer {
     }
 };
 
-// 只在主进程的主线程中初始化一次
+// define a static life-time object
 _MainThreadInitializer _thread_name_initializer;
 
 } // namespace
 
+Thread::~Thread() {
+    {
+        std::unique_lock<std::mutex> external_lock(_external_mutex);
+
+        if (!is_joined()) {
+            LOG_FATAL << "destructor called before joining of the thread";
+        }
+    }
+}
+
 void Thread::start() {
-    if (is_started()) {
-        return;
+    {
+        std::unique_lock<std::mutex> external_lock(_external_mutex);
+
+        if (!is_started()) {
+            _do_start(std::move(external_lock));
+        }
     }
-
-    std::unique_lock<std::mutex> lock_for_doing_start(_mutex_for_thread_state);
-
-    if (is_started()) {
-        return;
-    }
-
-    _do_start(std::move(lock_for_doing_start));
 
     return;
 }
 
 pid_t Thread::get_tid() {
-    if (is_started()) {
-        return _tid;
-    }
-
-    std::unique_lock<std::mutex> lock_for_doing_start(_mutex_for_thread_state);
-
-    if (is_started()) {
-        return _tid;
-    }
-
-    _do_start(std::move(lock_for_doing_start));
+    start();
 
     return _tid;
 }
 
-int Thread::join() {
-    // 确保处于已启动的状态:
+void Thread::join() {
+    // just in case, appropriate external flags are still required
     start();
 
-    if (is_joined()) {
-        return _join_result;
+    {
+        std::unique_lock<std::mutex> external_lock(_external_mutex);
+
+        if (!is_joined()) {
+            _do_join(std::move(external_lock));
+        }
     }
 
-    std::unique_lock<std::mutex> lock_for_doing_start(_mutex_for_thread_state);
-
-    if (is_joined()) {
-        return _join_result;
-    }
-
-    _do_join(std::move(lock_for_doing_start));
-
-    return _join_result;
+    return;
 }
 
 void *Thread::_adaptor_function_for_pthread_create(void *arg) {
@@ -100,46 +94,62 @@ void *Thread::_adaptor_function_for_pthread_create(void *arg) {
 
 void Thread::_wrapper_of_worker_function() {
     {
-        std::lock_guard<std::mutex> lock(_mutex_for_thread_info);
+        std::lock_guard<std::mutex> lock(_internal_mutex);
 
         _tid = current_thread::get_tid();
 
-        // 这里字符串的生命周期等于线程对象的生命周期,
-        // 因而等于线程本身的生命周期:
         current_thread::set_thread_name(_thread_name.c_str());
     }
 
-    _cond_for_thread_info.notify_all();
+    _internal_cond.notify_all();
 
     _worker_function();
 }
 
-void Thread::_do_start(std::unique_lock<std::mutex> lock) {
-    assert(!is_started());
+void Thread::_do_start(std::unique_lock<std::mutex>) {
+    {
+        std::unique_lock<std::mutex> lock_for_thread_info(_internal_mutex);
 
-    std::unique_lock<std::mutex> lock_for_thread_info(_mutex_for_thread_info);
+        if (pthread_create(
+                &_pthread_id,
+                nullptr,
+                Thread::_adaptor_function_for_pthread_create,
+                this
+            )) {
 
-    if (pthread_create(
-            &_pthread_id,
-            nullptr,
-            Thread::_adaptor_function_for_pthread_create,
-            this
-        )) {
+            LOG_SYS_FATAL << "Failed to create new thread";
+        }
 
-        LOG_SYS_FATAL << "Failed to create new thread";
+        _is_started = 1;
+
+        // handover control to the background thread
+        _internal_cond.wait(lock_for_thread_info, [this]() {
+            return _tid > 0;
+        });
     }
-
-    _is_started = 1;
-
-    _cond_for_thread_info.wait(lock_for_thread_info, [this]() {
-        return _tid > 0;
-    });
 }
 
-void Thread::_do_join(std::unique_lock<std::mutex> lock) {
-    assert(!is_joined());
+void Thread::_do_join(std::unique_lock<std::mutex>) {
+    // the thread itself never returns a result
+    auto _pthread_join_result = pthread_join(_pthread_id, nullptr);
 
-    _join_result = pthread_join(_pthread_id, nullptr);
+    if (_pthread_join_result) {
+        switch (errno) {
+        case EDEADLK: {
+            LOG_FATAL << "dead lock detected when joining a thread";
+        }
+
+        // will never encounter these, so make them fatal
+        case EINVAL:
+        case ESRCH: {
+            LOG_FATAL << "something that is not supposed to happen happened";
+        }
+
+        default: {
+            LOG_SYS_ERROR << "unknown error";
+        }
+        }
+    }
 
     _is_joined = 1;
 }

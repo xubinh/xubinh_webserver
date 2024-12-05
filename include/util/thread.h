@@ -12,6 +12,12 @@ namespace xubinh_server {
 
 namespace util {
 
+// Simple wrapper for POSIX thread
+//
+// - Only be responsible for executing a functor passed in in a separate thread.
+// For the thread to be joined successfully later, user must first set up
+// appropriate external flags (i.e., outside this `Thread` object)
+// indicating the end of execution.
 class Thread {
 public:
     using WorkerFunctionType = std::function<void()>;
@@ -21,15 +27,15 @@ public:
           _thread_name(thread_name) {
     }
 
-    // 每个线程都应该从头开始维护自己的上下文, 因此不允许拷贝
+    // no copy
     Thread(const Thread &) = delete;
     Thread &operator=(const Thread &) = delete;
 
-    // 虽然可以移动但没必要
+    // no move
     Thread(Thread &&) = delete;
     Thread &operator=(Thread &&) = delete;
 
-    ~Thread() = default;
+    ~Thread();
 
     bool is_started() const {
         return _is_started;
@@ -43,32 +49,31 @@ public:
 
     pid_t get_tid();
 
-    int join();
+    // this method must be called after setting up appropriate external flags
+    void join();
 
 private:
     static void *_adaptor_function_for_pthread_create(void *arg);
 
     void _wrapper_of_worker_function();
 
-    void _do_start(std::unique_lock<std::mutex> lock);
+    void _do_start(std::unique_lock<std::mutex>);
 
-    void _do_join(std::unique_lock<std::mutex> lock);
+    void _do_join(std::unique_lock<std::mutex>);
 
-    bool _is_started = 0;
-    bool _is_joined = 0;
-    int _join_result = 0;
+    bool _is_started = false;
+    bool _is_joined = false;
     pthread_t _pthread_id = std::numeric_limits<pthread_t>::max();
     pid_t _tid = -1;
     WorkerFunctionType _worker_function;
     const std::string _thread_name;
 
-    // 为外部线程竞争该线程对象的初始化操作提供保护
-    std::mutex _mutex_for_thread_state;
+    // external mutex for methods like `start`, `get_pid`, `join`, etc.
+    std::mutex _external_mutex;
 
-    // 在执行初始化的线程和该线程对象所封装的线程 (其负责初始化线程的状态)
-    // 之间提供同步机制
-    std::mutex _mutex_for_thread_info;
-    std::condition_variable _cond_for_thread_info;
+    // internal mutex and cond for thread info like TID, thread name, etc.
+    std::mutex _internal_mutex;
+    std::condition_variable _internal_cond;
 };
 
 } // namespace util
