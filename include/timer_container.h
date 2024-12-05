@@ -16,13 +16,20 @@ private:
     using TimePoint = util::TimePoint;
 
 public:
-    TimerIdentifier
-    add_a_timer(const TimePoint &expiration_time_point, const Timer *timer_ptr);
+    TimerIdentifier insert_a_timer(
+        const TimePoint &expiration_time_point,
+        const Timer *timer_ptr,
+        TimePoint &earliest_expiration_time_point_before_insertion
+    );
 
-    bool cancel_a_timer(const TimerIdentifier &timer_identifier);
+    bool remove_a_timer(
+        const TimerIdentifier &timer_identifier,
+        TimePoint &earliest_expiration_time_point_after_removal
+    );
 
-    std::vector<Timer *> get_all_timers_expire_after_this_time_point(
-        const TimePoint &expiration_time_point
+    std::vector<Timer *> move_out_all_timers_expire_at_this_time_point(
+        const TimePoint &expiration_time_point,
+        TimePoint &earliest_expiration_time_point_after_moving_out
     );
 
 private:
