@@ -65,7 +65,7 @@ struct TimeInterval {
 };
 
 struct TimePoint {
-    static constexpr int64_t NA = 0;
+    static constexpr int64_t FOREVER = 0xffffffffffffffff;
 
     static int64_t get_nanoseconds_from_epoch();
 
