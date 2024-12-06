@@ -1,8 +1,6 @@
-#include <cassert>
-
+#include "util/thread.h"
 #include "log_builder.h"
 #include "util/current_thread.h"
-#include "util/thread.h"
 
 namespace xubinh_server {
 
@@ -42,73 +40,18 @@ _MainThreadInitializer _thread_name_initializer;
 } // namespace
 
 Thread::~Thread() {
-    {
-        std::unique_lock<std::mutex> external_lock(_external_mutex);
-
-        if (!is_joined()) {
-            LOG_FATAL << "destructor called before joining of the thread";
-        }
+    if (!_is_joined) {
+        LOG_FATAL << "destructor called before joining of the thread";
     }
 }
 
 void Thread::start() {
-    {
-        std::unique_lock<std::mutex> external_lock(_external_mutex);
-
-        if (!is_started()) {
-            _do_start(std::move(external_lock));
-        }
+    if (_is_started) {
+        return;
     }
 
-    return;
-}
-
-pid_t Thread::get_tid() {
-    start();
-
-    return _tid;
-}
-
-void Thread::join() {
-    // just in case, appropriate external flags are still required
-    start();
-
     {
-        std::unique_lock<std::mutex> external_lock(_external_mutex);
-
-        if (!is_joined()) {
-            _do_join(std::move(external_lock));
-        }
-    }
-
-    return;
-}
-
-void *Thread::_adaptor_function_for_pthread_create(void *arg) {
-    Thread *thread = reinterpret_cast<Thread *>(arg);
-
-    thread->_wrapper_of_worker_function();
-
-    return nullptr;
-}
-
-void Thread::_wrapper_of_worker_function() {
-    {
-        std::lock_guard<std::mutex> lock(_internal_mutex);
-
-        _tid = current_thread::get_tid();
-
-        current_thread::set_thread_name(_thread_name.c_str());
-    }
-
-    _internal_cond.notify_all();
-
-    _worker_function();
-}
-
-void Thread::_do_start(std::unique_lock<std::mutex>) {
-    {
-        std::unique_lock<std::mutex> lock_for_thread_info(_internal_mutex);
+        std::unique_lock<std::mutex> lock(_mutex);
 
         if (pthread_create(
                 &_pthread_id,
@@ -117,19 +60,26 @@ void Thread::_do_start(std::unique_lock<std::mutex>) {
                 this
             )) {
 
-            LOG_SYS_FATAL << "Failed to create new thread";
+            LOG_SYS_FATAL << "failed to create new thread";
         }
 
-        _is_started = 1;
-
-        // handover control to the background thread
-        _internal_cond.wait(lock_for_thread_info, [this]() {
+        // handover control to the worker thread
+        _cond.wait(lock, [this]() {
             return _tid > 0;
         });
     }
+
+    _is_started = true;
 }
 
-void Thread::_do_join(std::unique_lock<std::mutex>) {
+void Thread::join() {
+    // just in case, appropriate external flags are still required
+    start();
+
+    if (_is_joined) {
+        return;
+    }
+
     // the thread itself never returns a result
     auto _pthread_join_result = pthread_join(_pthread_id, nullptr);
 
@@ -151,7 +101,29 @@ void Thread::_do_join(std::unique_lock<std::mutex>) {
         }
     }
 
-    _is_joined = 1;
+    _is_joined = true;
+}
+
+void *Thread::_adaptor_function_for_pthread_create(void *arg) {
+    Thread *thread = reinterpret_cast<Thread *>(arg);
+
+    thread->_wrapper_of_worker_function();
+
+    return nullptr;
+}
+
+void Thread::_wrapper_of_worker_function() {
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        _tid = current_thread::get_tid();
+
+        current_thread::set_thread_name(_thread_name.c_str());
+    }
+
+    _cond.notify_all();
+
+    _worker_function();
 }
 
 } // namespace util

@@ -20,17 +20,13 @@ public:
     void flush();
 
 private:
-    // 一个日志文件的大致的大小上限
     static constexpr size_t _PHYSICAL_FILE_SIZE_THRESHOLD = 500 * 1000 * 1000;
 
-    // 刷新底层文件的缓冲区的时间间隔
     static constexpr time_t _FLUSH_INTERVAL_IN_SECONDS = 3;
 
-    // 强制切换新文件的时间间隔
     static constexpr time_t _SWITCH_INTERVAL_IN_SECONDS = 24 * 60 * 60;
 
-    // 检查操作的执行频率
-    static constexpr int _MAJOR_CHECK_FREQUENCY = 1024;
+    static constexpr int _MAJOR_CHECK_FREQUENCY = 1000;
 
     static inline bool _is_in_a_new_switch_interval(
         time_t time_from_epoch_in_seconds_1, time_t time_from_epoch_in_seconds_2
@@ -43,8 +39,10 @@ private:
 
     void _switch_to_a_new_physical_file();
 
+    // cost time, called sparingly
     void _do_major_check();
 
+    // called frequently
     void _do_normal_check();
 
     const std::string _base_name;

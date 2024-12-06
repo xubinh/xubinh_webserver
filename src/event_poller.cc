@@ -84,7 +84,7 @@ EventPoller::poll_for_active_events_of_all_fds() {
         auto event_dispatcher_ptr =
             static_cast<EventDispatcher *>(_event_array[i].data.ptr);
 
-        event_dispatcher_ptr->renew_active_events(_event_array[i].events);
+        event_dispatcher_ptr->set_active_events(_event_array[i].events);
 
         event_dispatchers.push_back(event_dispatcher_ptr);
     }

@@ -9,7 +9,8 @@ namespace util {
 thread_local char strerror_buffer_tl[512];
 
 std::string strerror_tl(int saved_errno) {
-    // 使用的是 GNU 版本, 在提供的缓冲区空间不够的时候会退化为线程不安全的版本:
+    // GNU version, degenerates to the default, not thread-safe version if the
+    // given buffer is too small
     return strerror_r(
         saved_errno, strerror_buffer_tl, sizeof strerror_buffer_tl
     );

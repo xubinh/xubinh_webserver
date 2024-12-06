@@ -8,6 +8,7 @@
 
 namespace xubinh_server {
 
+// not thread-safe
 class Timer {
 private:
     using TimePoint = util::TimePoint;
@@ -17,8 +18,8 @@ public:
     using TimerCallbackType = std::function<void()>;
 
     Timer(
-        TimePoint expiration_time_point,
-        TimeInterval repetition_time_interval,
+        const TimePoint &expiration_time_point,
+        const TimeInterval &repetition_time_interval,
         int number_of_repetitions_left,
         TimerCallbackType callback
     )
@@ -38,8 +39,14 @@ public:
     Timer(Timer &&) = delete;
     Timer &operator=(Timer &&) = delete;
 
-    // not thread-safe
+    // - expire this timer once
+    // - return true if the timer is still valid after this expiration. or false
+    // if otherwise
     bool expire_once();
+
+    // expire this timer until the next expiration time point comes strictly
+    // after the given one, or until the timer is no longer valid
+    bool expire_until(const TimePoint &time_point);
 
     TimePoint get_expiration_time_point() const {
         return _expiration_time_point;

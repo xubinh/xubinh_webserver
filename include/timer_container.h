@@ -6,39 +6,33 @@
 #include <vector>
 
 #include "timer.h"
-#include "timer_identifier.h"
 #include "util/time_point.h"
 
 namespace xubinh_server {
 
-// thread-safe
+// not thread-safe
 class TimerContainer {
 private:
     using TimePoint = util::TimePoint;
 
 public:
-    // thread-safe
-    TimerIdentifier insert_a_timer(
-        const TimePoint &expiration_time_point,
-        const Timer *timer_ptr,
-        TimePoint &earliest_expiration_time_point_before_insertion
-    );
+    TimePoint get_earliest_expiration_time_point() {
+        return _timers.empty() ? TimePoint::FOREVER : _timers.begin()->first;
+    }
 
-    // thread-safe
-    bool remove_a_timer(
-        const TimerIdentifier &timer_identifier,
-        TimePoint &earliest_expiration_time_point_after_removal
-    );
+    void insert_one(const Timer *timer_ptr);
 
-    // thread-safe
-    std::vector<Timer *> move_out_all_timers_expire_at_this_time_point(
-        const TimePoint &expiration_time_point,
-        TimePoint &earliest_expiration_time_point_after_moving_out
-    );
+    void insert_all(const std::vector<const Timer *> &timers);
+
+    bool remove_one(const Timer *timer_ptr);
+
+    // move out all the timers that are supposed to expire before or right at
+    // the given time point
+    std::vector<const Timer *>
+    move_out_before_or_at(const TimePoint &expiration_time_point);
 
 private:
     std::set<std::pair<TimePoint, const Timer *>> _timers;
-    std::mutex _mutex;
 };
 
 } // namespace xubinh_server

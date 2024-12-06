@@ -11,9 +11,6 @@ namespace util {
 struct TimeInterval {
     TimeInterval() = default;
 
-    TimeInterval(const TimeInterval &other) : nanoseconds(other.nanoseconds) {
-    }
-
     TimeInterval(int64_t nanoseconds_input) : nanoseconds(nanoseconds_input) {
     }
 
@@ -70,10 +67,6 @@ struct TimePoint {
     static int64_t get_nanoseconds_from_epoch();
 
     TimePoint() : nanoseconds_from_epoch(get_nanoseconds_from_epoch()) {
-    }
-
-    TimePoint(const TimePoint &other)
-        : nanoseconds_from_epoch(other.nanoseconds_from_epoch) {
     }
 
     TimePoint(int64_t nanoseconds_from_epoch_input)

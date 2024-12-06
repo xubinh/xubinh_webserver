@@ -13,12 +13,12 @@ Datetime::get_datetime_string(const DatetimePurpose &datetime_purpose) {
 
     char buffer[32];
 
-    // 用于对文件进行命名 (例如 `2024_01_01_13_00_23`):
+    // for renaming physical files (e.g. `2024_01_01_13_00_23`):
     if (datetime_purpose == DatetimePurpose::RENAMING) {
         strftime(buffer, sizeof(buffer), "%Y_%m_%d_%H_%M_%S", &tm);
     }
 
-    // 用于打印 (例如 `2024-01-01 13:00:23`):
+    // for printing out into terminal or as log (e.g. `2024-01-01 13:00:23`):
     else if (datetime_purpose == DatetimePurpose::PRINTING) {
         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
     }

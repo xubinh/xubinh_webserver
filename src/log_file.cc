@@ -6,7 +6,8 @@
 namespace xubinh_server {
 
 LogFile::LogFile(const std::string &base_name) : _base_name(base_name) {
-    // 如果文件路径包含斜杠, 有可能会造成安全隐患, 因此需要抛出异常:
+    // slashes could cause folders to be created and should be avoided for
+    // security reason
     if (base_name.find('/') != std::string::npos) {
         throw std::runtime_error("File name contains slash which is unsafe");
     }
@@ -51,42 +52,39 @@ void LogFile::_do_major_check() {
     auto current_time_from_epoch_in_seconds =
         util::Datetime::get_current_time_from_epoch_in_seconds();
 
-    // 如果进入新的物理文件切换周期:
+    // forcibly switch
     if (_is_in_a_new_switch_interval(
             _time_of_last_major_check_from_epoch_in_seconds,
             current_time_from_epoch_in_seconds
         )) {
-        // 强制切换文件:
+
         _switch_to_a_new_physical_file();
     }
 
-    // 如果两次 major check 之间的间隔大于缓冲区刷新阈值:
+    // or manually flush
     else if (current_time_from_epoch_in_seconds - _time_of_last_major_check_from_epoch_in_seconds > _FLUSH_INTERVAL_IN_SECONDS) {
-        // 刷新缓冲区:
         flush();
     }
 
-    // 因为上述操作可能会比较耗时, 因此索性重新获取一次时间戳:
+    // simply refetch the time again
     _time_of_last_major_check_from_epoch_in_seconds =
         util::Datetime::get_current_time_from_epoch_in_seconds();
 }
 
 void LogFile::_do_normal_check() {
-    _number_of_normal_checks_since_last_major_check++;
+    _number_of_normal_checks_since_last_major_check += 1;
 
-    // 如果物理文件大小超出阈值:
     if (_physical_file_ptr->get_total_number_of_bytes_written()
         > _PHYSICAL_FILE_SIZE_THRESHOLD) {
-        // 切换新文件:
+
         _switch_to_a_new_physical_file();
 
-        // 由于 major check 就是为了切换新文件, 因此可以将其推迟:
+        // clear the count down since the file is already switched
         _number_of_normal_checks_since_last_major_check = 0;
 
         return;
     }
 
-    // 如果还不需要进行 major check 则直接返回:
     if (_number_of_normal_checks_since_last_major_check
         <= _MAJOR_CHECK_FREQUENCY) {
         return;

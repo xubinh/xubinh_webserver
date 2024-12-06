@@ -55,6 +55,7 @@ void EventDispatcher::dispatch_active_events() {
         }
     }
 
+    // here only means that the client peer closed its end of the channel
     if (_active_events & EventPoller::EVENT_TYPE_CLOSE) {
         if (_close_event_callback) {
             _close_event_callback();

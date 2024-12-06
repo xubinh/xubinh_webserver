@@ -40,14 +40,13 @@ public:
 
     FixedSizeLogBuffer() = default;
 
-    // 无需拷贝, 想要新的缓冲区直接创建即可
+    // no copy, just create new ones if wanted more
     FixedSizeLogBuffer(const FixedSizeLogBuffer &) = delete;
     FixedSizeLogBuffer &operator=(const FixedSizeLogBuffer &) = delete;
 
-    // 因为总是配合 `std::unique_ptr` 进行移动, 无需移动对象本身,
-    // 因此定义为删除的
-    FixedSizeLogBuffer(const FixedSizeLogBuffer &&) = delete;
-    FixedSizeLogBuffer &operator=(const FixedSizeLogBuffer &&) = delete;
+    // no move, should be used in conjunction with `std::unique_ptr`
+    FixedSizeLogBuffer(FixedSizeLogBuffer &&) = delete;
+    FixedSizeLogBuffer &operator=(FixedSizeLogBuffer &&) = delete;
 
     ~FixedSizeLogBuffer() = default;
 
@@ -74,7 +73,7 @@ public:
     }
 
     void append(const char *data, size_t data_size) {
-        // 如果大小不够则直接丢弃:
+        // throw away if no available space
         if (data_size > length_of_spare()) {
             return;
         }

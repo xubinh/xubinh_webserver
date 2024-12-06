@@ -24,8 +24,10 @@ public:
         ::close(_fd);
     }
 
+    // write
     void increment_by_value(uint64_t value);
 
+    // read
     uint64_t retrieve_the_sum();
 
 private:

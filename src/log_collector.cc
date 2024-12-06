@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include "log_collector.h"
 #include "log_file.h"
 #include "util/datetime.h"
@@ -22,45 +20,35 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     {
         std::lock_guard<decltype(_mutex)> lock(_mutex);
 
-        // 如果外部传进来的单条日志超过了内部缓冲区的额定大小则直接丢弃
-        // (一般不会发生, 因为外部缓冲区总是应该比内部缓冲区来得小):
+        // throw away if the entire buffer couldn't hold this single log
         if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
             return;
         }
 
-        // 如果当前缓冲区还能够容纳得下本条日志:
+        // no buffer replacement if the current buffer has enough space
         if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
-            // 写入本条日志:
             _current_chunk_buffer_ptr->append(entry_address, entry_size);
 
-            // 然后直接返回:
             return;
         }
 
-        // 否则将当前缓冲区放至阻塞队列中:
         _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr));
 
-        // 然后切换备用的内部缓冲区 (如果备用的也用光了那就新建一个):
         _current_chunk_buffer_ptr = _spare_chunk_buffer_ptr
                                         ? std::move(_spare_chunk_buffer_ptr)
                                         : ChunkBufferPtr(new LogChunkBuffer);
 
-        // 写入本条日志:
         _current_chunk_buffer_ptr->append(entry_address, entry_size);
     }
 
-    // 此时必然至少有两个非空的 chunk buffer, 因此需要通知后台的 I/O 线程:
+    // must have two non-empty buffers (i.e. the replaced fulled buffer and the
+    // current buffer that the log was written in) now, so signal the background
+    // I/O thread
     _cond.notify_all();
 }
 
 void LogCollector::abort() {
-    {
-        std::lock_guard<std::mutex> lock(_mutex_for_abortion);
-
-        _stop();
-
-        ::abort();
-    }
+    _stop(true);
 }
 
 std::string LogCollector::_base_name = "log_collector";
@@ -70,11 +58,7 @@ constexpr std::chrono::seconds::rep
 
 LogCollector::LogCollector()
     : _background_thread(
-        std::bind(
-            &LogCollector::
-                _collect_chunk_buffers_and_write_into_files_in_the_background,
-            this
-        ),
+        std::bind(&LogCollector::_background_io_thread_worker_functor, this),
         "logging"
     ) {
 
@@ -82,11 +66,10 @@ LogCollector::LogCollector()
 }
 
 LogCollector::~LogCollector() {
-    _stop();
+    _stop(false);
 }
 
-void LogCollector::
-    _collect_chunk_buffers_and_write_into_files_in_the_background() {
+void LogCollector::_background_io_thread_worker_functor() {
     ChunkBufferPtr spare_chunk_buffer_for_current_chunk_buffer(
         new LogChunkBuffer
     );
@@ -99,43 +82,35 @@ void LogCollector::
 
     std::unique_lock<decltype(_mutex)> lock_hook;
 
-    while (1) {
+    while (true) {
         {
             std::unique_lock<decltype(_mutex)> lock(_mutex);
 
-            // 如果还未积累足够多的日志:
+            // wait for a few seconds if no fulled buffers come in
             if (_fulled_chunk_buffers.empty()) {
-                // 暂时等待一段时间:
+                // spurious wakeup doesn't matter here
                 _cond.wait_for(
                     lock, std::chrono::seconds(_COLLECT_LOOP_TIMEOUT_IN_SECONDS)
                 );
             }
 
-            // 如果仍然没有积累足够多的日志:
+            // if still no fulled buffers
             if (_fulled_chunk_buffers.empty()) {
-                // 如果是因为日志系统即将退出:
-                if (_need_stop) {
-                    // 退出循环并进行善后处理:
+                // exist if asked for stop
+                if (_need_stop.load(std::memory_order_acquire)) {
                     lock_hook = std::move(lock);
 
                     break;
                 }
 
-                // 否则继续等待:
+                // continue waiting if otherwise
                 else {
                     continue;
                 }
             }
 
-            assert(
-                !_fulled_chunk_buffers.empty()
-                && _current_chunk_buffer_ptr->length() > 0
-            );
-
             _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr)
             );
-
-            assert(chunk_buffers_to_be_written.empty());
 
             _fulled_chunk_buffers.swap(chunk_buffers_to_be_written);
 
@@ -147,8 +122,6 @@ void LogCollector::
                     std::move(spare_chunk_buffer_for_spare_chunk_buffer);
             }
         }
-
-        assert(chunk_buffers_to_be_written.size() >= 2);
 
         if (chunk_buffers_to_be_written.size()
             > _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN) {
@@ -171,11 +144,6 @@ void LogCollector::
                 _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
             );
         }
-
-        assert(
-            chunk_buffers_to_be_written.size()
-            <= _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
-        );
 
         for (const auto &chunk_buffer_ptr : chunk_buffers_to_be_written) {
             log_file.write(
@@ -203,8 +171,6 @@ void LogCollector::
         log_file.flush();
     }
 
-    assert(_need_stop && _fulled_chunk_buffers.empty());
-
     if (_current_chunk_buffer_ptr->length()) {
         log_file.write(
             _current_chunk_buffer_ptr->get_start_address_of_buffer(),
@@ -215,14 +181,20 @@ void LogCollector::
     return;
 }
 
-void LogCollector::_stop() {
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
+void LogCollector::_stop(bool also_need_abort) {
+    bool expected = false;
 
-        _need_stop = 1;
+    if (!_need_stop.compare_exchange_strong(
+            expected, true, std::memory_order_acq_rel, std::memory_order_acquire
+        )) {
+        return;
     }
 
     _background_thread.join();
+
+    if (also_need_abort) {
+        ::abort();
+    }
 }
 
 } // namespace xubinh_server

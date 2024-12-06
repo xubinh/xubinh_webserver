@@ -16,9 +16,6 @@ class BlockingQueue {
 public:
     using ContainerType = std::deque<T>;
 
-    // no default constructor
-    BlockingQueue() = delete;
-
     // must specify a capacity explicitly
     explicit BlockingQueue(const int capacity) : _capacity(capacity) {
     }

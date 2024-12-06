@@ -8,13 +8,13 @@ namespace util {
 
 namespace current_thread {
 
-// 用于优化编译器分支预判:
+// for compiler's branch prediction
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
 
 thread_local pid_t _tid = 0;
 
-// 用于加快日志消息的构建:
+// for speeding up construction of single log strings
 thread_local char _tid_string[32]{};
 thread_local size_t _tid_string_length = 0;
 

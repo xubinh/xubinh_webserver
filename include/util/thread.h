@@ -14,6 +14,7 @@ namespace util {
 
 // Simple wrapper for POSIX thread
 //
+// - Not thread-safe
 // - Only be responsible for executing a functor passed in in a separate thread.
 // For the thread to be joined successfully later, user must first set up
 // appropriate external flags (i.e., outside this `Thread` object)
@@ -47,7 +48,11 @@ public:
 
     void start();
 
-    pid_t get_tid();
+    pid_t get_tid() {
+        start();
+
+        return _tid;
+    }
 
     // this method must be called after setting up appropriate external flags
     void join();
@@ -57,10 +62,6 @@ private:
 
     void _wrapper_of_worker_function();
 
-    void _do_start(std::unique_lock<std::mutex>);
-
-    void _do_join(std::unique_lock<std::mutex>);
-
     bool _is_started = false;
     bool _is_joined = false;
     pthread_t _pthread_id = std::numeric_limits<pthread_t>::max();
@@ -68,12 +69,9 @@ private:
     WorkerFunctionType _worker_function;
     const std::string _thread_name;
 
-    // external mutex for methods like `start`, `get_pid`, `join`, etc.
-    std::mutex _external_mutex;
-
-    // internal mutex and cond for thread info like TID, thread name, etc.
-    std::mutex _internal_mutex;
-    std::condition_variable _internal_cond;
+    // for initialization of worker thread info
+    std::mutex _mutex;
+    std::condition_variable _cond;
 };
 
 } // namespace util

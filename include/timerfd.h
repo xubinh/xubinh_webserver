@@ -29,10 +29,13 @@ public:
         ::close(_fd);
     }
 
+    // async write
     void set_alarm_at_time_point(const TimePoint &time_point);
 
+    // read
     uint64_t retrieve_the_number_of_expirations();
 
+    // write
     void cancel();
 
 private:
