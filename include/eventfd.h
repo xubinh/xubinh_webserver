@@ -10,10 +10,10 @@ namespace xubinh_server {
 
 class EventLoop;
 
-class Eventfd : public EventFileDescriptor {
+class Eventfd : public PollableFileDescriptor {
 public:
     Eventfd(EventLoop *event_loop)
-        : EventFileDescriptor(eventfd(0, _EVENTFD_FLAGS), event_loop) {
+        : PollableFileDescriptor(eventfd(0, _EVENTFD_FLAGS), event_loop) {
 
         if (_fd == -1) {
             LOG_SYS_FATAL << "failed creating eventfd";

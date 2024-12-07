@@ -10,13 +10,13 @@ namespace xubinh_server {
 
 class EventLoop;
 
-class Timerfd : public EventFileDescriptor {
+class Timerfd : public PollableFileDescriptor {
 private:
     using TimePoint = util::TimePoint;
 
 public:
     Timerfd(EventLoop *event_loop)
-        : EventFileDescriptor(
+        : PollableFileDescriptor(
             timerfd_create(CLOCK_REALTIME, _TIMERFD_FLAGS), event_loop
         ) {
 

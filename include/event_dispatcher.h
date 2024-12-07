@@ -20,7 +20,7 @@ public:
         _event.data.ptr = this;
         _event.events |= EPOLLET;
 
-        EventFileDescriptor::set_fd_as_nonblocking(_hosted_fd);
+        PollableFileDescriptor::set_fd_as_nonblocking(_hosted_fd);
     }
 
     void register_read_event_callback(CallbackType read_event_callback) {

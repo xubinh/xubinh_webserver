@@ -132,7 +132,7 @@
     1. 在构造函数中创建 epoll 内核事件表.
     1. 为文件描述符注册事件.
     1. 对 `epoll_wait` 进行封装, 返回活跃的 `EventDispatcher` 对象 (的裸指针) 的列表. 之后会由事件循环 `EventLoop` 内部负责遍历这一列表并逐一分发活跃事件.
-- [x] `EventFileDescriptor`: 对文件描述符的抽象, 作为各个分化的文件描述符类型的公共基类. 具体实现为 `EventDispatcher` 的直接派生类.
+- [x] `PollableFileDescriptor`: 对文件描述符的抽象, 作为各个分化的文件描述符类型的公共基类. 具体实现为 `EventDispatcher` 的直接派生类.
   - 考虑过将 `EventDispatcher` 类对象作为一个成员, 但这涉及到将 `EventDispatcher` 类的 API 向外进行额外的一次转发, 同时用户设置的回调也同样要经过额外的一层注册, 因此该方案被舍弃.
 - [x] `Eventfd`: 对 eventfd 的抽象. 内部包装了一些 eventfd 相关的基础 API.
 - [x] `Timerfd`: 对 timerfd 的抽象. 内部包装了一些 timerfd 相关的基础 API.
