@@ -162,10 +162,10 @@
 - [ ] `TcpConnectSocketfd`: 对 TCP 连接套接字的抽象. 内含两个 `MutableSizeTcpBuffer` 缓冲区, 一个用于接收, 一个用于发送.
 - [ ] `InetAddress`: 对套接字地址的抽象. 为 IPv4 和 IPv6 地址提供统一的接口.
 - [ ] `ListenSocketfd`: 对监听套接字的抽象.
-- [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocket` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocket` 连接.
+- [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.
 - [ ] `TcpClient`: 对 TCP 客户端的抽象. 与服务器不同, 客户端只需在主线程维护一个 TCP 连接即可.
 - [ ] `Signalfd`: 对 signalfd 的抽象.
-- [ ] `HttpContext`: 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程. 本对象是存储在 `TcpConnectSocket` 对象中的 (muduo 实现的 `TcpConnectSocket` 对象中设置了一个通用的上下文对象成员 `boost::any context_` 用于存储任意上下文, 其中自然也包括 HTTP 上下文 `HttpContext`).
+- [ ] `HttpContext`: 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程. 本对象是存储在 `TcpConnectSocketfd` 对象中的 (muduo 实现的 `TcpConnection` 对象中设置了一个通用的上下文对象成员 `boost::any context_` 用于存储任意上下文, 其中自然也包括 HTTP 上下文 `HttpContext`).
 - [ ] `HttpRequest`: 对 HTTP 请求报文的抽象, 提供一些基础的 API, 包括获取请求头信息等等.
 - [ ] `HttpResponse`: 对 HTTP 响应报文的抽象, 提供一些基础的 API, 包括设置响应体数据等等.
 - [ ] (基础) 实现一个 echo 服务器.
