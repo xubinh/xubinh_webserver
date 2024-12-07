@@ -24,10 +24,14 @@ public:
         ::close(_fd);
     }
 
-    // write
+    // write operation
+    //
+    // - thread-safe
     void increment_by_value(uint64_t value);
 
-    // read
+    // read operation
+    //
+    // - thread-safe
     uint64_t retrieve_the_sum();
 
 private:

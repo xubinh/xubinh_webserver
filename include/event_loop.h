@@ -106,8 +106,10 @@ private:
         const TimePoint &time_point
     );
 
+    // for async-handling of eventfd notifications
     void _read_event_callback_for_eventfd();
 
+    // for async-handling of timerfd notifications
     void _read_event_callback_for_timerfd();
 
     EventPoller _event_poller;

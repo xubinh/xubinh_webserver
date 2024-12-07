@@ -29,14 +29,30 @@ public:
         ::close(_fd);
     }
 
-    // async write
+    // async write operation
+    //
+    // - thread-safe
+    // - always one-off, repetition is controlled from outside
     void set_alarm_at_time_point(const TimePoint &time_point);
 
-    // read
+    // read operation
+    //
+    // - thread-safe
     uint64_t retrieve_the_number_of_expirations();
 
-    // write
+    // write operation
+    //
+    // - thread-safe
     void cancel();
+    // Issue a cancellation at the point where a timer is already expired but
+    // before the other thread polls the event and new timers are rearmed would
+    // still cancel that already-expired timer, but in this case only the
+    // counter will be zeroed out (?) and the poll event is still triggered
+    // nonetheless which would cause the poller to be blocked indefinitely if
+    // the underlying fd was not set to non-block mode in the first place. The
+    // solution is to set non-blocking of the fd and the read would fail and
+    // return a errno indicating that situation.
+    // [source](https://stackoverflow.com/questions/78381098/is-timerfd-thread-safe)
 
 private:
     // must be zero before (and including) Linux v2.6.26

@@ -3,7 +3,6 @@
 
 namespace xubinh_server {
 
-// thread-safe
 void Eventfd::increment_by_value(uint64_t value) {
     ssize_t bytes_written = ::write(_fd, &value, sizeof(value));
 
@@ -17,7 +16,6 @@ void Eventfd::increment_by_value(uint64_t value) {
     }
 }
 
-// thread-safe
 uint64_t Eventfd::retrieve_the_sum() {
     uint64_t sum;
 

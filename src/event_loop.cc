@@ -210,7 +210,6 @@ void EventLoop::
     }
 }
 
-// for async-handling of eventfd notifications
 void EventLoop::_read_event_callback_for_eventfd() {
     auto value = _eventfd.retrieve_the_sum();
 
@@ -219,7 +218,6 @@ void EventLoop::_read_event_callback_for_eventfd() {
     }
 }
 
-// for async-handling of timerfd notifications
 void EventLoop::_read_event_callback_for_timerfd() {
     auto value = _timerfd.retrieve_the_number_of_expirations();
 
