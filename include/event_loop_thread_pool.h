@@ -5,6 +5,7 @@
 
 #include "event_loop.h"
 #include "event_loop_thread.h"
+#include "log_builder.h"
 
 namespace xubinh_server {
 
@@ -12,6 +13,10 @@ class EventLoopThreadPool {
 public:
     explicit EventLoopThreadPool(int capacity)
         : _THREAD_POOL_CAPASITY(capacity), _thread_pool(capacity) {
+        if (capacity <= 0) {
+            LOG_FATAL << "non-positive thread pool capacity given";
+        }
+
         for (auto &thread : _thread_pool) {
             thread.start();
         }
