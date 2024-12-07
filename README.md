@@ -156,7 +156,7 @@
        - 提供接口用于间接向 `FunctorQueue` 对象成员中添加函子 (即 muduo 中实现的 `runInLoop` 和 `queueInLoop`).
     1. 在初始化的时候注册一个 timerfd, 通过监听 timerfd 实现定时机制, 以便处理外部调用者所注册的回调.
        - 提供接口用于间接向 `TimerContainer` 对象成员中添加定时器 (即 muduo 中实现的 `runAt` 和 `runAfter`).
-- [ ] `EventLoopThread`: 对事件循环工作线程的抽象. 内部封装一个 `Thread` 对象, 同时实现一个包装函数用于在新线程中初始化并启动一个 `EventLoop` 对象.
+- [x] `EventLoopThread`: 对事件循环工作线程的抽象. 内部封装一个 `Thread` 对象, 同时实现一个包装函数用于在新线程中初始化并启动一个 `EventLoop` 对象.
 - [ ] `EventLoopThreadPool`: 对事件循环工作线程池的抽象. 提供接口用于随机抽取一个工作线程.
 - [ ] `MutableSizeTcpBuffer`: TCP 连接专用的变长缓冲区, 用于保存从一个套接字描述符中读取的或是将要向一个套接字描述符中写入的数据.
 - [ ] `TcpConnectSocket`: 对 TCP 连接套接字的抽象. 内含两个 `MutableSizeTcpBuffer` 缓冲区, 一个用于接收, 一个用于发送.
