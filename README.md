@@ -159,9 +159,9 @@
 - [x] `EventLoopThread`: 对事件循环工作线程的抽象. 内部封装一个 `Thread` 对象, 同时实现一个包装函数用于在新线程中初始化并启动一个 `EventLoop` 对象.
 - [x] `EventLoopThreadPool`: 对事件循环工作线程池的抽象. 提供接口用于随机抽取一个工作线程.
 - [ ] `MutableSizeTcpBuffer`: TCP 连接专用的变长缓冲区, 用于保存从一个套接字描述符中读取的或是将要向一个套接字描述符中写入的数据.
-- [ ] `TcpConnectSocket`: 对 TCP 连接套接字的抽象. 内含两个 `MutableSizeTcpBuffer` 缓冲区, 一个用于接收, 一个用于发送.
+- [ ] `TcpConnectSocketfd`: 对 TCP 连接套接字的抽象. 内含两个 `MutableSizeTcpBuffer` 缓冲区, 一个用于接收, 一个用于发送.
 - [ ] `InetAddress`: 对套接字地址的抽象. 为 IPv4 和 IPv6 地址提供统一的接口.
-- [ ] `ListenSocket`: 对监听套接字的抽象.
+- [ ] `ListenSocketfd`: 对监听套接字的抽象.
 - [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocket` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocket` 连接.
 - [ ] `TcpClient`: 对 TCP 客户端的抽象. 与服务器不同, 客户端只需在主线程维护一个 TCP 连接即可.
 - [ ] `Signalfd`: 对 signalfd 的抽象.
