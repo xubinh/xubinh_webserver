@@ -119,14 +119,13 @@ void EventLoop::cancel_a_timer(const TimerIdentifier &timer_identifier) {
 }
 
 void EventLoop::ask_to_stop() {
-    bool expected = false;
-
-    if (!_need_stop.compare_exchange_strong(
-            expected, true, std::memory_order_acq_rel, std::memory_order_acquire
-        )) {
-
-        return;
-    }
+    // a release fence that comes after a store essentially makes the store
+    // become a part of the memory ordering, i.e. store first and then do the
+    // dummy wake-ups
+    //
+    // [TODO]: make sure this is correct
+    _need_stop.store(true, std::memory_order_relaxed);
+    std::atomic_thread_fence(std::memory_order_release);
 
     const int NUMBER_OF_DUMMY_WAKE_UPS = 3;
 

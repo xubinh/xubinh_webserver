@@ -67,6 +67,7 @@ public:
 
     void cancel_a_timer(const TimerIdentifier &timer_identifier);
 
+    // not thread-safe
     void ask_to_stop();
 
 private:
