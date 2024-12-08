@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "event_dispatcher.h"
+#include "pollable_file_descriptor.h"
 #include "util/type_traits.h"
 
 namespace xubinh_server {
@@ -32,7 +32,7 @@ public:
 
     void register_event_for_fd(int fd, const epoll_event *event);
 
-    std::vector<EventDispatcher *> poll_for_active_events_of_all_fds();
+    std::vector<PollableFileDescriptor *> poll_for_active_events_of_all_fds();
 
 private:
     static constexpr int _MAX_SIZE_OF_EVENT_ARRAY = 65536;

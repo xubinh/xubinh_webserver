@@ -3,29 +3,26 @@
 
 namespace xubinh_server {
 
+// explicit instantiation
 template class util::BlockingQueue<EventLoop::FunctorType>;
 
 EventLoop::EventLoop()
-    : _eventfd(this), _functor_blocking_queue(_FUNCTOR_QUEUE_CAPACITY),
-      _timerfd(this), _owner_thread_tid(util::current_thread::get_tid()) {
+    : _eventfd(Eventfd::create_eventfd(0), this),
+      _functor_blocking_queue(_FUNCTOR_QUEUE_CAPACITY),
+      _timerfd(Timerfd::create_timerfd(0), this),
+      _owner_thread_tid(util::current_thread::get_tid()) {
 
-    _eventfd.register_read_event_callback(
-        std::bind(_read_event_callback_for_eventfd, this)
+    _eventfd.register_eventfd_message_callback(
+        std::bind(_eventfd_message_callback, this, std::placeholders::_1)
     );
 
     _eventfd.enable_read_event();
 
-    _timerfd.register_read_event_callback(
-        std::bind(_read_event_callback_for_timerfd, this)
+    _timerfd.register_timerfd_message_callback(
+        std::bind(_timerfd_message_callback, this, std::placeholders::_1)
     );
 
     _timerfd.enable_read_event();
-}
-
-EventLoop::~EventLoop() {
-    _eventfd.enable_all_event();
-
-    _timerfd.enable_all_event();
 }
 
 void EventLoop::loop() {
@@ -210,17 +207,13 @@ void EventLoop::
     }
 }
 
-void EventLoop::_read_event_callback_for_eventfd() {
-    auto value = _eventfd.retrieve_the_sum();
-
+void EventLoop::_eventfd_message_callback(uint64_t value) {
     if (value) {
         _eventfd_triggered = true;
     }
 }
 
-void EventLoop::_read_event_callback_for_timerfd() {
-    auto value = _timerfd.retrieve_the_number_of_expirations();
-
+void EventLoop::_timerfd_message_callback(uint64_t value) {
     if (value) {
         _timerfd_triggered = true;
     }

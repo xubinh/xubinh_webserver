@@ -37,7 +37,7 @@ public:
     // properly
     EventLoop();
 
-    ~EventLoop();
+    ~EventLoop() = default;
 
     void loop();
 
@@ -107,10 +107,10 @@ private:
     );
 
     // for async-handling of eventfd notifications
-    void _read_event_callback_for_eventfd();
+    void _eventfd_message_callback(uint64_t value);
 
     // for async-handling of timerfd notifications
-    void _read_event_callback_for_timerfd();
+    void _timerfd_message_callback(uint64_t value);
 
     EventPoller _event_poller;
 

@@ -69,7 +69,7 @@ void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
     }
 }
 
-std::vector<EventDispatcher *>
+std::vector<PollableFileDescriptor *>
 EventPoller::poll_for_active_events_of_all_fds() {
     int current_event_array_size =
         epoll_wait(_epoll_fd, _event_array, _MAX_SIZE_OF_EVENT_ARRAY, -1);
@@ -78,11 +78,11 @@ EventPoller::poll_for_active_events_of_all_fds() {
         LOG_SYS_FATAL << "epoll_wait failed";
     }
 
-    std::vector<EventDispatcher *> event_dispatchers;
+    std::vector<PollableFileDescriptor *> event_dispatchers;
 
     for (int i = 0; i < current_event_array_size; i++) {
         auto event_dispatcher_ptr =
-            static_cast<EventDispatcher *>(_event_array[i].data.ptr);
+            static_cast<PollableFileDescriptor *>(_event_array[i].data.ptr);
 
         event_dispatcher_ptr->set_active_events(_event_array[i].events);
 

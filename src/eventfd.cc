@@ -4,7 +4,8 @@
 namespace xubinh_server {
 
 void Eventfd::increment_by_value(uint64_t value) {
-    ssize_t bytes_written = ::write(_fd, &value, sizeof(value));
+    ssize_t bytes_written =
+        ::write(_pollable_file_descriptor.get_fd(), &value, sizeof(value));
 
     if (bytes_written == -1) {
         LOG_SYS_ERROR << "failed writing to eventfd";
@@ -16,10 +17,11 @@ void Eventfd::increment_by_value(uint64_t value) {
     }
 }
 
-uint64_t Eventfd::retrieve_the_sum() {
+uint64_t Eventfd::_retrieve_the_sum() {
     uint64_t sum;
 
-    auto bytes_read = ::read(_fd, &sum, sizeof(sum));
+    auto bytes_read =
+        ::read(_pollable_file_descriptor.get_fd(), &sum, sizeof(sum));
 
     if (bytes_read == -1) {
         if (errno == EAGAIN) {

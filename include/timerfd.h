@@ -10,23 +10,51 @@ namespace xubinh_server {
 
 class EventLoop;
 
-class Timerfd : public PollableFileDescriptor {
+class Timerfd {
 private:
     using TimePoint = util::TimePoint;
 
 public:
-    Timerfd(EventLoop *event_loop)
-        : PollableFileDescriptor(
-            timerfd_create(CLOCK_REALTIME, _TIMERFD_FLAGS), event_loop
-        ) {
+    using TimerMessageCallbackType = std::function<void(uint64_t)>;
 
-        if (_fd == -1) {
+    static int create_timerfd(int flags) {
+        if (flags == 0) {
+            flags = _DEFAULT_TIMERFD_FLAGS;
+        }
+
+        return ::timerfd_create(CLOCK_REALTIME, _DEFAULT_TIMERFD_FLAGS);
+    }
+
+    Timerfd(int fd, EventLoop *event_loop)
+        : _pollable_file_descriptor(fd, event_loop) {
+
+        if (fd < 0) {
             LOG_SYS_FATAL << "failed creating timerfd";
         }
+
+        _pollable_file_descriptor.register_read_event_callback(
+            std::bind(_read_event_callback, this)
+        );
     }
 
     ~Timerfd() {
-        ::close(_fd);
+        disable_read_event();
+
+        ::close(_pollable_file_descriptor.get_fd());
+    }
+
+    void register_timerfd_message_callback(
+        TimerMessageCallbackType timerfd_message_callback
+    ) {
+        _timerfd_message_callback = std::move(timerfd_message_callback);
+    }
+
+    void enable_read_event() {
+        _pollable_file_descriptor.enable_read_event();
+    }
+
+    void disable_read_event() {
+        _pollable_file_descriptor.disable_read_event();
     }
 
     // async write operation
@@ -34,11 +62,6 @@ public:
     // - thread-safe
     // - always one-off, repetition is controlled from outside
     void set_alarm_at_time_point(const TimePoint &time_point);
-
-    // read operation
-    //
-    // - thread-safe
-    uint64_t retrieve_the_number_of_expirations();
 
     // write operation
     //
@@ -56,7 +79,22 @@ public:
 
 private:
     // must be zero before (and including) Linux v2.6.26
-    static constexpr int _TIMERFD_FLAGS = TFD_CLOEXEC | TFD_NONBLOCK;
+    static constexpr int _DEFAULT_TIMERFD_FLAGS = TFD_CLOEXEC | TFD_NONBLOCK;
+
+    void _read_event_callback() {
+        if (_timerfd_message_callback) {
+            _timerfd_message_callback(_retrieve_the_number_of_expirations());
+        }
+    }
+
+    // read operation
+    //
+    // - thread-safe
+    uint64_t _retrieve_the_number_of_expirations();
+
+    TimerMessageCallbackType _timerfd_message_callback;
+
+    PollableFileDescriptor _pollable_file_descriptor;
 };
 
 } // namespace xubinh_server
