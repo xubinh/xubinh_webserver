@@ -98,8 +98,9 @@
 - [x] `TimerIdentifier`: 对定时器的裸指针的包装类.
   - 本类为 `EventLoop` 专用.
     - 之所以不是 `TimerContainer` 专用是因为定时器容器需要关于超时时间顺序对定时器元素进行排序, 并通过结合超时时间和定时器元素的指针来唯一索引一个定时器元素, 这决定了定时器容器只能在定时器元素的裸指针上进行操作. 而既然定时器容器位于裸指针的层次, 那么就必然不能够直接和用户进行接触, 而应该通过 `EventLoop` 作为中间者进行间接接触. `EventLoop` 负责接受用户传递进来的回调并生成 `TimerIdentifier`, 同时负责生成裸指针以便对另一边的 `TimerContainer` 进行操作.
-- [x] `EventDispatcher`: 为各类可供监听事件的文件描述符提供统一的事件分发的接口.
+- [x] `PollableFileDescriptor`: 对可监听文件描述符的抽象, 作为各个分化的文件描述符类型的公共基类, 为各类可供监听事件的文件描述符提供统一的事件分发的接口.
   - 成员包括:
+    - 文件描述符.
     - 当前监听事件集.
     - 活跃事件集.
     - 各个事件对应的回调.
@@ -127,13 +128,24 @@
     - `EPOLLET`: 标志位, 表示启用 ET 模式.
     - `EPOLLONESHOT`: 标志位, 表示启用 one-shot 模式.
   - 由于事件的注册需要用到 `epoll_event` 类型的一个对象, 因此内部需要维护一个类型为 `uint32_t` 的成员用于存储当前注册的事件集合. 等到构建 `epoll_event` 类型的对象的时候再现场令该 `epoll_event` 对象的 `data.ptr` 成员指向 `EventDispatcher` 对象自身, 这样就建立起从 `epoll_wait` 所返回的活跃事件对象到 `EventDispatcher` 对象的映射.
+  - 各个派生类的实现规范:
+    - 以 `static` 形式包装实现对应类型的文件描述符的创建方法.
+    - 降低回调函数注册接口的暴露程度, 仅向外暴露那些对应类型特定的回调函数的注册接口 (例如 TCP 套接字仅应当暴露数据处理接口, 而读事件接口可通过硬编码在内部的方式进行固化).
+    - 降低 epoll 事件监听状态更改接口的暴露程度, 只保留那些在该种类型的文件描述符的情况下有意义并且允许用户使用的接口.
+    - 包装实现与特定类型的文件描述符相关的 API, 以便用户自由构建回调函数.
+- 各个派生类并不负责在构造函数中创建对应类型的文件描述符, 而是将创建时机推迟给用户以便设置一些可能的标志等等. 反之由于文件描述符的使用周期和该文件描述符对象的生命周期相同, 因此各个派生类将统一在析构函数中调用 `::close()` 关闭文件描述符.
+- 派生类的用户在构造派生类对象的时候需要做三件事:
+  1. 调用派生类专用的函数创建派生类文件描述符, 并初始化对象.
+  1. 注册派生类专用的回调函数.
+  1. 启用监听派生类专用的事件 (之所以交给用户来做是为了避免事件在回调注册之前就提前触发).
+
+  用户在析构派生类对象的时候不需要做任何事情, 由派生类对象自身的析构函数确保析构之前禁用所有事件的监听并关闭文件描述符.
+
 - [x] `EventPoller`: 对 epoll 机制的抽象.
   - 提供的 API 包括:
     1. 在构造函数中创建 epoll 内核事件表.
     1. 为文件描述符注册事件.
     1. 对 `epoll_wait` 进行封装, 返回活跃的 `EventDispatcher` 对象 (的裸指针) 的列表. 之后会由事件循环 `EventLoop` 内部负责遍历这一列表并逐一分发活跃事件.
-- [x] `PollableFileDescriptor`: 对文件描述符的抽象, 作为各个分化的文件描述符类型的公共基类. 具体实现为 `EventDispatcher` 的直接派生类.
-  - 考虑过将 `EventDispatcher` 类对象作为一个成员, 但这涉及到将 `EventDispatcher` 类的 API 向外进行额外的一次转发, 同时用户设置的回调也同样要经过额外的一层注册, 因此该方案被舍弃.
 - [x] `Eventfd`: 对 eventfd 的抽象. 内部包装了一些 eventfd 相关的基础 API.
 - [x] `Timerfd`: 对 timerfd 的抽象. 内部包装了一些 timerfd 相关的基础 API.
 - [x] `EventLoop`: 用于收纳事件循环相关的代码.
@@ -158,33 +170,54 @@
        - 提供接口用于间接向 `TimerContainer` 对象成员中添加定时器 (即 muduo 中实现的 `runAt` 和 `runAfter`).
 - [x] `EventLoopThread`: 对事件循环工作线程的抽象. 内部封装一个 `Thread` 对象, 同时实现一个包装函数用于在新线程中初始化并启动一个 `EventLoop` 对象.
 - [x] `EventLoopThreadPool`: 对事件循环工作线程池的抽象. 提供接口用于随机抽取一个工作线程.
-- [ ] `MutableSizeTcpBuffer`: TCP 连接专用的变长缓冲区, 用于保存从一个套接字描述符中读取的或是将要向一个套接字描述符中写入的数据.
-- [ ] `TcpConnectSocketfd`: 对 TCP 连接套接字的抽象. 内含两个 `MutableSizeTcpBuffer` 缓冲区, 一个用于接收, 一个用于发送.
 - [ ] `InetAddress`: 对套接字地址的抽象. 为 IPv4 和 IPv6 地址提供统一的接口.
-- [ ] `ListenSocketfd`: 对监听套接字的抽象.
+- [ ] `MutableSizeTcpBuffer`: TCP connect socketfd 专用的变长缓冲区. 其 API 主要提供给框架外部的用户使用, 在框架内部仅作为占位符.
+- [ ] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
+- [ ] `ListenSocketfd`: 对 listen socketfd 的抽象.
 - [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.
-- [ ] `TcpClient`: 对 TCP 客户端的抽象. 与服务器不同, 客户端只需在主线程维护一个 TCP 连接即可.
-- [ ] `Signalfd`: 对 signalfd 的抽象.
+- [ ] `PreconnectSocketfd`: 对预连接的 connect socketfd 的抽象.
+- [ ] `TcpClient`: 对 TCP 客户端的抽象.
 - [ ] `HttpContext`: 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程. 本对象是存储在 `TcpConnectSocketfd` 对象中的 (muduo 实现的 `TcpConnection` 对象中设置了一个通用的上下文对象成员 `boost::any context_` 用于存储任意上下文, 其中自然也包括 HTTP 上下文 `HttpContext`).
 - [ ] `HttpRequest`: 对 HTTP 请求报文的抽象, 提供一些基础的 API, 包括获取请求头信息等等.
 - [ ] `HttpResponse`: 对 HTTP 响应报文的抽象, 提供一些基础的 API, 包括设置响应体数据等等.
+- [ ] `Signalfd`: 对 signalfd 的抽象.
 - [ ] (基础) 实现一个 echo 服务器.
 - [ ] (进阶) 以 long polling 方式开发一个简单的实时聊天室应用.
 - [ ] (进阶) 简易 RPC 框架.
+- [ ] 尽可能降低线程间的竞争代价.
+- [ ] 尽可能精简 API 的命名, 并将信息转移至注释中.
 
 ## muduo 项目中所采用的抽象
 
 > - **由于下列类型是通过与 ChatGPT 的问答生成的, 因此可能并不与实际在 muduo 中使用的类型的名称完全一致**.
 > - **以下内容仅为个人理解**.
 
-1. `Channel`: 对 socket 文件描述符的抽象, 其中包含事件到来时需要执行的回调函数 (由外部的 Acceptor 或 TcpConnection 类进行注册) 等等.
+1. `MutexLock`: 对互斥锁的抽象. C++11 下的等价设施: `std::mutex`
+1. `MutexLockGuard`: 对互斥锁的 RAII 机制的抽象. C++11 下的等价设施: `std::lock_guard<std::mutex>`
+1. `Condition`: 对信号量机制的抽象. C++11 下的等价设施: `std::condition_variable`
+1. `Atomic`: 对原子操作的抽象 (但是并不提供内存顺序控制). C++11 下的等价设施: `std::atomic<T>`
+1. `BlockingQueue`: 对 (无大小限制的) 阻塞队列的抽象.
+1. `BoundedBlockingQueue`: 对 (固定大小的) 阻塞队列的抽象.
+1. `AppendFile`: [TODO]
+1. `LogFile`: [TODO]
+1. `AsyncLogging`: [TODO]
+1. `LogStream`: [TODO]
+1. `SourceFile`: [TODO]
+1. `Impl`: [TODO]
+1. `Logger`: [TODO]
+1. `StringPiece`: [TODO]
 1. `Buffer`: 管理动态缓冲区, 用于存储 I/O 操作期间 (例如读取客户端发送过来的 HTTP 请求时) 的数据, 优化读写性能.
+1. `Socket`: [TODO]
+1. `Channel`: 对 socket 文件描述符的抽象, 其中包含事件到来时需要执行的回调函数 (由外部的 Acceptor 或 TcpConnection 类进行注册) 等等.
 1. `Acceptor`: 对 listen socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
+1. `Connector`: [TODO]
 1. `TcpConnection`: 对 connect socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
 1. `Poller`: 对 epoll 机制的抽象.
+1. `Timestamp`: 对时间戳的抽象, 内部使用一个 `int64_t` 类型的变量表示自 epoch 以来的毫秒数 (一年约有 $2^{44.84}$ 毫秒).
+1. `TimerQueue`: 对计时器容器的抽象.
+1. `Timer`: 对单个计时器元素的抽象.
 1. `EventLoop`: 对事件循环的抽象. 每个循环中不仅需要处理 epoll 事件的监听, 还要处理定时器和外部注册到当前线程中的任务等等.
-1. `ThreadLocal`: 帮手类, 用于实现 C++11 以前的线程局部存储 (TLS) 机制.
-   - C++11 下的等价设施: `thread_local` 关键字
+1. `ThreadLocal`: 帮手类, 用于实现 C++11 以前的线程局部存储 (TLS) 机制. C++11 下的等价设施: `thread_local` 关键字
 1. `CurrentThread`: 使用 `__thread` 关键字存储一些线程独立的信息, 包括对 TID, TID 的字符串形式, TID 字符串的长度, 以及线程名称字符串的缓存. 同时提供了一些 API 用于初始化以及获取这些信息.
 1. `ThreadData`: 帮手类, 用于在启动 `Thread` 对象时在启动 `Thread` 对象的线程 (主线程) 和该对象底层所封装的线程 (工作线程) 之间关于 `Thread` 对象的各个状态成员建立同步关系. 由于状态的改变需要在工作线程中进行, 因此还需要对 `Thread` 对象传进来的可调用对象进一步进行封装, 也就是说封装后的可调用对象会先改变状态, 然后调用内部所封装的原始的可调用对象. `ThreadData` 就是可调用对象的类, 它的成员函数 `runInThread` 和全局作用域中的函数 `startThread` 共同构成了可调用对象的调用运算符.
 1. `Thread`: 对线程的抽象, 内部封装了 POSIX pthread API, 并提供一系列额外的简单的 API 用于对底层封装的线程执行各种操作, 包括但不限于 `start`, `stop`, `get_tid` 等等. 使用 `Thread` 最重要的原因是它将底层封装的线程的状态映射到 `Thread` 对象的各个相应成员上, 然后通过一系列 API 方便简洁地获取这些状态信息, 更重要的一点是使用 `Thread` 对象还能够控制线程的生命周期, 实现惰性启动 (如果直接使用 `std::thread` 那么在创建对象的那一刻起底层的线程就已经启动了).
@@ -192,26 +225,7 @@
 1. `EventLoopThreadPool`: 对线程池的抽象. 是 `EventLoopThread` 类的一个包装类.
 1. `InetAddress`: 对套接字地址 (IP + port) 的抽象.
 1. `TcpServer`: 对服务器的抽象.
-1. `Timestamp`: 对时间戳的抽象, 内部使用一个 `int64_t` 类型的变量表示自 epoch 以来的毫秒数 (一年约有 $2^{44.84}$ 毫秒).
-1. `TimerQueue`: 对计时器容器的抽象.
-1. `Timer`: 对单个计时器元素的抽象.
-1. `MutexLock`: 对互斥锁的抽象
-   - C++11 下的等价设施: `std::mutex`
-1. `MutexLockGuard`: 对互斥锁的 RAII 机制的抽象.
-   - C++11 下的等价设施: `std::lock_guard<std::mutex>`
-1. `Condition`: 对信号量机制的抽象.
-   - C++11 下的等价设施: `std::condition_variable`
-1. `Atomic`: 对原子操作的抽象 (但是并不提供内存顺序控制).
-   - C++11 下的等价设施: `std::atomic<T>`
-1. `BlockingQueue`: 对 (无大小限制的) 阻塞队列的抽象.
-1. `BoundedBlockingQueue`: 对 (固定大小的) 阻塞队列的抽象.
-1. `AppendFile`: [TODO]
-1. `LogFile`: [TODO]
-1. `AsyncLogging`: [TODO]
-1. `LogStream`: [TODO]
-1. `Logger::SourceFile`: [TODO]
-1. `Logger::Impl`: [TODO]
-1. `Logger`: [TODO]
+1. `TcpClient`: [TODO]
 1. `HttpRequest`: 对 HTTP 请求报文的抽象.
 1. `HttpResponse`: 对 HTTP 响应报文的抽象.
 1. `HttpContext`: 对 HTTP 请求解析过程的抽象.
