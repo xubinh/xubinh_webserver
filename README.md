@@ -170,7 +170,8 @@
        - 提供接口用于间接向 `TimerContainer` 对象成员中添加定时器 (即 muduo 中实现的 `runAt` 和 `runAfter`).
 - [x] `EventLoopThread`: 对事件循环工作线程的抽象. 内部封装一个 `Thread` 对象, 同时实现一个包装函数用于在新线程中初始化并启动一个 `EventLoop` 对象.
 - [x] `EventLoopThreadPool`: 对事件循环工作线程池的抽象. 提供接口用于随机抽取一个工作线程.
-- [ ] `InetAddress`: 对套接字地址的抽象. 为 IPv4 和 IPv6 地址提供统一的接口.
+- [x] `InetAddress`: 对套接字地址的抽象. 为 IPv4 和 IPv6 地址提供统一的接口.
+  - 一方面需要提供 API 方便用户以一般字符串形式传入套接字地址并转换至专门的类型, 另一方面也要提供 API 方便框架内部按相反的方向进行转换.
 - [ ] `MutableSizeTcpBuffer`: TCP connect socketfd 专用的变长缓冲区. 其 API 主要提供给框架外部的用户使用, 在框架内部仅作为占位符.
 - [ ] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
 - [ ] `ListenSocketfd`: 对 listen socketfd 的抽象.
