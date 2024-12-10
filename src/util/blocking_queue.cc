@@ -49,7 +49,7 @@ BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
-        queue = std::swap(_queue);
+        queue.swap(_queue);
     }
 
     return queue;
