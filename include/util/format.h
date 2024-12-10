@@ -9,7 +9,7 @@
 #include <limits>
 #include <type_traits>
 
-#include "type_traits.h"
+#include "util/type_traits.h"
 
 namespace xubinh_server {
 
