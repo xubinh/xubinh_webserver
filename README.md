@@ -182,10 +182,33 @@
     1. 检查从 `begin()` 到当前读取位置的空闲空间加上当前写入位置和 `size()` 之间的空闲空间的总大小.如果足够则先平移后写入, 否则接着往下检查.
     1. 直接调用 `resize()` 申请重分配内存块. 由于此举隐式包含了一次内存复制, 为了效率起见, 重分配之后不实施平移.
   - `std::vector<char>` 的初始 capacity 为 `0`, 并且每当大小超出 capacity 时会重新分配一个两倍大小的新内存块. 为了降低这一行为在频繁分配小型缓冲区时造成的性能影响, 可以适当将初始 capacity 调高一些 (例如 1 KB).
+- [x] `Any`: 帮手类, 用于存储任意类型的对象. 仿效自 `boost::any`.
+  - 需要定义两个内部的帮手类实现类型擦除模式, 这两个类分别是 `HolderBase` 以及 `Holder`.
+    - `HolderBase`: 普通类型, 作为类型擦除模式的基类.
+      - 提供的 API 包括:
+        - 一个虚的析构函数.
+        - 一个纯虚的 `type()` 函数. 派生类在内部调用 `typeid` 表达式, 因此返回值为 `std::type_info` 类型.
+        - 一个纯虚的 `clone()` 函数. 派生类实现各自的拷贝函数.
+    - `Holder<DecayedNoCvrValueType>`: 派生类, 直接继承自 `HolderBase`, 用于存储类型信息.
+      - 成员包括:
+        - 一个类型为所委托类型的对象.
+      - 提供的 API 包括:
+        - 对所委托的值的完美转发.
+        - 基类的虚函数的实现.
+  - 成员包括:
+    - `HolderBase` 类型的裸指针, 指向底层对象.
+  - 提供的 API 包括:
+    - 一个构造函数模板, 使用完美转发将任意类型的对象转发给底层的 `HolderBase` 对象.
+    - 拷贝构造函数, 通过调用 `HolderBase` 的虚 `close()` 函数对底层对象进行拷贝.
+    - 移动构造函数, 直接移动底层对象的指针.
+    - 交换运算.
+    - 根据返回值类型的不同, 需要实现两种不同的 `any_cast` 函数用于取出底层对象:
+      - 返回值为指针类型的版本的 `any_cast` 接受 `Any` 对象的指针并返回指向底层对象的指针. 此版本根据形参类型的不同又进一步细分为普通指针和常量指针两种具体实现.
+      - 返回值为非指针类型的版本的 `any_cast` 接受 `Any` 对象的引用并返回底层对象的引用. 此版本根据形参类型的不同又进一步细分为普通左值引用, 常量左值引用, 以及右值引用三种具体实现.
 - [ ] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
 - [ ] `ListenSocketfd`: 对 listen socketfd 的抽象.
-- [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.
 - [ ] `PreconnectSocketfd`: 对预连接的 connect socketfd 的抽象.
+- [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.
 - [ ] `TcpClient`: 对 TCP 客户端的抽象.
 - [ ] `HttpContext`: 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程. 本对象是存储在 `TcpConnectSocketfd` 对象中的 (muduo 实现的 `TcpConnection` 对象中设置了一个通用的上下文对象成员 `boost::any context_` 用于存储任意上下文, 其中自然也包括 HTTP 上下文 `HttpContext`).
 - [ ] `HttpRequest`: 对 HTTP 请求报文的抽象, 提供一些基础的 API, 包括获取请求头信息等等.
