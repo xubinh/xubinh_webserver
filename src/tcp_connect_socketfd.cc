@@ -9,9 +9,14 @@
 namespace xubinh_server {
 
 TcpConnectSocketfd::TcpConnectSocketfd(
-    int fd, EventLoop *event_loop, const std::string &id
+    int fd,
+    EventLoop *event_loop,
+    const std::string &id,
+    const InetAddress &local_address,
+    const InetAddress &remote_address
 )
-    : _id(id), _pollable_file_descriptor(fd, event_loop) {
+    : _id(id), _local_address(local_address), _remote_address(remote_address),
+      _pollable_file_descriptor(fd, event_loop) {
 
     if (fd < 0) {
         LOG_SYS_FATAL << "failed creating eventfd";

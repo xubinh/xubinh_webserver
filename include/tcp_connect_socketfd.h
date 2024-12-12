@@ -1,6 +1,7 @@
 #ifndef XUBINH_SERVER_TCP_CONNECT_SOCKETFD
 #define XUBINH_SERVER_TCP_CONNECT_SOCKETFD
 
+#include "inet_address.h"
 #include "pollable_file_descriptor.h"
 #include "tcp_buffer.h"
 #include "util/any.h"
@@ -23,7 +24,13 @@ public:
     using CloseCallbackType =
         std::function<void(TcpConnectSocketfd *tcp_connect_socketfd_self)>;
 
-    TcpConnectSocketfd(int fd, EventLoop *event_loop, const std::string &id);
+    TcpConnectSocketfd(
+        int fd,
+        EventLoop *event_loop,
+        const std::string &id,
+        const InetAddress &local_address,
+        const InetAddress &remote_address
+    );
 
     void register_message_callback(MessageCallbackType message_callback) {
         _message_callback = std::move(message_callback);
@@ -78,6 +85,8 @@ private:
     static constexpr const int _RECEIVE_DATA_SIZE = 4096;
 
     const std::string _id;
+    const InetAddress _local_address;
+    const InetAddress _remote_address;
 
     MutableSizeTcpBuffer _input_buffer;
     MutableSizeTcpBuffer _output_buffer;
