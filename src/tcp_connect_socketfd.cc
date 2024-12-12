@@ -8,21 +8,6 @@
 
 namespace xubinh_server {
 
-int TcpConnectSocketfd::get_socketfd_errno(int socketfd) {
-    int saved_errno;
-    socklen_t saved_errno_len = sizeof(decltype(saved_errno));
-
-    if (::getsockopt(
-            socketfd, SOL_SOCKET, SO_ERROR, &saved_errno, &saved_errno_len
-        )
-        < 0) {
-        LOG_SYS_FATAL << "getsockopt failed";
-    }
-    else {
-        return saved_errno;
-    }
-}
-
 TcpConnectSocketfd::TcpConnectSocketfd(
     int fd,
     EventLoop *event_loop,

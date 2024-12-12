@@ -6,27 +6,22 @@
 #include "inet_address.h"
 #include "log_builder.h"
 #include "pollable_file_descriptor.h"
+#include "socketfd.h"
 
 namespace xubinh_server {
 
-class ListenSocketfd {
+class ListenSocketfd : public Socketfd {
 public:
     using NewConnectionCallbackType =
         std::function<void(int fd, const InetAddress &peer_address)>;
 
-    ListenSocketfd(int fd, EventLoop *event_loop)
-        : _pollable_file_descriptor(fd, event_loop) {
+    static void set_socketfd_as_address_reusable(int socketfd);
 
-        if (fd < 0) {
-            LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
-        }
+    static void bind(int socketfd, const InetAddress &local_address);
 
-        _pollable_file_descriptor.register_read_event_callback(
-            std::bind(_read_event_callback, this)
-        );
+    static void listen(int socketfd);
 
-        _open_spare_fd();
-    }
+    ListenSocketfd(int fd, EventLoop *event_loop);
 
     ~ListenSocketfd() {
         _close_spare_fd();

@@ -3,6 +3,7 @@
 
 #include "inet_address.h"
 #include "pollable_file_descriptor.h"
+#include "socketfd.h"
 #include "tcp_buffer.h"
 #include "util/any.h"
 #include "util/time_point.h"
@@ -10,7 +11,8 @@
 namespace xubinh_server {
 
 class TcpConnectSocketfd
-    : public std::enable_shared_from_this<TcpConnectSocketfd> {
+    : public std::enable_shared_from_this<TcpConnectSocketfd>,
+      public Socketfd {
 public:
     using MessageCallbackType = std::function<void(
         TcpConnectSocketfd *tcp_connect_socketfd_self,
@@ -23,10 +25,6 @@ public:
 
     using CloseCallbackType =
         std::function<void(TcpConnectSocketfd *tcp_connect_socketfd_self)>;
-
-    // [TODO]: this should be in something like `Socketfd` and shared by all
-    // kinds of socketfds
-    static int get_socketfd_errno(int socketfd);
 
     TcpConnectSocketfd(
         int fd,

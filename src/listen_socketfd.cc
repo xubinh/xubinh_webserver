@@ -6,6 +6,51 @@
 
 namespace xubinh_server {
 
+void ListenSocketfd::set_socketfd_as_address_reusable(int socketfd) {
+    int set = 1;
+
+    if (::setsockopt(
+            socketfd,
+            SOL_SOCKET,
+            SO_REUSEADDR,
+            &set,
+            static_cast<socklen_t>(sizeof set)
+        )) {
+        LOG_SYS_FATAL << "failed when setting SO_REUSEADDR to a socketfd";
+    }
+}
+
+void ListenSocketfd::bind(int socketfd, const InetAddress &local_address) {
+    if (::bind(
+            socketfd,
+            local_address.get_address(),
+            local_address.get_address_length()
+        )
+        < 0) {
+        LOG_SYS_FATAL << "failed when binding a socketfd";
+    }
+}
+
+void ListenSocketfd::listen(int socketfd) {
+    if (::listen(socketfd, SOMAXCONN) < 0) {
+        LOG_SYS_FATAL << "failed when start listening a socketfd";
+    }
+}
+
+ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
+    : _pollable_file_descriptor(fd, event_loop) {
+
+    if (fd < 0) {
+        LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
+    }
+
+    _pollable_file_descriptor.register_read_event_callback(
+        std::bind(_read_event_callback, this)
+    );
+
+    _open_spare_fd();
+}
+
 int ListenSocketfd::_accept_new_connection(
     int listen_socketfd, InetAddress &peer_address
 ) {

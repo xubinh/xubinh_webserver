@@ -4,12 +4,14 @@
 #include "inet_address.h"
 #include "log_builder.h"
 #include "pollable_file_descriptor.h"
+#include "socketfd.h"
 #include "util/time_point.h"
 
 namespace xubinh_server {
 
 class PreconnectSocketfd
-    : public std::enable_shared_from_this<PreconnectSocketfd> {
+    : public std::enable_shared_from_this<PreconnectSocketfd>,
+      public Socketfd {
 public:
     using NewConnectionCallbackType = std::function<
         void(PreconnectSocketfd *preconnect_socketfd_self, int socketfd)>;

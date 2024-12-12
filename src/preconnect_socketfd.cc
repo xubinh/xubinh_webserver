@@ -1,5 +1,4 @@
 #include "preconnect_socketfd.h"
-#include "tcp_connect_socketfd.h"
 
 namespace xubinh_server {
 
@@ -54,7 +53,7 @@ void PreconnectSocketfd::_schedule_retry() {
 void PreconnectSocketfd::_write_event_callback() {
     int socketfd = _pollable_file_descriptor.get_fd();
 
-    auto saved_errno = TcpConnectSocketfd::get_socketfd_errno(socketfd);
+    auto saved_errno = get_socketfd_errno(socketfd);
 
     // success
     if (saved_errno == 0) {
