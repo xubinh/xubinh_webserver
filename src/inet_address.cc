@@ -19,10 +19,10 @@ InetAddress::InetAddress(
         }
 
         // port
-        _in.sin_port = static_cast<in_port_t>(port);
+        _in.sin_port = ::htons(static_cast<in_port_t>(port));
     }
 
-    else {
+    else if (inet_type == IPv6) {
         // protocol
         _in6.sin6_family = AF_INET6;
 
@@ -32,7 +32,25 @@ InetAddress::InetAddress(
         }
 
         // port
-        _in6.sin6_port = static_cast<in_port_t>(port);
+        _in6.sin6_port = ::htons(static_cast<in_port_t>(port));
+    }
+
+    else {
+        LOG_FATAL << "unknown InetAddressType";
+    }
+}
+
+bool InetAddress::is_ipv4() const {
+    auto protocol = _get_sa_family(&_in_unknown);
+
+    if (protocol == AF_INET) {
+        return true;
+    }
+    else if (protocol == AF_INET6) {
+        return false;
+    }
+    else {
+        LOG_FATAL << "unknown InetAddress protocol";
     }
 }
 

@@ -19,7 +19,7 @@ TcpConnectSocketfd::TcpConnectSocketfd(
       _pollable_file_descriptor(fd, event_loop) {
 
     if (fd < 0) {
-        LOG_SYS_FATAL << "failed creating eventfd";
+        LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
     }
 
     _pollable_file_descriptor.register_read_event_callback(
@@ -44,6 +44,11 @@ TcpConnectSocketfd::TcpConnectSocketfd(
 }
 
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {
+    // could be called after the connection is closed, so check it first
+    if (_is_closed) {
+        return;
+    }
+
     // leave the writing to the event callback if already started listening
     if (_is_writing) {
         _output_buffer.write(data, data_size);
@@ -96,6 +101,11 @@ void TcpConnectSocketfd::_read_event_callback() {
 }
 
 void TcpConnectSocketfd::_write_event_callback() {
+    // could be called after the connection is closed, so check it first
+    if (_is_closed) {
+        return;
+    }
+
     auto total_number_of_bytes = _output_buffer.get_readable_size();
 
     auto number_of_bytes_sent = _send_as_many_data(
@@ -116,19 +126,24 @@ void TcpConnectSocketfd::_write_event_callback() {
     _pollable_file_descriptor.disable_write_event();
     _is_writing = false;
 
-    // do what close event handler should do as all events are no longer being
-    // listened on
+    // connection is essentially closed: no data could be read in, nor sent out
     if (!_is_reading) {
-        if (_close_callback) {
-            _close_callback(this);
-        }
+        _close_event_callback();
     }
 }
 
 void TcpConnectSocketfd::_close_event_callback() {
+    if (_is_closed) {
+        return;
+    }
+
+    // no more reads or writes will come in ET mode; OK to shut them down
     _pollable_file_descriptor.disable_all_event();
-    _is_reading = false;
-    _is_writing = false;
+
+    _is_closed = true;
+
+    // [NOTE]: still needs to read in data, which can be done within this
+    // iteration
 
     if (_close_callback) {
         _close_callback(this);

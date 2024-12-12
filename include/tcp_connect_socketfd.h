@@ -32,6 +32,16 @@ public:
         const InetAddress &remote_address
     );
 
+    ~TcpConnectSocketfd() {
+        if (!_is_closed) {
+            LOG_ERROR << "tcp connection socketfd object being destroyed "
+                         "before closing the connection, id: "
+                      << _id;
+
+            _close_event_callback();
+        }
+    }
+
     void register_message_callback(MessageCallbackType message_callback) {
         _message_callback = std::move(message_callback);
     }
@@ -53,7 +63,7 @@ public:
         }
 
         if (!_message_callback) {
-            LOG_FATAL << "message callback is missing";
+            LOG_FATAL << "missing message callback";
         }
 
         _pollable_file_descriptor.enable_read_event();
@@ -97,6 +107,7 @@ private:
 
     bool _is_reading = false;
     bool _is_writing = false;
+    bool _is_closed = false;
 
     PollableFileDescriptor _pollable_file_descriptor;
 };

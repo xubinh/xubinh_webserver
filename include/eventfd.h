@@ -26,7 +26,7 @@ public:
         : _pollable_file_descriptor(fd, event_loop) {
 
         if (fd < 0) {
-            LOG_SYS_FATAL << "failed creating eventfd";
+            LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
         }
 
         _pollable_file_descriptor.register_read_event_callback(
@@ -36,8 +36,6 @@ public:
 
     ~Eventfd() {
         _pollable_file_descriptor.disable_read_event();
-
-        ::close(_pollable_file_descriptor.get_fd());
     }
 
     void register_eventfd_message_callback(
@@ -48,7 +46,7 @@ public:
 
     void start_reading() {
         if (!_message_callback) {
-            LOG_FATAL << "message callback is missing";
+            LOG_FATAL << "missing message callback";
         }
 
         _pollable_file_descriptor.enable_read_event();

@@ -208,7 +208,7 @@
       - 返回值为指针类型的版本的 `any_cast` 接受 `Any` 对象的指针并返回指向底层对象的指针. 此版本根据形参类型的不同又进一步细分为普通指针和常量指针两种具体实现.
       - 返回值为非指针类型的版本的 `any_cast` 接受 `Any` 对象的引用并返回底层对象的引用. 此版本根据形参类型的不同又进一步细分为普通左值引用, 常量左值引用, 以及右值引用三种具体实现.
 - [x] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
-- [ ] `ListenSocketfd`: 对 listen socketfd 的抽象.
+- [x] `ListenSocketfd`: 对 listen socketfd 的抽象.
 - [ ] `PreconnectSocketfd`: 对预连接的 connect socketfd 的抽象.
 - [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.
 - [ ] `TcpClient`: 对 TCP 客户端的抽象.
@@ -216,11 +216,14 @@
 - [ ] `HttpRequest`: 对 HTTP 请求报文的抽象, 提供一些基础的 API, 包括获取请求头信息等等.
 - [ ] `HttpResponse`: 对 HTTP 响应报文的抽象, 提供一些基础的 API, 包括设置响应体数据等等.
 - [ ] `Signalfd`: 对 signalfd 的抽象.
-- [ ] (基础) 实现一个 echo 服务器.
-- [ ] (进阶) 以 long polling 方式开发一个简单的实时聊天室应用.
-- [ ] (进阶) 简易 RPC 框架.
-- [ ] 尽可能降低线程间的竞争代价.
-- [ ] 尽可能精简 API 的命名, 并将信息转移至注释中.
+- [ ] 应用: 实现一个 echo 服务器.
+- [ ] 应用: 以 long polling 方式开发一个简单的实时聊天室应用.
+- [ ] 应用: 简易 RPC 框架.
+- [ ] 优化:
+  - 将指针形式的形参全部更换为引用形式.
+  - 尽可能使用右值引用避免不必要的拷贝和移动.
+  - 尽可能降低线程间的竞争代价.
+  - 尽可能精简 API 的命名, 并将信息转移至注释中.
 
 ## muduo 项目中所采用的抽象
 

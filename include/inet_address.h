@@ -5,14 +5,18 @@
 #include <netinet/in.h>
 #include <string>
 
+#include "log_builder.h"
+
 namespace xubinh_server {
 
 class InetAddress {
-private:
-    using sockaddr_in_or_in6 = sockaddr_in6;
-
 public:
+    using sockaddr_unknown_t = sockaddr_in6;
+
     enum InetAddressType { IPv4, IPv6 };
+
+    InetAddress() : _in_unknown{} {
+    }
 
     // for user
     InetAddress(const std::string &ip, int port, InetAddressType inet_type);
@@ -22,12 +26,13 @@ public:
         ::memcpy(&_in_unknown, address, address_length);
     }
 
-    bool is_ipv4() const {
-        return _get_sa_family(&_in_unknown) == AF_INET;
-    }
+    bool is_ipv4() const;
 
     // for framework
     const sockaddr *get_address() const {
+        // dummy code, only for checking initialization
+        is_ipv4();
+
         return reinterpret_cast<const sockaddr *>(&_in_unknown);
     }
 
@@ -41,7 +46,9 @@ public:
 
     // for user
     int get_port() const {
-        return static_cast<int>(is_ipv4() ? _in.sin_port : _in6.sin6_port);
+        return static_cast<int>(
+            ::ntohs(is_ipv4() ? _in.sin_port : _in6.sin6_port)
+        );
     }
 
 private:
@@ -49,10 +56,11 @@ private:
         return *reinterpret_cast<const sa_family_t *>(address);
     }
 
+    // always store as network order
     union {
         sockaddr_in _in;
         sockaddr_in6 _in6;
-        sockaddr_in_or_in6 _in_unknown;
+        sockaddr_unknown_t _in_unknown;
     };
 };
 

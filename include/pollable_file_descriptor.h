@@ -10,6 +10,9 @@ namespace xubinh_server {
 
 // not thread-safe
 class PollableFileDescriptor {
+private:
+    using EpollEventsType = decltype(epoll_event().events);
+
 public:
     using CallbackType = std::function<void()>;
 
@@ -22,6 +25,10 @@ public:
         _event.events |= EPOLLET;
 
         set_fd_as_nonblocking(_fd);
+    }
+
+    ~PollableFileDescriptor() {
+        ::close(_fd);
     }
 
     int get_fd() {
@@ -72,7 +79,7 @@ public:
     }
 
 private:
-    void _register_event();
+    void _register_event(EpollEventsType new_events);
 
     void _dispatch_active_events();
 

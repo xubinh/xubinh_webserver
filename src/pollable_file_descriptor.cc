@@ -24,39 +24,27 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
 }
 
 void PollableFileDescriptor::enable_read_event() {
-    _event.events |= EventPoller::EVENT_TYPE_READ;
-
-    _register_event();
+    _register_event(_event.events | EventPoller::EVENT_TYPE_READ);
 }
 
 void PollableFileDescriptor::disable_read_event() {
-    _event.events &= ~EventPoller::EVENT_TYPE_READ;
-
-    _register_event();
+    _register_event(_event.events & ~EventPoller::EVENT_TYPE_READ);
 }
 
 void PollableFileDescriptor::enable_write_event() {
-    _event.events |= EventPoller::EVENT_TYPE_WRITE;
-
-    _register_event();
+    _register_event(_event.events | EventPoller::EVENT_TYPE_WRITE);
 }
 
 void PollableFileDescriptor::disable_write_event() {
-    _event.events &= ~EventPoller::EVENT_TYPE_WRITE;
-
-    _register_event();
+    _register_event(_event.events & ~EventPoller::EVENT_TYPE_WRITE);
 }
 
 void PollableFileDescriptor::enable_all_event() {
-    _event.events |= EventPoller::EVENT_TYPE_ALL;
-
-    _register_event();
+    _register_event(_event.events | EventPoller::EVENT_TYPE_ALL);
 }
 
 void PollableFileDescriptor::disable_all_event() {
-    _event.events &= ~EventPoller::EVENT_TYPE_ALL;
-
-    _register_event();
+    _register_event(_event.events & ~EventPoller::EVENT_TYPE_ALL);
 }
 
 void PollableFileDescriptor::dispatch_active_events() {
@@ -76,7 +64,13 @@ void PollableFileDescriptor::dispatch_active_events() {
     }
 }
 
-void PollableFileDescriptor::_register_event() {
+void PollableFileDescriptor::_register_event(EpollEventsType new_events) {
+    if (new_events == _event.events) {
+        return;
+    }
+
+    _event.events = new_events;
+
     _event_loop->run(
         std::bind(EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
     );
