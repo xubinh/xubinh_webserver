@@ -19,7 +19,11 @@ private:
 public:
     enum EventType : EventTypeEnumUnderlyingType {
         EVENT_TYPE_READ =
-            EPOLLIN | EPOLLPRI | EPOLLRDHUP, // even for non-socket fds
+            EPOLLIN | EPOLLPRI
+            | EPOLLRDHUP, // EPOLLRDHUP here stands for the fact
+                          // that EOF itself is also a kind of readable data
+                          // that should be read by the callback in order to
+                          // update the internal state of the connection
         EVENT_TYPE_WRITE = EPOLLOUT,
         EVENT_TYPE_CLOSE = EPOLLHUP,
         EVENT_TYPE_ERROR = EPOLLERR,

@@ -121,10 +121,12 @@
   - epoll 所支持的事件类型:
     - `EPOLLIN`: 通用读事件, 说明有数据待读取. 处理读事件的例子包括 `read()`, `recv()`, 以及 `accept()` 等等.
     - `EPOLLOUT`: 通用写事件, 说明可写入数据. 处理写事件的例子包括 `write()` 和 `send()` 等等.
-    - `EPOLLRDHUP`: TCP 套接字专用的关闭事件, 说明对方关闭了连接或是关闭了连接的写端.
+    - `EPOLLRDHUP`: TCP 套接字专用的关闭事件, 说明对方完全关闭了连接或者关闭了连接的写端. 此时本方仍然能够读取剩余的未读取的数据, 直至遇到 EOF (`read` 操作返回 `0`).
     - `EPOLLPRI`: 通用紧急事件, 说明有紧急数据待读取.
-    - `EPOLLERR`: 通用错误事件, 说明文件描述符的内部出现错误. 处理错误事件的例子包括 `getsockopt()` 等等. 此事件无需注册, `epoll_wait` 总是会监听此事件.
-    - `EPOLLHUP`: 通用关闭事件, 说明对方关闭了连接或是关闭了连接的写端. 此事件无需注册, `epoll_wait` 总是会监听此事件.
+    - `EPOLLERR`: 通用错误事件, 说明文件描述符的内部出现错误. 处理错误事件的例子包括 `getsockopt()` 等等.
+      - 此事件无需注册, `epoll_wait` 总是会监听此事件.
+    - `EPOLLHUP`: 通用关闭事件, 说明对方完全关闭了连接. 此时本方仍然能够读取剩余的未读取的数据, 直至遇到 EOF (`read` 操作返回 `0`).
+      - 此事件无需注册, `epoll_wait` 总是会监听此事件.
     - `EPOLLET`: 标志位, 表示启用 ET 模式.
     - `EPOLLONESHOT`: 标志位, 表示启用 one-shot 模式.
   - 由于事件的注册需要用到 `epoll_event` 类型的一个对象, 因此内部需要维护一个类型为 `uint32_t` 的成员用于存储当前注册的事件集合. 等到构建 `epoll_event` 类型的对象的时候再现场令该 `epoll_event` 对象的 `data.ptr` 成员指向 `EventDispatcher` 对象自身, 这样就建立起从 `epoll_wait` 所返回的活跃事件对象到 `EventDispatcher` 对象的映射.
@@ -205,7 +207,7 @@
     - 根据返回值类型的不同, 需要实现两种不同的 `any_cast` 函数用于取出底层对象:
       - 返回值为指针类型的版本的 `any_cast` 接受 `Any` 对象的指针并返回指向底层对象的指针. 此版本根据形参类型的不同又进一步细分为普通指针和常量指针两种具体实现.
       - 返回值为非指针类型的版本的 `any_cast` 接受 `Any` 对象的引用并返回底层对象的引用. 此版本根据形参类型的不同又进一步细分为普通左值引用, 常量左值引用, 以及右值引用三种具体实现.
-- [ ] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
+- [x] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
 - [ ] `ListenSocketfd`: 对 listen socketfd 的抽象.
 - [ ] `PreconnectSocketfd`: 对预连接的 connect socketfd 的抽象.
 - [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.

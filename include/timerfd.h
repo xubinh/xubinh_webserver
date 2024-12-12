@@ -15,7 +15,7 @@ private:
     using TimePoint = util::TimePoint;
 
 public:
-    using TimerMessageCallbackType = std::function<void(uint64_t)>;
+    using MessageCallbackType = std::function<void(uint64_t)>;
 
     static int create_timerfd(int flags) {
         if (flags == 0) {
@@ -38,23 +38,23 @@ public:
     }
 
     ~Timerfd() {
-        disable_read_event();
+        _pollable_file_descriptor.disable_read_event();
 
         ::close(_pollable_file_descriptor.get_fd());
     }
 
     void register_timerfd_message_callback(
-        TimerMessageCallbackType timerfd_message_callback
+        MessageCallbackType timerfd_message_callback
     ) {
-        _timerfd_message_callback = std::move(timerfd_message_callback);
+        _message_callback = std::move(timerfd_message_callback);
     }
 
-    void enable_read_event() {
+    void start_reading() {
+        if (!_message_callback) {
+            LOG_FATAL << "message callback is missing";
+        }
+
         _pollable_file_descriptor.enable_read_event();
-    }
-
-    void disable_read_event() {
-        _pollable_file_descriptor.disable_read_event();
     }
 
     // async write operation
@@ -82,9 +82,7 @@ private:
     static constexpr int _DEFAULT_TIMERFD_FLAGS = TFD_CLOEXEC | TFD_NONBLOCK;
 
     void _read_event_callback() {
-        if (_timerfd_message_callback) {
-            _timerfd_message_callback(_retrieve_the_number_of_expirations());
-        }
+        _message_callback(_retrieve_the_number_of_expirations());
     }
 
     // read operation
@@ -92,7 +90,7 @@ private:
     // - thread-safe
     uint64_t _retrieve_the_number_of_expirations();
 
-    TimerMessageCallbackType _timerfd_message_callback;
+    MessageCallbackType _message_callback;
 
     PollableFileDescriptor _pollable_file_descriptor;
 };

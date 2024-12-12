@@ -64,8 +64,17 @@ public:
     // used by poller
     void dispatch_active_events();
 
+    void register_weak_lifetime_guard(
+        const std::shared_ptr<void> &strong_lifetime_guard
+    ) {
+        _weak_lifetime_guard = strong_lifetime_guard;
+        _is_weak_lifetime_guard_registered = true;
+    }
+
 private:
     void _register_event();
+
+    void _dispatch_active_events();
 
     int _fd;
     EventLoop *_event_loop;
@@ -75,6 +84,8 @@ private:
     CallbackType _write_event_callback;
     CallbackType _close_event_callback;
     CallbackType _error_event_callback;
+    std::weak_ptr<void> _weak_lifetime_guard;
+    bool _is_weak_lifetime_guard_registered = false;
 };
 
 } // namespace xubinh_server

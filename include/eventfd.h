@@ -12,7 +12,7 @@ class EventLoop;
 
 class Eventfd {
 public:
-    using EventfdMessageCallbackType = std::function<void(uint64_t)>;
+    using MessageCallbackType = std::function<void(uint64_t)>;
 
     static int create_eventfd(int flags) {
         if (flags == 0) {
@@ -35,23 +35,23 @@ public:
     }
 
     ~Eventfd() {
-        disable_read_event();
+        _pollable_file_descriptor.disable_read_event();
 
         ::close(_pollable_file_descriptor.get_fd());
     }
 
     void register_eventfd_message_callback(
-        EventfdMessageCallbackType eventfd_message_callback
+        MessageCallbackType eventfd_message_callback
     ) {
-        _eventfd_message_callback = std::move(eventfd_message_callback);
+        _message_callback = std::move(eventfd_message_callback);
     }
 
-    void enable_read_event() {
+    void start_reading() {
+        if (!_message_callback) {
+            LOG_FATAL << "message callback is missing";
+        }
+
         _pollable_file_descriptor.enable_read_event();
-    }
-
-    void disable_read_event() {
-        _pollable_file_descriptor.disable_read_event();
     }
 
     // write operation
@@ -64,9 +64,7 @@ private:
     static constexpr int _DEFAULT_EVENTFD_FLAGS = EFD_CLOEXEC | EFD_NONBLOCK;
 
     void _read_event_callback() {
-        if (_eventfd_message_callback) {
-            _eventfd_message_callback(_retrieve_the_sum());
-        }
+        _message_callback(_retrieve_the_sum());
     }
 
     // read operation
@@ -74,7 +72,7 @@ private:
     // - thread-safe
     uint64_t _retrieve_the_sum();
 
-    EventfdMessageCallbackType _eventfd_message_callback;
+    MessageCallbackType _message_callback;
 
     PollableFileDescriptor _pollable_file_descriptor;
 };
