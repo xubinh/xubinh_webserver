@@ -24,6 +24,10 @@ public:
     using CloseCallbackType =
         std::function<void(TcpConnectSocketfd *tcp_connect_socketfd_self)>;
 
+    // [TODO]: this should be in something like `Socketfd` and shared by all
+    // kinds of socketfds
+    static int get_socketfd_errno(int socketfd);
+
     TcpConnectSocketfd(
         int fd,
         EventLoop *event_loop,
@@ -42,6 +46,10 @@ public:
         }
     }
 
+    const std::string &get_id() const {
+        return _id;
+    }
+
     void register_message_callback(MessageCallbackType message_callback) {
         _message_callback = std::move(message_callback);
     }
@@ -57,7 +65,7 @@ public:
     }
 
     // not thread-safe
-    void start_reading() {
+    void start() {
         if (_is_reading) {
             return;
         }
@@ -77,8 +85,6 @@ public:
     util::Any context{};
 
 private:
-    static int _get_socket_errno(int socketfd);
-
     void _read_event_callback();
 
     void _write_event_callback();

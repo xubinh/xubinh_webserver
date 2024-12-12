@@ -40,7 +40,7 @@ public:
         _new_connection_callback = std::move(new_connection_callback);
     }
 
-    void start_reading() {
+    void start() {
         if (!_new_connection_callback) {
             LOG_FATAL << "missing new connection callback";
         }
@@ -49,7 +49,7 @@ public:
     }
 
 private:
-    // simple wrapper for `::accept`, returns -1 for errors
+    // simple wrapper for `::accept` with return values unchanged
     static int
     _accept_new_connection(int listen_socketfd, InetAddress &peer_address);
 

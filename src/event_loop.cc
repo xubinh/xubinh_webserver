@@ -16,13 +16,13 @@ EventLoop::EventLoop()
         std::bind(_eventfd_message_callback, this, std::placeholders::_1)
     );
 
-    _eventfd.start_reading();
+    _eventfd.start();
 
     _timerfd.register_timerfd_message_callback(
         std::bind(_timerfd_message_callback, this, std::placeholders::_1)
     );
 
-    _timerfd.start_reading();
+    _timerfd.start();
 }
 
 void EventLoop::loop() {

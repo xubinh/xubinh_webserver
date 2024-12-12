@@ -8,6 +8,21 @@
 
 namespace xubinh_server {
 
+int TcpConnectSocketfd::get_socketfd_errno(int socketfd) {
+    int saved_errno;
+    socklen_t saved_errno_len = sizeof(decltype(saved_errno));
+
+    if (::getsockopt(
+            socketfd, SOL_SOCKET, SO_ERROR, &saved_errno, &saved_errno_len
+        )
+        < 0) {
+        LOG_SYS_FATAL << "getsockopt failed";
+    }
+    else {
+        return saved_errno;
+    }
+}
+
 TcpConnectSocketfd::TcpConnectSocketfd(
     int fd,
     EventLoop *event_loop,
@@ -38,8 +53,8 @@ TcpConnectSocketfd::TcpConnectSocketfd(
         std::bind(_error_event_callback, this)
     );
 
-    // TCP connections must ensure lifetime safety, since they could be
-    // destroyed by themselves or by the callbacks registered in them
+    // must ensure lifetime safety as this exact object could be
+    // destroyed by the callbacks registered inside themselves
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 }
 
@@ -75,21 +90,6 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
 
     _pollable_file_descriptor.enable_write_event();
     _is_writing = true;
-}
-
-int TcpConnectSocketfd::_get_socket_errno(int socketfd) {
-    int saved_errno;
-    socklen_t saved_errno_len = sizeof(decltype(saved_errno));
-
-    if (::getsockopt(
-            socketfd, SOL_SOCKET, SO_ERROR, &saved_errno, &saved_errno_len
-        )
-        < 0) {
-        LOG_SYS_FATAL << "getsockopt failed";
-    }
-    else {
-        return saved_errno;
-    }
 }
 
 void TcpConnectSocketfd::_read_event_callback() {
@@ -151,7 +151,7 @@ void TcpConnectSocketfd::_close_event_callback() {
 }
 
 void TcpConnectSocketfd::_error_event_callback() {
-    auto saved_errno = _get_socket_errno(_pollable_file_descriptor.get_fd());
+    auto saved_errno = get_socketfd_errno(_pollable_file_descriptor.get_fd());
 
     LOG_ERROR << "TCP connection socket error, id: " << _id
               << ", errno: " << saved_errno

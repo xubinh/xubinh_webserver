@@ -47,7 +47,7 @@ public:
         _message_callback = std::move(timerfd_message_callback);
     }
 
-    void start_reading() {
+    void start() {
         if (!_message_callback) {
             LOG_FATAL << "missing message callback";
         }

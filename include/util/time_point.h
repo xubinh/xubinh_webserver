@@ -9,9 +9,10 @@ namespace xubinh_server {
 namespace util {
 
 struct TimeInterval {
-    TimeInterval() = default;
+    constexpr TimeInterval() = default;
 
-    TimeInterval(int64_t nanoseconds_input) : nanoseconds(nanoseconds_input) {
+    constexpr TimeInterval(int64_t nanoseconds_input)
+        : nanoseconds(nanoseconds_input) {
     }
 
     operator bool() const {
@@ -30,12 +31,22 @@ struct TimeInterval {
         return *this;
     }
 
+    TimeInterval &operator*=(int64_t multiplier) {
+        nanoseconds *= multiplier;
+
+        return *this;
+    }
+
     TimeInterval operator+(const TimeInterval &other) const {
         return TimeInterval(*this) += other;
     }
 
     TimeInterval operator-(const TimeInterval &other) const {
         return TimeInterval(*this) -= other;
+    }
+
+    TimeInterval operator*(int64_t multiplier) const {
+        return TimeInterval(*this) *= multiplier;
     }
 
     bool operator<(const TimeInterval &other) const {
