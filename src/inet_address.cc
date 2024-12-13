@@ -7,9 +7,9 @@
 namespace xubinh_server {
 
 InetAddress::InetAddress(
-    const std::string &ip, int port, InetAddressType inet_type
+    const std::string &ip, int port, InetAddressType type
 ) {
-    if (inet_type == IPv4) {
+    if (type == IPv4) {
         // protocol
         _in.sin_family = AF_INET;
 
@@ -22,7 +22,7 @@ InetAddress::InetAddress(
         _in.sin_port = ::htons(static_cast<in_port_t>(port));
     }
 
-    else if (inet_type == IPv6) {
+    else {
         // protocol
         _in6.sin6_family = AF_INET6;
 
@@ -34,24 +34,34 @@ InetAddress::InetAddress(
         // port
         _in6.sin6_port = ::htons(static_cast<in_port_t>(port));
     }
-
-    else {
-        LOG_FATAL << "unknown InetAddressType";
-    }
 }
 
-bool InetAddress::is_ipv4() const {
-    auto protocol = _get_sa_family(&_in_unknown);
+InetAddress::InetAddress(int connect_socketfd, InetAddressDirection direction) {
+    socklen_t socket_address_len = sizeof(sockaddr_unknown_t);
 
-    if (protocol == AF_INET) {
-        return true;
+    if (direction == LOCAL) {
+        if (::getsockname(
+                connect_socketfd,
+                reinterpret_cast<sockaddr *>(&_in_unknown),
+                &socket_address_len
+            )
+            == -1) {
+            LOG_SYS_FATAL << "failed to get local socket address";
+        }
     }
-    else if (protocol == AF_INET6) {
-        return false;
-    }
+
     else {
-        LOG_FATAL << "unknown InetAddress protocol";
+        if (::getpeername(
+                connect_socketfd,
+                (struct sockaddr *)&_in_unknown,
+                &socket_address_len
+            )
+            == -1) {
+            LOG_SYS_FATAL << "failed to get peer socket address";
+        }
     }
+
+    _check_validity();
 }
 
 std::string InetAddress::get_ip() const {
