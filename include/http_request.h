@@ -27,8 +27,7 @@ public:
 
     ~HttpRequest() = default;
 
-    // true = success, false = fail
-    bool set_method_type(const char *start, const char *end);
+    bool parse_request_line(const char *start, const char *end);
 
     HttpMethodType get_method_type() const {
         return _method;
@@ -36,16 +35,9 @@ public:
 
     const char *get_method_type_as_string() const;
 
-    void set_path(const char *start, const char *end) {
-        _path.assign(start, end);
-    }
-
     const std::string &get_path() const {
         return _path;
     }
-
-    // true = success, false = fail
-    bool set_version_type(const char *start, const char *end);
 
     HttpVersionType get_version_type() const {
         return _version;
@@ -62,7 +54,7 @@ public:
     }
 
     // true = success, false = fail
-    bool set_header(const char *start, const char *end);
+    bool parse_header_line(const char *start, const char *end);
 
     const std::string &get_header(const std::string &key) const {
         auto it = _headers.find(key);
@@ -91,6 +83,16 @@ public:
     }
 
 private:
+    // true = success, false = fail
+    bool _set_method_type(const char *start, const char *end);
+
+    void _set_path(const char *start, const char *end) {
+        _path.assign(start, end);
+    }
+
+    // true = success, false = fail
+    bool _set_version_type(const char *start, const char *end);
+
     HttpMethodType _method = UNSUPPORTED_HTTP_METHOD;
     std::string _path;
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
