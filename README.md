@@ -213,7 +213,7 @@
 - [x] `TcpServer`: 对 TCP 服务器的抽象.
 - [x] `TcpClient`: 对 TCP 客户端的抽象.
 - [x] `HttpRequest`: 对 HTTP 请求报文的抽象.
-- [ ] `HttpContext`: 对 HTTP 请求解析过程的上下文的抽象, 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程.
+- [x] `HttpParser`: 对 HTTP 请求解析过程的抽象, 通过在内部维护必要的上下文信息来为离散的数据接收事件维护一个逻辑上连续的解析过程.
 - [ ] `HttpResponse`: 对 HTTP 响应报文的抽象.
 - [ ] `Signalfd`: 对 signalfd 的抽象.
 - [ ] 应用: 实现一个 echo 服务器.

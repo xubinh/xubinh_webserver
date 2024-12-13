@@ -139,6 +139,10 @@ bool HttpRequest::parse_header_line(const char *start, const char *end) {
         key_end--;
     }
 
+    HttpRequest::to_lowercase(
+        const_cast<char *>(key_start), const_cast<char *>(key_end)
+    );
+
     const char *value_start = colon + 1;
     const char *value_end = end;
 
@@ -146,6 +150,7 @@ bool HttpRequest::parse_header_line(const char *start, const char *end) {
         value_start++;
     }
 
+    // empty value is allowed
     if (value_start != value_end) {
         while (::isspace(*(value_end - 1))) {
             value_end--;

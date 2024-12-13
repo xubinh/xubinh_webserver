@@ -70,12 +70,8 @@ public:
         return _headers;
     }
 
-    void set_body(const std::string &body) {
-        _body = body;
-    }
-
-    void set_body(std::string &&body) {
-        _body = std::move(body);
+    void set_body(const char *start, const char *end) {
+        _body.assign(start, end);
     }
 
     const std::string &get_body() const {
@@ -83,6 +79,18 @@ public:
     }
 
 private:
+    // HTTP header field names (keys) are case-insensitive, according to
+    // HTTP/1.1 specification (RFC 7230, Section 3.2) which states:
+    //
+    // - "Field names are case-insensitive."
+    static void to_lowercase(char *start, char *end) {
+        auto it = start;
+
+        while (it != end) {
+            *it = ::tolower(*it);
+        }
+    }
+
     // true = success, false = fail
     bool _set_method_type(const char *start, const char *end);
 
