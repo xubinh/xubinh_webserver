@@ -6,6 +6,16 @@
 
 namespace xubinh_server {
 
+int Socketfd::create_socketfd() {
+    int socketfd = ::socket(AF_INET, SOCK_STREAM, 0);
+
+    if (socketfd == -1) {
+        LOG_SYS_FATAL << "failed to create socketfd";
+    }
+
+    return socketfd;
+}
+
 int Socketfd::get_socketfd_errno(int socketfd) {
     int saved_errno;
     socklen_t saved_errno_len = sizeof(decltype(saved_errno));
