@@ -80,7 +80,7 @@ EventPoller::poll_for_active_events_of_all_fds() {
 
     std::vector<PollableFileDescriptor *> event_dispatchers;
 
-    for (int i = 0; i < current_event_array_size; i++) {
+    for (int i = 0; i < current_event_array_size; ++i) {
         auto event_dispatcher_ptr =
             static_cast<PollableFileDescriptor *>(_event_array[i].data.ptr);
 
