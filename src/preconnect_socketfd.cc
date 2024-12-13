@@ -1,3 +1,5 @@
+#include <sys/socket.h>
+
 #include "preconnect_socketfd.h"
 
 namespace xubinh_server {
@@ -27,6 +29,16 @@ PreconnectSocketfd::PreconnectSocketfd(
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 }
 
+int PreconnectSocketfd::_connect_to_server(
+    int socketfd, const InetAddress &server_address
+) {
+    return ::connect(
+        socketfd,
+        server_address.get_address(),
+        server_address.get_address_length()
+    );
+}
+
 void PreconnectSocketfd::_schedule_retry() {
     if (_number_of_retries >= _MAX_NUMBER_OF_RETRIES) {
         LOG_ERROR << "max number of retries reached";
@@ -41,7 +53,7 @@ void PreconnectSocketfd::_schedule_retry() {
     _number_of_retries += 1;
 
     _event_loop->run_after_time_interval(
-        _current_retry_time_interval,
+        std::min(_MAX_RETRY_TIME_INTERVAL, _current_retry_time_interval),
         0,
         0,
         std::bind(_try_once, shared_from_this())
