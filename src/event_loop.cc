@@ -27,7 +27,7 @@ EventLoop::EventLoop()
 
 void EventLoop::loop() {
     while (true) {
-        // check for external stop signal
+        // check for stop signal (either external or from within)
         if (_need_stop.load(std::memory_order_acquire)) {
             break;
         }
@@ -127,7 +127,7 @@ void EventLoop::ask_to_stop() {
     const int NUMBER_OF_DUMMY_WAKE_UPS = 3;
 
     // do a bunch of dummy wake-ups
-    for (int i = 0; i < NUMBER_OF_DUMMY_WAKE_UPS; i++) {
+    for (int i = 0; i < NUMBER_OF_DUMMY_WAKE_UPS; ++i) {
         _wake_up_this_loop();
     }
 }
