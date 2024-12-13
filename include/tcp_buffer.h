@@ -1,7 +1,9 @@
 #ifndef XUBINH_SERVER_TCP_BUFFER
 #define XUBINH_SERVER_TCP_BUFFER
 
+#include <algorithm>
 #include <cstddef>
+#include <cstring>
 #include <vector>
 
 namespace xubinh_server {
@@ -68,8 +70,29 @@ public:
     // fixed-size write
     void write(const char *buffer, size_t buffer_size);
 
+    const char *get_next_newline_position() {
+        return static_cast<const char *>(
+            ::memchr(get_current_read_position(), '\n', get_readable_size())
+        );
+    }
+
+    const char *get_next_crlf_position() {
+        auto next_crlf_position = std::search(
+            get_current_read_position(),
+            get_current_write_position(),
+            CRLF,
+            CRLF + 2
+        );
+
+        return next_crlf_position == get_current_write_position()
+                   ? nullptr
+                   : next_crlf_position;
+    }
+
 private:
     static constexpr size_t _DEFAULT_INITIAL_BUFFER_SIZE = 1024;
+
+    static char CRLF[];
 
     char *_begin() {
         return &(*_buffer.begin());

@@ -30,4 +30,6 @@ void MutableSizeTcpBuffer::write(const char *buffer, size_t buffer_size) {
     forward_write_position(buffer_size);
 }
 
+char MutableSizeTcpBuffer::CRLF[] = "\r\n";
+
 } // namespace xubinh_server
