@@ -11,33 +11,24 @@ namespace xubinh_server {
 
 class EventLoopThreadPool {
 public:
-    explicit EventLoopThreadPool(int capacity)
-        : _THREAD_POOL_CAPASITY(capacity), _thread_pool(capacity) {
-        if (capacity <= 0) {
-            LOG_FATAL << "non-positive thread pool capacity given";
-        }
+    using ThreadInitializationCallbackType =
+        EventLoopThread::ThreadInitializationCallbackType;
 
-        for (auto &thread : _thread_pool) {
-            thread.start();
-        }
-    }
+    explicit EventLoopThreadPool(
+        int capacity,
+        ThreadInitializationCallbackType thread_initialization_callback
+    );
 
-    ~EventLoopThreadPool() {
-        for (auto &thread : _thread_pool) {
-            thread.get_loop()->ask_to_stop();
-        }
+    ~EventLoopThreadPool();
 
-        for (auto &thread : _thread_pool) {
-            thread.join();
-        }
-    }
+    void start();
 
-    EventLoopThread *get_next_thread() {
-        auto next_loop_index =
-            _next_loop_index_counter.fetch_add(1, std::memory_order_acquire)
-            % _THREAD_POOL_CAPASITY;
+    void stop();
 
-        return &_thread_pool[next_loop_index];
+    EventLoopThread *get_next_thread();
+
+    EventLoop *get_next_loop() {
+        return get_next_thread()->get_loop();
     }
 
 private:
