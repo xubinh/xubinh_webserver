@@ -2,13 +2,13 @@
 
 namespace xubinh_server {
 
-explicit EventLoopThreadPool::EventLoopThreadPool(
-    int capacity,
+EventLoopThreadPool::EventLoopThreadPool(
+    size_t capacity,
     ThreadInitializationCallbackType thread_initialization_callback
 )
     : _THREAD_POOL_CAPASITY(capacity) {
-    if (capacity <= 0) {
-        LOG_FATAL << "non-positive thread pool capacity given";
+    if (capacity == 0) {
+        LOG_FATAL << "zero capacity given for initializing thread pool";
     }
 
     for (int i = 0; i < capacity; ++i) {
@@ -20,23 +20,32 @@ explicit EventLoopThreadPool::EventLoopThreadPool(
 }
 
 EventLoopThreadPool::~EventLoopThreadPool() {
-    for (auto &thread : _thread_pool) {
-        if (thread.is_joined()) {
-            continue;
-        }
-
-        LOG_FATAL << "event loop thread pool must be stopped before "
-                     "destruction";
+    if (!_is_stopped) {
+        LOG_FATAL << "tried to destruct a thread pool before stopping it";
     }
 }
 
 void EventLoopThreadPool::start() {
+    if (_is_started) {
+        return;
+    }
+
     for (auto &thread : _thread_pool) {
         thread.start();
     }
+
+    _is_started = true;
 }
 
 void EventLoopThreadPool::stop() {
+    if (_is_stopped) {
+        return;
+    }
+
+    if (!_is_started) {
+        LOG_FATAL << "tried to stop a thread pool before starting it";
+    }
+
     for (auto &thread : _thread_pool) {
         thread.get_loop()->ask_to_stop();
     }
@@ -44,6 +53,8 @@ void EventLoopThreadPool::stop() {
     for (auto &thread : _thread_pool) {
         thread.join();
     }
+
+    _is_stopped = true;
 }
 
 EventLoopThread *EventLoopThreadPool::get_next_thread() {

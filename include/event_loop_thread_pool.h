@@ -9,13 +9,14 @@
 
 namespace xubinh_server {
 
+// not thread-safe
 class EventLoopThreadPool {
 public:
     using ThreadInitializationCallbackType =
         EventLoopThread::ThreadInitializationCallbackType;
 
-    explicit EventLoopThreadPool(
-        int capacity,
+    EventLoopThreadPool(
+        size_t capacity,
         ThreadInitializationCallbackType thread_initialization_callback
     );
 
@@ -32,7 +33,10 @@ public:
     }
 
 private:
-    const int _THREAD_POOL_CAPASITY = -1;
+    const size_t _THREAD_POOL_CAPASITY = 0;
+
+    bool _is_started = false;
+    bool _is_stopped = false;
 
     std::vector<EventLoopThread> _thread_pool;
     std::atomic<int> _next_loop_index_counter{0};
