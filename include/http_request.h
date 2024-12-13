@@ -5,6 +5,10 @@
 #include <string>
 #include <unordered_map>
 
+#include "util/time_point.h"
+
+namespace xubinh_server {
+
 class HttpRequest {
 public:
     enum HttpMethodType { UNSUPPORTED_HTTP_METHOD, GET, POST };
@@ -49,6 +53,14 @@ public:
 
     const char *get_version_type_as_string() const;
 
+    void set_receive_time_point(const util::TimePoint &receive_time_point) {
+        _receive_time_point = receive_time_point;
+    }
+
+    const util::TimePoint &get_receive_time_point() const {
+        return _receive_time_point;
+    }
+
     // true = success, false = fail
     bool set_header(const char *start, const char *end);
 
@@ -82,8 +94,11 @@ private:
     HttpMethodType _method = UNSUPPORTED_HTTP_METHOD;
     std::string _path;
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
+    util::TimePoint _receive_time_point;
     std::unordered_map<std::string, std::string> _headers;
     std::string _body;
 };
+
+} // namespace xubinh_server
 
 #endif
