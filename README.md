@@ -212,9 +212,9 @@
 - [x] `PreconnectSocketfd`: 对预连接的 connect socketfd 的抽象.
 - [x] `TcpServer`: 对 TCP 服务器的抽象.
 - [x] `TcpClient`: 对 TCP 客户端的抽象.
-- [ ] `HttpContext`: 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程. 本对象是存储在 `TcpConnectSocketfd` 对象中的 (muduo 实现的 `TcpConnection` 对象中设置了一个通用的上下文对象成员 `boost::any context_` 用于存储任意上下文, 其中自然也包括 HTTP 上下文 `HttpContext`).
-- [ ] `HttpRequest`: 对 HTTP 请求报文的抽象, 提供一些基础的 API, 包括获取请求头信息等等.
-- [ ] `HttpResponse`: 对 HTTP 响应报文的抽象, 提供一些基础的 API, 包括设置响应体数据等等.
+- [ ] `HttpContext`: 对 HTTP 请求解析过程的上下文的抽象, 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程.
+- [ ] `HttpRequest`: 对 HTTP 请求报文的抽象.
+- [ ] `HttpResponse`: 对 HTTP 响应报文的抽象.
 - [ ] `Signalfd`: 对 signalfd 的抽象.
 - [ ] 应用: 实现一个 echo 服务器.
 - [ ] 应用: 以 long polling 方式开发一个简单的实时聊天室应用.
