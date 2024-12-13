@@ -25,6 +25,10 @@ void EventLoopThread::_worker_function() {
 
     _cond.notify_all();
 
+    if (_thread_initialization_callback) {
+        _thread_initialization_callback();
+    }
+
     loop.loop();
 }
 
