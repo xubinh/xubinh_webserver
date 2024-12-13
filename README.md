@@ -210,7 +210,7 @@
 - [x] `TcpConnectSocketfd`: 对 TCP connect socketfd 的抽象.
 - [x] `ListenSocketfd`: 对 listen socketfd 的抽象.
 - [x] `PreconnectSocketfd`: 对预连接的 connect socketfd 的抽象.
-- [ ] `TcpServer`: 对 TCP 服务器的抽象. 执行的逻辑包括创建 `ListenSocketfd` 对象并设置回调, 创建并启动线程池, 以及启动事件循环等. 内部使用一个 map 来索引已建立的 `TcpConnectSocketfd` 连接.
+- [x] `TcpServer`: 对 TCP 服务器的抽象.
 - [ ] `TcpClient`: 对 TCP 客户端的抽象.
 - [ ] `HttpContext`: 用于在不连续的数据接收事件之间维护一个逻辑上连续的解析过程. 本对象是存储在 `TcpConnectSocketfd` 对象中的 (muduo 实现的 `TcpConnection` 对象中设置了一个通用的上下文对象成员 `boost::any context_` 用于存储任意上下文, 其中自然也包括 HTTP 上下文 `HttpContext`).
 - [ ] `HttpRequest`: 对 HTTP 请求报文的抽象, 提供一些基础的 API, 包括获取请求头信息等等.
@@ -220,6 +220,7 @@
 - [ ] 应用: 以 long polling 方式开发一个简单的实时聊天室应用.
 - [ ] 应用: 简易 RPC 框架.
 - [ ] 优化:
+  - 手动实现各种同步原语.
   - 尽可能将指针形式的形参更换为引用形式.
   - 尽可能使用右值引用避免不必要的拷贝和移动.
   - 尽可能降低线程间的竞争代价.
