@@ -3,6 +3,16 @@
 namespace xubinh_server {
 
 void TcpServer::start() {
+    if (_is_started) {
+        return;
+    }
+
+    _is_started = true;
+
+    if (!_message_callback) {
+        LOG_FATAL << "missing message callback";
+    }
+
     auto listen_socketfd = Socketfd::create_socketfd();
 
     ListenSocketfd::set_socketfd_as_address_reusable(listen_socketfd);
@@ -28,6 +38,16 @@ void TcpServer::start() {
 }
 
 void TcpServer::stop() {
+    if (_is_stopped) {
+        return;
+    }
+
+    if (!_is_started) {
+        LOG_FATAL << "tried to stop tcp server before starting it";
+    }
+
+    _is_stopped = true;
+
     if (_thread_pool_capacity > 0) {
         _thread_pool->stop();
     }

@@ -13,8 +13,7 @@ class PreconnectSocketfd
     : public std::enable_shared_from_this<PreconnectSocketfd>,
       public Socketfd {
 public:
-    using NewConnectionCallbackType = std::function<
-        void(PreconnectSocketfd *preconnect_socketfd_self, int socketfd)>;
+    using NewConnectionCallbackType = std::function<void(int connect_socketfd)>;
 
     using ConnectFailCallbackType =
         std::function<void(PreconnectSocketfd *preconnect_socketfd_self)>;
@@ -22,17 +21,12 @@ public:
     PreconnectSocketfd(
         int fd,
         EventLoop *event_loop,
-        const std::string &id,
         const InetAddress &server_address,
         int max_number_of_retries
     );
 
     ~PreconnectSocketfd() {
         _pollable_file_descriptor.disable_write_event();
-    }
-
-    const std::string &get_id() const {
-        return _id;
     }
 
     void register_new_connection_callback(
@@ -74,8 +68,6 @@ private:
     void _try_once();
 
     EventLoop *_event_loop;
-
-    const std::string _id;
 
     const int _MAX_NUMBER_OF_RETRIES;
 

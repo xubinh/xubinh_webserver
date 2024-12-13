@@ -23,6 +23,12 @@ public:
         : _loop(loop), _local_address(local_address) {
     }
 
+    ~TcpServer() {
+        if (!_is_stopped) {
+            LOG_SYS_FATAL << "tried to destruct tcp server before stopping it";
+        }
+    }
+
     void register_message_callback(MessageCallbackType message_callback) {
         _message_callback = std::move(message_callback);
     }
@@ -56,6 +62,9 @@ private:
 
     // for tcp connect socketfd
     void _close_callback(TcpConnectSocketfd *tcp_connect_socketfd_self);
+
+    bool _is_started = false;
+    bool _is_stopped = false;
 
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;

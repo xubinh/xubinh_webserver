@@ -7,12 +7,10 @@ namespace xubinh_server {
 PreconnectSocketfd::PreconnectSocketfd(
     int fd,
     EventLoop *event_loop,
-    const std::string &id,
     const InetAddress &server_address,
     int max_number_of_retries
 )
-    : _event_loop(event_loop), _id(id),
-      _MAX_NUMBER_OF_RETRIES(max_number_of_retries),
+    : _event_loop(event_loop), _MAX_NUMBER_OF_RETRIES(max_number_of_retries),
       _server_address(server_address),
       _pollable_file_descriptor(fd, event_loop) {
 
