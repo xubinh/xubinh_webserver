@@ -58,6 +58,7 @@ public:
         _write_complete_callback = std::move(write_complete_callback);
     }
 
+    // used by internal framework
     void register_close_callback(CloseCallbackType close_callback) {
         _close_callback = std::move(close_callback);
     }

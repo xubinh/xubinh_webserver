@@ -29,6 +29,7 @@ public:
         _pollable_file_descriptor.disable_read_event();
     }
 
+    // used by internal framework
     void register_new_connection_callback(
         NewConnectionCallbackType new_connection_callback
     ) {
@@ -45,8 +46,9 @@ public:
 
 private:
     // simple wrapper for `::accept` with return values unchanged
-    static int
-    _accept_new_connection(int listen_socketfd, InetAddress &peer_address);
+    static int _accept_new_connection(
+        int listen_socketfd, std::unique_ptr<InetAddress> &peer_address
+    );
 
     void _open_spare_fd();
 

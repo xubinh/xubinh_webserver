@@ -52,26 +52,27 @@ ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
 }
 
 int ListenSocketfd::_accept_new_connection(
-    int listen_socketfd, InetAddress &peer_address
+    int listen_socketfd, std::unique_ptr<InetAddress> &peer_address_ptr
 ) {
     using sockaddr_unknown_t = InetAddress::sockaddr_unknown_t;
 
     sockaddr_unknown_t peer_address_temp{};
     socklen_t peer_address_temp_len = sizeof(sockaddr_unknown_t);
 
-    int connect_socketfd = accept(
+    int connect_socketfd = ::accept(
         listen_socketfd,
-        (struct sockaddr *)&peer_address_temp,
+        reinterpret_cast<sockaddr *>(&peer_address_temp),
         &peer_address_temp_len
     );
 
     if (connect_socketfd >= 0) {
-        peer_address = InetAddress(
+        peer_address_ptr.reset(new InetAddress(
             reinterpret_cast<sockaddr *>(&peer_address_temp),
             peer_address_temp_len
-        );
+        ));
     }
 
+    // may fail and return errno instead
     return connect_socketfd;
 }
 
@@ -90,10 +91,10 @@ void ListenSocketfd::_close_spare_fd() {
 void ListenSocketfd::_drop_connection_using_spare_fd() {
     _close_spare_fd();
 
-    InetAddress peer_address{};
+    std::unique_ptr<InetAddress> peer_address_ptr;
 
     auto connect_socketfd = ListenSocketfd::_accept_new_connection(
-        _pollable_file_descriptor.get_fd(), peer_address
+        _pollable_file_descriptor.get_fd(), peer_address_ptr
     );
 
     ::close(connect_socketfd);
@@ -103,15 +104,15 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
 
 void ListenSocketfd::_read_event_callback() {
     while (true) {
-        InetAddress peer_address{};
+        std::unique_ptr<InetAddress> peer_address_ptr;
 
         auto connect_socketfd = ListenSocketfd::_accept_new_connection(
-            _pollable_file_descriptor.get_fd(), peer_address
+            _pollable_file_descriptor.get_fd(), peer_address_ptr
         );
 
         // success
         if (connect_socketfd >= 0) {
-            _new_connection_callback(connect_socketfd, peer_address);
+            _new_connection_callback(connect_socketfd, *peer_address_ptr);
         }
 
         // error
@@ -148,8 +149,6 @@ void ListenSocketfd::_read_event_callback() {
             }
         }
     }
-
-    LOG_SYS_FATAL << "failed to accept new connection";
 }
 
 } // namespace xubinh_server
