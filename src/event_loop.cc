@@ -127,7 +127,7 @@ void EventLoop::ask_to_stop() {
     const int NUMBER_OF_DUMMY_WAKE_UPS = 3;
 
     // do a bunch of dummy wake-ups
-    for (int i = 0; i < NUMBER_OF_DUMMY_WAKE_UPS; ++i) {
+    for (int i = 0; i < NUMBER_OF_DUMMY_WAKE_UPS; i++) {
         _wake_up_this_loop();
     }
 }

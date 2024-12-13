@@ -40,7 +40,7 @@ TimerContainer::move_out_before_or_at(const TimePoint &expiration_time_point) {
     // optional for bidirectional iterator
     // timers_to_be_returned.reserve(std::distance(range_begin, range_end));
 
-    for (auto it = range_begin; it != range_end; ++it) {
+    for (auto it = range_begin; it != range_end; it++) {
         timers_to_be_returned.push_back(it->second);
     }
 

@@ -88,7 +88,7 @@ public:
 
         auto buffer_ptr = output_buffer + 2;
 
-        for (size_t i = 0; i < _NUMBER_OF_LETTERS_OF_POINTER_IN_HEX; ++i) {
+        for (size_t i = 0; i < _NUMBER_OF_LETTERS_OF_POINTER_IN_HEX; i++) {
             uint8_t nibble = value & 0xF;
 
             *buffer_ptr++ = _HEX_ALPHABET_TABLE[nibble];

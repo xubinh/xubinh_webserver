@@ -11,7 +11,7 @@ EventLoopThreadPool::EventLoopThreadPool(
         LOG_FATAL << "zero capacity given for initializing thread pool";
     }
 
-    for (int i = 0; i < capacity; ++i) {
+    for (int i = 0; i < capacity; i++) {
         _thread_pool.emplace_back(
             "#" + std::to_string(i) + "@EventLoopThreadPool",
             thread_initialization_callback
