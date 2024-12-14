@@ -89,6 +89,22 @@ public:
                    : next_crlf_position;
     }
 
+    void write_space() {
+        write(" ", 1);
+    }
+
+    void write_newline() {
+        write("\n", 1);
+    }
+
+    void write_crlf() {
+        write("\r\n", 2);
+    }
+
+    void write_colon() {
+        write(":", 1);
+    }
+
 private:
     static constexpr size_t _DEFAULT_INITIAL_BUFFER_SIZE = 1024;
 
