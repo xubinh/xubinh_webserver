@@ -199,7 +199,7 @@ TcpConnectSocketfd::_send_as_many_data(const char *data, size_t data_size) {
             _pollable_file_descriptor.get_fd(),
             data + total_number_of_bytes_sent,
             data_size - total_number_of_bytes_sent,
-            0
+            MSG_NOSIGNAL // prevent shutting down by a single SIGPIPE
         );
 
         if (current_number_of_bytes_sent >= 0) {
@@ -210,6 +210,14 @@ TcpConnectSocketfd::_send_as_many_data(const char *data, size_t data_size) {
         else if (current_number_of_bytes_sent == -1) {
             // socket's send buffer is full
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
+
+            // tries to write after the peer has closed the connection
+            else if (errno == EPIPE) {
+                LOG_WARN << "SIGPIPE encountered when trying to write to a tcp "
+                            "connection";
+
                 break;
             }
 
