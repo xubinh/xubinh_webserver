@@ -8,7 +8,9 @@
 
 namespace xubinh_server {
 
-// not thread-safe
+// non-copyable, non-movable, and pollable file descriptors
+//
+// - not thread-safe
 class PollableFileDescriptor {
 private:
     using EpollEventsType = decltype(epoll_event().events);
@@ -26,6 +28,14 @@ public:
 
         set_fd_as_nonblocking(_fd);
     }
+
+    // no copy
+    PollableFileDescriptor(const PollableFileDescriptor &) = delete;
+    PollableFileDescriptor &operator=(const PollableFileDescriptor &) = delete;
+
+    // no move
+    PollableFileDescriptor(PollableFileDescriptor &&) = delete;
+    PollableFileDescriptor &operator=(PollableFileDescriptor &&) = delete;
 
     ~PollableFileDescriptor() {
         ::close(_fd);
