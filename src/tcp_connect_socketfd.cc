@@ -43,6 +43,19 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 }
 
+void TcpConnectSocketfd::start() {
+    if (_is_reading) {
+        return;
+    }
+
+    if (!_message_callback) {
+        LOG_FATAL << "missing message callback";
+    }
+
+    _pollable_file_descriptor.enable_read_event();
+    _is_reading = true;
+}
+
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     // could be called after the connection is closed, so check it first
     if (_is_closed) {
@@ -62,7 +75,7 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     // no need for further writing if all data is sent
     if (number_of_bytes_sent == data_size) {
         if (_write_complete_callback) {
-            _write_complete_callback(this);
+            _write_complete_callback(shared_from_this());
         }
 
         return;
@@ -82,7 +95,7 @@ void TcpConnectSocketfd::_read_event_callback() {
 
     // user should call `send()` internally to send the data and possibly start
     // listening the writing event
-    _message_callback(this, &_input_buffer, util::TimePoint());
+    _message_callback(shared_from_this(), &_input_buffer, util::TimePoint());
 }
 
 void TcpConnectSocketfd::_write_event_callback() {
@@ -105,7 +118,7 @@ void TcpConnectSocketfd::_write_event_callback() {
     }
 
     if (_write_complete_callback) {
-        _write_complete_callback(this);
+        _write_complete_callback(shared_from_this());
     }
 
     _pollable_file_descriptor.disable_write_event();
@@ -131,7 +144,7 @@ void TcpConnectSocketfd::_close_event_callback() {
     // iteration
 
     if (_close_callback) {
-        _close_callback(this);
+        _close_callback(shared_from_this());
     }
 }
 

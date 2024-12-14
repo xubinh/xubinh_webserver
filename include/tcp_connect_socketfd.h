@@ -14,17 +14,21 @@ class TcpConnectSocketfd
     : public std::enable_shared_from_this<TcpConnectSocketfd>,
       public Socketfd {
 public:
+    using TcpConnectSocketfdPtr = std::shared_ptr<TcpConnectSocketfd>;
+
     using MessageCallbackType = std::function<void(
-        TcpConnectSocketfd *tcp_connect_socketfd_self,
+        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
         MutableSizeTcpBuffer *input_buffer,
         const util::TimePoint &time_point
     )>;
 
     using WriteCompleteCallbackType =
-        std::function<void(TcpConnectSocketfd *tcp_connect_socketfd_self)>;
+        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+        )>;
 
     using CloseCallbackType =
-        std::function<void(TcpConnectSocketfd *tcp_connect_socketfd_self)>;
+        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+        )>;
 
     TcpConnectSocketfd(
         int fd,
@@ -48,6 +52,14 @@ public:
         return _id;
     }
 
+    const InetAddress &get_local_address() const {
+        return _local_address;
+    }
+
+    const InetAddress &get_remote_address() const {
+        return _remote_address;
+    }
+
     void register_message_callback(MessageCallbackType message_callback) {
         _message_callback = std::move(message_callback);
     }
@@ -64,20 +76,15 @@ public:
     }
 
     // not thread-safe
-    void start() {
-        if (_is_reading) {
-            return;
-        }
+    void start();
 
-        if (!_message_callback) {
-            LOG_FATAL << "missing message callback";
-        }
-
-        _pollable_file_descriptor.enable_read_event();
-        _is_reading = true;
+    void shutdown() {
+        _pollable_file_descriptor.get_loop()->run(
+            std::bind(_close_event_callback, shared_from_this())
+        );
     }
 
-    // should only be executed by one worker loop
+    // should be called only inside a worker loop
     void send(const char *data, size_t data_size);
 
     // used by user

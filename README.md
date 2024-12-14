@@ -216,7 +216,6 @@
 - [x] `HttpParser`: 对 HTTP 请求解析过程的抽象, 通过在内部维护必要的上下文信息来为离散的数据接收事件维护一个逻辑上连续的解析过程.
 - [x] `HttpResponse`: 对 HTTP 响应报文的抽象.
 - [x] `Signalfd`: 对 signalfd 的抽象.
-- [ ] 处理 `Connection: close`, `Connection: keep-alive`, 以及超时链接等问题.
 - [ ] 应用: 实现一个 echo 服务器.
 - [ ] 添加英文版 `README.md`.
 - [ ] 应用: 以 long polling 方式开发一个简单的实时聊天室应用.

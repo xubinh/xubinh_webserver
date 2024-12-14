@@ -13,10 +13,16 @@ class PreconnectSocketfd
     : public std::enable_shared_from_this<PreconnectSocketfd>,
       public Socketfd {
 public:
-    using NewConnectionCallbackType = std::function<void(int connect_socketfd)>;
+    using PreconnectSocketfdPtr = std::shared_ptr<PreconnectSocketfd>;
+
+    using NewConnectionCallbackType = std::function<void(
+        const PreconnectSocketfdPtr &preconnect_socketfd_ptr,
+        int connect_socketfd
+    )>;
 
     using ConnectFailCallbackType =
-        std::function<void(PreconnectSocketfd *preconnect_socketfd_self)>;
+        std::function<void(const PreconnectSocketfdPtr &preconnect_socketfd_ptr
+        )>;
 
     PreconnectSocketfd(
         int fd,

@@ -11,6 +11,8 @@ namespace xubinh_server {
 
 class TcpServer {
 public:
+    using TcpConnectSocketfdPtr = TcpConnectSocketfd::TcpConnectSocketfdPtr;
+
     using MessageCallbackType = TcpConnectSocketfd::MessageCallbackType;
 
     using WriteCompleteCallbackType =
@@ -18,6 +20,10 @@ public:
 
     using ThreadInitializationCallbackType =
         EventLoopThreadPool::ThreadInitializationCallbackType;
+
+    using RunForEachConnectionCallbackType =
+        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+        )>;
 
     TcpServer(EventLoop *loop, const InetAddress &local_address)
         : _loop(loop), _local_address(local_address) {
@@ -54,6 +60,14 @@ public:
 
     void stop();
 
+    void run_for_each_connection(RunForEachConnectionCallbackType callback) {
+        _loop->run([=]() {
+            for (const auto &pair : _tcp_connect_socketfds) {
+                callback(pair.second);
+            }
+        });
+    }
+
 private:
     // for listen socketfd
     void _new_connection_callback(
@@ -61,7 +75,7 @@ private:
     );
 
     // for tcp connect socketfd
-    void _close_callback(TcpConnectSocketfd *tcp_connect_socketfd_self);
+    void _close_callback(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr);
 
     bool _is_started = false;
     bool _is_stopped = false;
@@ -76,8 +90,7 @@ private:
 
     std::unique_ptr<ListenSocketfd> _listen_socketfd;
 
-    std::map<std::string, std::shared_ptr<TcpConnectSocketfd>>
-        _tcp_connect_socketfds;
+    std::map<std::string, TcpConnectSocketfdPtr> _tcp_connect_socketfds;
 
     size_t _thread_pool_capacity = 0;
     ThreadInitializationCallbackType _thread_initialization_callback;

@@ -56,6 +56,12 @@ void PollableFileDescriptor::dispatch_active_events() {
         if (strong_lifetime_guard) {
             _dispatch_active_events();
         }
+
+        else {
+            // the wrapper object is just in the process of destruction right
+            // now
+            return;
+        }
     }
 
     // otherwise the outer class ensures there will be no lifetime issue

@@ -42,7 +42,7 @@ void PreconnectSocketfd::_schedule_retry() {
         LOG_ERROR << "max number of retries reached";
 
         if (_connect_fail_callback) {
-            _connect_fail_callback(this);
+            _connect_fail_callback(shared_from_this());
         }
 
         return;
@@ -67,7 +67,7 @@ void PreconnectSocketfd::_write_event_callback() {
 
     // success
     if (saved_errno == 0) {
-        _new_connection_callback(this, socketfd);
+        _new_connection_callback(shared_from_this(), socketfd);
 
         _pollable_file_descriptor.disable_write_event();
     }
@@ -87,7 +87,7 @@ void PreconnectSocketfd::_try_once() {
 
     // success
     if (connect_status == 0) {
-        _new_connection_callback(this, socketfd);
+        _new_connection_callback(shared_from_this(), socketfd);
 
         _pollable_file_descriptor.disable_write_event();
     }
@@ -121,7 +121,7 @@ void PreconnectSocketfd::_try_once() {
                              "connect one single socketfd";
 
             if (_connect_fail_callback) {
-                _connect_fail_callback(this);
+                _connect_fail_callback(shared_from_this());
             }
 
             break;
@@ -137,7 +137,7 @@ void PreconnectSocketfd::_try_once() {
             LOG_SYS_ERROR << "invalid connect operation";
 
             if (_connect_fail_callback) {
-                _connect_fail_callback(this);
+                _connect_fail_callback(shared_from_this());
             }
 
             break;

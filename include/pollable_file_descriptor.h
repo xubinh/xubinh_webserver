@@ -45,6 +45,10 @@ public:
         return _fd;
     }
 
+    EventLoop *get_loop() {
+        return _event_loop;
+    }
+
     void register_read_event_callback(CallbackType read_event_callback) {
         _read_event_callback = std::move(read_event_callback);
     }
