@@ -97,7 +97,7 @@ void LogCollector::_background_io_thread_worker_functor() {
             // if still no fulled buffers
             if (_fulled_chunk_buffers.empty()) {
                 // exist if asked for stop
-                if (_need_stop.load(std::memory_order_acquire)) {
+                if (_need_stop.load(std::memory_order_relaxed)) {
                     lock_hook = std::move(lock);
 
                     break;
@@ -185,8 +185,9 @@ void LogCollector::_stop(bool also_need_abort) {
     bool expected = false;
 
     if (!_need_stop.compare_exchange_strong(
-            expected, true, std::memory_order_acq_rel, std::memory_order_acquire
+            expected, true, std::memory_order_relaxed, std::memory_order_relaxed
         )) {
+
         return;
     }
 

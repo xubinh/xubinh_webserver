@@ -59,7 +59,7 @@ void EventLoopThreadPool::stop() {
 
 EventLoopThread *EventLoopThreadPool::get_next_thread() {
     auto next_loop_index =
-        _next_loop_index_counter.fetch_add(1, std::memory_order_acquire)
+        _next_loop_index_counter.fetch_add(1, std::memory_order_relaxed)
         % _THREAD_POOL_CAPASITY;
 
     return &_thread_pool[next_loop_index];

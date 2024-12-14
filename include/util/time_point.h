@@ -73,8 +73,6 @@ struct TimeInterval {
 };
 
 struct TimePoint {
-    static constexpr int64_t FOREVER = 0xffffffffffffffff;
-
     static int64_t get_nanoseconds_from_epoch();
 
     TimePoint() : nanoseconds_from_epoch(get_nanoseconds_from_epoch()) {
@@ -141,6 +139,8 @@ struct TimePoint {
     bool operator!=(const int64_t &other_nanoseconds_from_epoch) const {
         return !operator==(other_nanoseconds_from_epoch);
     }
+
+    static constexpr int64_t FOREVER = 0xffffffffffffffff;
 
     int64_t nanoseconds_from_epoch = 0;
 };

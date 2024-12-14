@@ -1,6 +1,8 @@
 #ifndef XUBINH_SERVER_TCP_CONNECT_SOCKETFD
 #define XUBINH_SERVER_TCP_CONNECT_SOCKETFD
 
+#include <atomic>
+
 #include "inet_address.h"
 #include "pollable_file_descriptor.h"
 #include "socketfd.h"
@@ -87,6 +89,16 @@ public:
     // should be called only inside a worker loop
     void send(const char *data, size_t data_size);
 
+    // thread-safe
+    void set_time_stamp(const util::TimePoint &time_stamp) {
+        _time_stamp.store(time_stamp, std::memory_order_relaxed);
+    }
+
+    // thread-safe
+    util::TimePoint get_time_stamp() const {
+        return _time_stamp.load(std::memory_order_relaxed);
+    }
+
     // used by user
     util::Any context{};
 
@@ -109,6 +121,8 @@ private:
     const std::string _id;
     const InetAddress _local_address;
     const InetAddress _remote_address;
+
+    std::atomic<util::TimePoint> _time_stamp;
 
     MutableSizeTcpBuffer _input_buffer;
     MutableSizeTcpBuffer _output_buffer;

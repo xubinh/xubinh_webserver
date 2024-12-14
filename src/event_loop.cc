@@ -28,7 +28,7 @@ EventLoop::EventLoop()
 void EventLoop::loop() {
     while (true) {
         // check for stop signal (either external or from within)
-        if (_need_stop.load(std::memory_order_acquire)) {
+        if (_need_stop.load(std::memory_order_relaxed)) {
             break;
         }
 
@@ -119,8 +119,6 @@ void EventLoop::ask_to_stop() {
     // a release fence that comes after a store essentially makes the store
     // become a part of the memory ordering, i.e. store first and then do the
     // dummy wake-ups
-    //
-    // [TODO]: make sure this is correct
     _need_stop.store(true, std::memory_order_relaxed);
     std::atomic_thread_fence(std::memory_order_release);
 
