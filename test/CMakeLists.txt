@@ -1,3 +1,5 @@
+enable_testing()
+
 include(FetchContent)
 
 # last release that supports C++11

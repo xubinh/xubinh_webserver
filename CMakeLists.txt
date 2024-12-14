@@ -10,6 +10,4 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # for enabling recursive parsing
 add_subdirectory(src)
 
-enable_testing()
-
 add_subdirectory(test)
