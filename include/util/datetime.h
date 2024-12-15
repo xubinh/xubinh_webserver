@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_DATETIME
-#define XUBINH_SERVER_UTIL_DATETIME
+#ifndef __XUBINH_SERVER_UTIL_DATETIME
+#define __XUBINH_SERVER_UTIL_DATETIME
 
 #include <cstring>
 #include <ctime>
@@ -20,6 +20,11 @@ public:
 
     static std::string
     get_datetime_string(const DatetimePurpose &datetime_purpose);
+
+    static std::string get_datetime_string(
+        time_t time_from_epoch_in_seconds,
+        const DatetimePurpose &datetime_purpose
+    );
 
     static constexpr size_t DATETIME_STRING_LENGTHES[static_cast<size_t>(
         DatetimePurpose::NUMBER_OF_ALL_PURPOSES

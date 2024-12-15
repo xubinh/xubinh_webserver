@@ -85,19 +85,22 @@ void Thread::join() {
 
     if (_pthread_join_result) {
         switch (errno) {
-        case EDEADLK: {
+        case EDEADLK:
             LOG_FATAL << "dead lock detected when joining a thread";
-        }
+
+            break;
 
         // will never encounter these, so make them fatal
         case EINVAL:
-        case ESRCH: {
+        case ESRCH:
             LOG_FATAL << "something that is not supposed to happen happened";
-        }
 
-        default: {
+            break;
+
+        default:
             LOG_SYS_ERROR << "unknown error";
-        }
+
+            break;
         }
     }
 

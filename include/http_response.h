@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_HTTP_RESPONSE
-#define XUBINH_SERVER_HTTP_RESPONSE
+#ifndef __XUBINH_SERVER_HTTP_RESPONSE
+#define __XUBINH_SERVER_HTTP_RESPONSE
 
 #include <string>
 #include <unordered_map>
@@ -145,6 +145,8 @@ public:
     void dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer);
 
 private:
+    static const std::string _empty_string;
+
     HttpVersionType _version;
 
     HttpStatusCode _status_code = S_NONE;

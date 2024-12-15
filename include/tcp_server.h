@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_TCP_SERVER
-#define XUBINH_SERVER_TCP_SERVER
+#ifndef __XUBINH_SERVER_TCP_SERVER
+#define __XUBINH_SERVER_TCP_SERVER
 
 #include <map>
 
@@ -12,6 +12,10 @@ namespace xubinh_server {
 class TcpServer {
 public:
     using TcpConnectSocketfdPtr = TcpConnectSocketfd::TcpConnectSocketfdPtr;
+
+    using ConnectSuccessCallbackType =
+        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+        )>;
 
     using MessageCallbackType = TcpConnectSocketfd::MessageCallbackType;
 
@@ -33,6 +37,12 @@ public:
         if (!_is_stopped) {
             LOG_SYS_FATAL << "tried to destruct tcp server before stopping it";
         }
+    }
+
+    void register_connect_success_callback(
+        ConnectSuccessCallbackType connect_success_callback
+    ) {
+        _connect_success_callback = std::move(connect_success_callback);
     }
 
     void register_message_callback(MessageCallbackType message_callback) {
@@ -79,6 +89,8 @@ private:
 
     bool _is_started = false;
     bool _is_stopped = false;
+
+    ConnectSuccessCallbackType _connect_success_callback;
 
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;

@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_TIMER
-#define XUBINH_SERVER_TIMER
+#ifndef __XUBINH_SERVER_TIMER
+#define __XUBINH_SERVER_TIMER
 
 #include <algorithm>
 #include <functional>

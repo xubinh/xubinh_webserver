@@ -24,7 +24,10 @@ int Socketfd::get_socketfd_errno(int socketfd) {
             socketfd, SOL_SOCKET, SO_ERROR, &saved_errno, &saved_errno_len
         )
         < 0) {
+
         LOG_SYS_FATAL << "getsockopt failed";
+
+        return 0;
     }
     else {
         return saved_errno;

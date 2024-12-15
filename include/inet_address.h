@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_INET_ADDRESS
-#define XUBINH_SERVER_INET_ADDRESS
+#ifndef __XUBINH_SERVER_INET_ADDRESS
+#define __XUBINH_SERVER_INET_ADDRESS
 
 #include <arpa/inet.h>
 #include <string>

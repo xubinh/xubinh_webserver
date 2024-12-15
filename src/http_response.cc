@@ -4,21 +4,17 @@ namespace xubinh_server {
 
 const char *HttpResponse::get_version_type_as_string() const {
     switch (_version) {
-
-    case HTTP_1_0: {
+    case HTTP_1_0:
         return "HTTP/1.0";
         break;
-    }
 
-    case HTTP_1_1: {
+    case HTTP_1_1:
         return "HTTP/1.1";
         break;
-    }
 
-    default: {
+    default:
         return nullptr;
         break;
-    }
     }
 }
 
@@ -224,7 +220,7 @@ const std::string &HttpResponse::get_header(const std::string &key) const {
         return it->second;
     }
 
-    return {};
+    return _empty_string;
 }
 
 bool HttpResponse::erase_header(const std::string &key) {

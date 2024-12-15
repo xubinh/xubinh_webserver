@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_EVENT_POLLER
-#define XUBINH_SERVER_EVENT_POLLER
+#ifndef __XUBINH_SERVER_EVENT_POLLER
+#define __XUBINH_SERVER_EVENT_POLLER
 
 #include <sys/epoll.h>
 #include <unordered_set>

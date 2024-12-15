@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_SIGNALFD
-#define XUBINH_SERVER_SIGNALFD
+#ifndef __XUBINH_SERVER_SIGNALFD
+#define __XUBINH_SERVER_SIGNALFD
 
 #include <csignal>
 #include <functional>

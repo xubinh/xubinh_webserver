@@ -29,6 +29,17 @@ void TimePoint::to_timespec(timespec *time_specification) const {
         );
 }
 
+std::string
+TimePoint::to_datetime_string(const DatetimePurpose &datetime_purpose) const {
+    auto time_from_epoch_in_seconds = static_cast<time_t>(
+        nanoseconds_from_epoch / static_cast<int64_t>(1000 * 1000 * 1000)
+    );
+
+    return util::Datetime::get_datetime_string(
+        time_from_epoch_in_seconds, datetime_purpose
+    );
+}
+
 } // namespace util
 
 } // namespace xubinh_server

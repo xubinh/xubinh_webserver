@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_LOG_FILE
-#define XUBINH_SERVER_LOG_FILE
+#ifndef __XUBINH_SERVER_LOG_FILE
+#define __XUBINH_SERVER_LOG_FILE
 
 #include <ctime>
 #include <memory>

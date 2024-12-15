@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_LOG_COLLECTOR
-#define XUBINH_SERVER_LOG_COLLECTOR
+#ifndef __XUBINH_SERVER_LOG_COLLECTOR
+#define __XUBINH_SERVER_LOG_COLLECTOR
 
 #include <atomic>
 #include <chrono>

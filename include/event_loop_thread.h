@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_EVENT_LOOP_THREAD
-#define XUBINH_SERVER_EVENT_LOOP_THREAD
+#ifndef __XUBINH_SERVER_EVENT_LOOP_THREAD
+#define __XUBINH_SERVER_EVENT_LOOP_THREAD
 
 #include <condition_variable>
 #include <mutex>

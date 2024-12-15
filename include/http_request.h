@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_HTTP_REQUEST
-#define XUBINH_SERVER_HTTP_REQUEST
+#ifndef __XUBINH_SERVER_HTTP_REQUEST
+#define __XUBINH_SERVER_HTTP_REQUEST
 
 #include <cstring>
 #include <string>

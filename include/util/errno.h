@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_ERRNO
-#define XUBINH_SERVER_UTIL_ERRNO
+#ifndef __XUBINH_SERVER_UTIL_ERRNO
+#define __XUBINH_SERVER_UTIL_ERRNO
 
 #include <string>
 

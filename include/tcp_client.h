@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_TCP_CLIENT
-#define XUBINH_SERVER_TCP_CLIENT
+#ifndef __XUBINH_SERVER_TCP_CLIENT
+#define __XUBINH_SERVER_TCP_CLIENT
 
 #include "event_loop.h"
 #include "inet_address.h"
@@ -13,6 +13,10 @@ public:
     using PreconnectSocketfdPtr = PreconnectSocketfd::PreconnectSocketfdPtr;
 
     using TcpConnectSocketfdPtr = TcpConnectSocketfd::TcpConnectSocketfdPtr;
+
+    using ConnectSuccessCallbackType =
+        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+        )>;
 
     using MessageCallbackType = TcpConnectSocketfd::MessageCallbackType;
 
@@ -32,6 +36,12 @@ public:
         if (!_is_started) {
             LOG_FATAL << "tried to destruct tcp client before starting it";
         }
+    }
+
+    void register_connect_success_callback(
+        ConnectSuccessCallbackType connect_success_callback
+    ) {
+        _connect_success_callback = std::move(connect_success_callback);
     }
 
     void register_message_callback(MessageCallbackType message_callback) {
@@ -56,6 +66,10 @@ public:
 
     void start();
 
+    void close_preconnect_socketfd();
+
+    void close_tcp_connect_socketfd_ptr();
+
 private:
     // for preconnect socketfd
     void _new_connection_callback(int connect_socketfd);
@@ -63,6 +77,8 @@ private:
     static constexpr int _MAX_NUMBER_OF_RETRIES = 5;
 
     bool _is_started = false;
+
+    ConnectSuccessCallbackType _connect_success_callback;
 
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;

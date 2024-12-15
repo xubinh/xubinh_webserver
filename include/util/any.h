@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_ANY
-#define XUBINH_SERVER_UTIL_ANY
+#ifndef __XUBINH_SERVER_UTIL_ANY
+#define __XUBINH_SERVER_UTIL_ANY
 
 #include <type_traits>
 #include <typeinfo>

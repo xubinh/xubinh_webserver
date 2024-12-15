@@ -1,3 +1,5 @@
+#include <functional>
+
 #include "util/blocking_queue.h"
 
 namespace xubinh_server {
@@ -58,6 +60,9 @@ typename BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
 
     return queue;
 }
+
+// explicit instantiation
+template class BlockingQueue<std::function<void()>>;
 
 } // namespace util
 

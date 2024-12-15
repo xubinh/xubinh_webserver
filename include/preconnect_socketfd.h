@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_PRECONNECT_SOCKETFD
-#define XUBINH_SERVER_PRECONNECT_SOCKETFD
+#ifndef __XUBINH_SERVER_PRECONNECT_SOCKETFD
+#define __XUBINH_SERVER_PRECONNECT_SOCKETFD
 
 #include "inet_address.h"
 #include "log_builder.h"
@@ -49,19 +49,16 @@ private:
     static int
     _connect_to_server(int socketfd, const InetAddress &server_address);
 
-    static constexpr const util::TimeInterval _INITIAL_RETRY_TIME_INTERVAL{
-        static_cast<uint64_t>(500 * 1000 * 1000)}; // 0.5 sec
-
-    static constexpr const util::TimeInterval _MAX_RETRY_TIME_INTERVAL{
-        static_cast<uint64_t>(30 * 1000 * 1000)
-        * static_cast<uint64_t>(1000)}; // 30 sec
-
     void _schedule_retry();
 
     void _write_event_callback();
 
     // must be guarded by shared_from_this()
     void _try_once();
+
+    static const util::TimeInterval _INITIAL_RETRY_TIME_INTERVAL;
+
+    static const util::TimeInterval _MAX_RETRY_TIME_INTERVAL;
 
     EventLoop *_event_loop;
 

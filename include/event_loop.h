@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_EVENT_LOOP
-#define XUBINH_SERVER_EVENT_LOOP
+#ifndef __XUBINH_SERVER_EVENT_LOOP
+#define __XUBINH_SERVER_EVENT_LOOP
 
 #include <atomic>
 #include <functional>
@@ -15,8 +15,6 @@
 #include "util/current_thread.h"
 
 namespace xubinh_server {
-
-class EventLoop;
 
 // Abstraction of an event loop
 //
@@ -124,8 +122,6 @@ private:
 
     std::atomic<bool> _need_stop{false};
 };
-
-extern template class util::BlockingQueue<EventLoop::FunctorType>;
 
 } // namespace xubinh_server
 

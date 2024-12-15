@@ -78,41 +78,33 @@ bool HttpRequest::parse_request_line(const char *start, const char *end) {
 
 const char *HttpRequest::get_method_type_as_string() const {
     switch (_method) {
-
-    case GET: {
+    case GET:
         return "GET";
         break;
-    }
 
-    case POST: {
+    case POST:
         return "POST";
         break;
-    }
 
-    default: {
+    default:
         return nullptr;
         break;
-    }
     }
 }
 
 const char *HttpRequest::get_version_type_as_string() const {
     switch (_version) {
-
-    case HTTP_1_0: {
+    case HTTP_1_0:
         return "HTTP/1.0";
         break;
-    }
 
-    case HTTP_1_1: {
+    case HTTP_1_1:
         return "HTTP/1.1";
         break;
-    }
 
-    default: {
+    default:
         return nullptr;
         break;
-    }
     }
 }
 

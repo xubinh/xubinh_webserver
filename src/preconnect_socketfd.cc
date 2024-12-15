@@ -62,7 +62,10 @@ void PreconnectSocketfd::_schedule_retry() {
     _number_of_retries += 1;
 
     _event_loop->run_after_time_interval(
-        std::min(_MAX_RETRY_TIME_INTERVAL, _current_retry_time_interval),
+        std::min(
+            PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL,
+            _current_retry_time_interval
+        ),
         0,
         0,
         std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
@@ -106,28 +109,25 @@ void PreconnectSocketfd::_try_once() {
     // error
     else {
         switch (errno) {
-
         // for non-blocking socketfd: success later, not now
-        case EINPROGRESS: {
+        case EINPROGRESS:
             _pollable_file_descriptor.enable_write_event();
 
             break;
-        }
 
         // may retry
         case EADDRINUSE:
         case EADDRNOTAVAIL:
         case EAGAIN:
         case ECONNREFUSED:
-        case ENETUNREACH: {
+        case ENETUNREACH:
             _schedule_retry();
 
             break;
-        }
 
         // one socketfd, one object
         case EALREADY:
-        case EISCONN: {
+        case EISCONN:
             LOG_SYS_ERROR << "there seems to be multiple entities trying to "
                              "connect one single socketfd";
 
@@ -136,7 +136,6 @@ void PreconnectSocketfd::_try_once() {
             }
 
             break;
-        }
 
         case EACCES:
         case EPERM:
@@ -144,7 +143,7 @@ void PreconnectSocketfd::_try_once() {
         case EBADF:
         case EFAULT:
         case ENOTSOCK:
-        case EPROTOTYPE: {
+        case EPROTOTYPE:
             LOG_SYS_ERROR << "invalid connect operation";
 
             if (_connect_fail_callback) {
@@ -152,18 +151,23 @@ void PreconnectSocketfd::_try_once() {
             }
 
             break;
-        }
 
         // [NOTE]: signals will be managed by the user using Signalfd, so
         // here just make it abort
         // case EINTR:
-        default: {
+        default:
             LOG_SYS_FATAL << "unknown error";
 
             break;
         }
-        }
     }
 }
+
+const util::TimeInterval PreconnectSocketfd::_INITIAL_RETRY_TIME_INTERVAL{
+    static_cast<int64_t>(500 * 1000 * 1000)}; // 0.5 sec
+
+const util::TimeInterval PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL{
+    static_cast<int64_t>(30 * 1000 * 1000)
+    * static_cast<int64_t>(1000)}; // 30 sec
 
 } // namespace xubinh_server

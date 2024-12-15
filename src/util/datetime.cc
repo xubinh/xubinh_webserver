@@ -7,9 +7,16 @@ namespace util {
 std::string
 Datetime::get_datetime_string(const DatetimePurpose &datetime_purpose) {
     time_t now = get_current_time_from_epoch_in_seconds();
+
+    return get_datetime_string(now, datetime_purpose);
+}
+
+std::string Datetime::get_datetime_string(
+    time_t time_from_epoch_in_seconds, const DatetimePurpose &datetime_purpose
+) {
     tm tm{};
 
-    localtime_r(&now, &tm);
+    localtime_r(&time_from_epoch_in_seconds, &tm);
 
     char buffer[32];
 

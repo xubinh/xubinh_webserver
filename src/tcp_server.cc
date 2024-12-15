@@ -65,6 +65,10 @@ void TcpServer::_new_connection_callback(
         connect_socketfd, loop, id, local_address, peer_address
     );
 
+    if (_connect_success_callback) {
+        _connect_success_callback(new_tcp_connect_socketfd_ptr);
+    }
+
     _tcp_connect_socketfds.insert(
         std::make_pair(id, new_tcp_connect_socketfd_ptr)
     );

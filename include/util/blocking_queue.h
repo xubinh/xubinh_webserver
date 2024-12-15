@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_BLOCKING_QUEUE
-#define XUBINH_SERVER_UTIL_BLOCKING_QUEUE
+#ifndef __XUBINH_SERVER_UTIL_BLOCKING_QUEUE
+#define __XUBINH_SERVER_UTIL_BLOCKING_QUEUE
 
 #include <condition_variable>
 #include <deque>
@@ -41,6 +41,9 @@ private:
     std::condition_variable _cond_queue_not_full;
     std::condition_variable _cond_queue_not_empty;
 };
+
+// declaration
+extern template class BlockingQueue<std::function<void()>>;
 
 } // namespace util
 

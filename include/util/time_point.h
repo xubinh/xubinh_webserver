@@ -1,8 +1,10 @@
-#ifndef XUBINH_SERVER_UTIL_TIME_POINT
-#define XUBINH_SERVER_UTIL_TIME_POINT
+#ifndef __XUBINH_SERVER_UTIL_TIME_POINT
+#define __XUBINH_SERVER_UTIL_TIME_POINT
 
 #include <cstdint>
 #include <sys/timerfd.h>
+
+#include "util/datetime.h"
 
 namespace xubinh_server {
 
@@ -73,6 +75,8 @@ struct TimeInterval {
 };
 
 struct TimePoint {
+    using DatetimePurpose = util::DatetimePurpose;
+
     static int64_t get_nanoseconds_from_epoch();
 
     TimePoint() : nanoseconds_from_epoch(get_nanoseconds_from_epoch()) {
@@ -83,6 +87,9 @@ struct TimePoint {
     }
 
     void to_timespec(timespec *time_specification) const;
+
+    std::string to_datetime_string(const DatetimePurpose &datetime_purpose
+    ) const;
 
     TimePoint &operator+=(const TimeInterval &time_interval) {
         nanoseconds_from_epoch += time_interval.nanoseconds;

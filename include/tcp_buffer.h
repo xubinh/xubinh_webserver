@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_TCP_BUFFER
-#define XUBINH_SERVER_TCP_BUFFER
+#ifndef __XUBINH_SERVER_TCP_BUFFER
+#define __XUBINH_SERVER_TCP_BUFFER
 
 #include <algorithm>
 #include <cstddef>

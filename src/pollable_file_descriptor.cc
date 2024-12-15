@@ -10,7 +10,7 @@
 namespace xubinh_server {
 
 void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
-    auto flags = fcntl(fd, F_GETFL, 0);
+    auto flags = ::fcntl(fd, F_GETFL, 0);
 
     if (flags == -1) {
         LOG_SYS_FATAL << "fcntl F_GETFL";
@@ -18,7 +18,7 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
 
     flags |= O_NONBLOCK;
 
-    if (fcntl(fd, F_SETFL, flags) == -1) {
+    if (::fcntl(fd, F_SETFL, flags) == -1) {
         LOG_SYS_FATAL << "fcntl F_SETFL";
     }
 

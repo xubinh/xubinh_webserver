@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_THREAD
-#define XUBINH_SERVER_UTIL_THREAD
+#ifndef __XUBINH_SERVER_UTIL_THREAD
+#define __XUBINH_SERVER_UTIL_THREAD
 
 #include <condition_variable>
 #include <cstdint>

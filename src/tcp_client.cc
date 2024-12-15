@@ -30,6 +30,17 @@ void TcpClient::start() {
     _preconnect_socketfd_ptr->start();
 }
 
+void TcpClient::close_preconnect_socketfd() {
+    _loop->run([=]() {
+        _preconnect_socketfd_ptr.reset();
+    });
+}
+
+void TcpClient::close_tcp_connect_socketfd_ptr() {
+    _loop->run([=]() {
+        _tcp_connect_socketfd_ptr.reset();
+    });
+}
 void TcpClient::_new_connection_callback(int connect_socketfd) {
     _preconnect_socketfd_ptr.reset();
 
@@ -39,6 +50,10 @@ void TcpClient::_new_connection_callback(int connect_socketfd) {
     _tcp_connect_socketfd_ptr = std::make_shared<TcpConnectSocketfd>(
         connect_socketfd, _loop, "0", local_address, peer_address
     );
+
+    if (_connect_success_callback) {
+        _connect_success_callback(_tcp_connect_socketfd_ptr);
+    }
 
     _tcp_connect_socketfd_ptr->register_message_callback(_message_callback);
     _tcp_connect_socketfd_ptr->register_write_complete_callback(

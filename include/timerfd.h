@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_TIMERFD
-#define XUBINH_SERVER_TIMERFD
+#ifndef __XUBINH_SERVER_TIMERFD
+#define __XUBINH_SERVER_TIMERFD
 
 #include <sys/timerfd.h>
 

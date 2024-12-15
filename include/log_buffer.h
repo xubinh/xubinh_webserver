@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_LOG_BUFFER
-#define XUBINH_SERVER_LOG_BUFFER
+#ifndef __XUBINH_SERVER_LOG_BUFFER
+#define __XUBINH_SERVER_LOG_BUFFER
 
 #include <cstddef>
 #include <cstring>

@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_FILE
-#define XUBINH_SERVER_UTIL_FILE
+#ifndef __XUBINH_SERVER_UTIL_FILE
+#define __XUBINH_SERVER_UTIL_FILE
 
 #include <string>
 

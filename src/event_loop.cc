@@ -3,9 +3,6 @@
 
 namespace xubinh_server {
 
-// explicit instantiation
-template class util::BlockingQueue<EventLoop::FunctorType>;
-
 EventLoop::EventLoop()
     : _eventfd(Eventfd::create_eventfd(0), this),
       _functor_blocking_queue(_FUNCTOR_QUEUE_CAPACITY),

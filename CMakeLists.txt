@@ -9,6 +9,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 
+add_subdirectory(example)
+
 option(ENABLE_TESTING "Enable building tests" ON)
 
 if(ENABLE_TESTING)

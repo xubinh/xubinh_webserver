@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_UTIL_FORMAT
-#define XUBINH_SERVER_UTIL_FORMAT
+#ifndef __XUBINH_SERVER_UTIL_FORMAT
+#define __XUBINH_SERVER_UTIL_FORMAT
 
 #include <algorithm>
 #include <array>

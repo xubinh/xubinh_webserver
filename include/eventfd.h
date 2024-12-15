@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_EVENTFD
-#define XUBINH_SERVER_EVENTFD
+#ifndef __XUBINH_SERVER_EVENTFD
+#define __XUBINH_SERVER_EVENTFD
 
 #include <sys/eventfd.h>
 

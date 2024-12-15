@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_SOCKETFD
-#define XUBINH_SERVER_SOCKETFD
+#ifndef __XUBINH_SERVER_SOCKETFD
+#define __XUBINH_SERVER_SOCKETFD
 
 namespace xubinh_server {
 

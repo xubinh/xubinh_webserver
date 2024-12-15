@@ -1,5 +1,5 @@
-#ifndef XUBINH_SERVER_LOG_BUILDER
-#define XUBINH_SERVER_LOG_BUILDER
+#ifndef __XUBINH_SERVER_LOG_BUILDER
+#define __XUBINH_SERVER_LOG_BUILDER
 
 // #include <cerrno>
 // #include <cstring>
