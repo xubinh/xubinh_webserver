@@ -1,8 +1,7 @@
 #ifndef XUBINH_SERVER_INET_ADDRESS
 #define XUBINH_SERVER_INET_ADDRESS
 
-#include <bits/socket.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string>
 
 #include "log_builder.h"

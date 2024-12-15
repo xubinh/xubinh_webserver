@@ -2,7 +2,9 @@
 #include <functional>
 #include <sys/epoll.h>
 
+#include "event_loop.h"
 #include "event_poller.h"
+#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 
 namespace xubinh_server {
@@ -78,7 +80,7 @@ void PollableFileDescriptor::_register_event(EpollEventsType new_events) {
     _event.events = new_events;
 
     _event_loop->run(
-        std::bind(EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
+        std::bind(&EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
     );
 }
 

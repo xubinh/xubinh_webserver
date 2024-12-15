@@ -1,5 +1,5 @@
-#include <bits/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 
 #include "log_builder.h"
 #include "socketfd.h"

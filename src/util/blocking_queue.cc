@@ -13,7 +13,7 @@ void BlockingQueue<T>::push(T element) {
             // [TODO]: add timeout
             _cond_queue_not_full.wait(lock, [this]() {
                 return _queue.size() < _capacity;
-            })
+            });
         }
 
         _queue.push_back(std::move(element)); // move whenever possible
@@ -24,6 +24,8 @@ void BlockingQueue<T>::push(T element) {
 
 template <typename T>
 T BlockingQueue<T>::pop() {
+    T popped_element;
+
     {
         std::unique_lock<std::mutex> lock(_mutex);
 
@@ -31,10 +33,12 @@ T BlockingQueue<T>::pop() {
             // [TODO]: add timeout
             _cond_queue_not_empty.wait(lock, [this]() {
                 return !_queue.empty();
-            })
+            });
         }
 
-        auto popped_element = _queue.pop_front(); // RVO, no need to move
+        popped_element = std::move(_queue.front());
+
+        _queue.pop_front();
     }
 
     _cond_queue_not_full.notify_one();
@@ -43,7 +47,7 @@ T BlockingQueue<T>::pop() {
 }
 
 template <typename T>
-BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
+typename BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
     ContainerType queue;
 
     {

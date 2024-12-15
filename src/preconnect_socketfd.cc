@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 
+#include "event_loop.h"
 #include "preconnect_socketfd.h"
 
 namespace xubinh_server {
@@ -19,12 +20,22 @@ PreconnectSocketfd::PreconnectSocketfd(
     }
 
     _pollable_file_descriptor.register_write_event_callback(
-        std::bind(_write_event_callback, this)
+        std::bind(&PreconnectSocketfd::_write_event_callback, this)
     );
 
     // must ensure lifetime safety as this exact object could be
     // destroyed by the callbacks registered inside themselves
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
+}
+
+void PreconnectSocketfd::start() {
+    if (!_new_connection_callback) {
+        LOG_FATAL << "missing new connection callback";
+    }
+
+    _event_loop->run(
+        std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
+    );
 }
 
 int PreconnectSocketfd::_connect_to_server(
@@ -42,7 +53,7 @@ void PreconnectSocketfd::_schedule_retry() {
         LOG_ERROR << "max number of retries reached";
 
         if (_connect_fail_callback) {
-            _connect_fail_callback(shared_from_this());
+            _connect_fail_callback();
         }
 
         return;
@@ -54,7 +65,7 @@ void PreconnectSocketfd::_schedule_retry() {
         std::min(_MAX_RETRY_TIME_INTERVAL, _current_retry_time_interval),
         0,
         0,
-        std::bind(_try_once, shared_from_this())
+        std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
     );
 
     _current_retry_time_interval *= 2;
@@ -67,7 +78,7 @@ void PreconnectSocketfd::_write_event_callback() {
 
     // success
     if (saved_errno == 0) {
-        _new_connection_callback(shared_from_this(), socketfd);
+        _new_connection_callback(socketfd);
 
         _pollable_file_descriptor.disable_write_event();
     }
@@ -87,7 +98,7 @@ void PreconnectSocketfd::_try_once() {
 
     // success
     if (connect_status == 0) {
-        _new_connection_callback(shared_from_this(), socketfd);
+        _new_connection_callback(socketfd);
 
         _pollable_file_descriptor.disable_write_event();
     }
@@ -121,7 +132,7 @@ void PreconnectSocketfd::_try_once() {
                              "connect one single socketfd";
 
             if (_connect_fail_callback) {
-                _connect_fail_callback(shared_from_this());
+                _connect_fail_callback();
             }
 
             break;
@@ -137,7 +148,7 @@ void PreconnectSocketfd::_try_once() {
             LOG_SYS_ERROR << "invalid connect operation";
 
             if (_connect_fail_callback) {
-                _connect_fail_callback(shared_from_this());
+                _connect_fail_callback();
             }
 
             break;

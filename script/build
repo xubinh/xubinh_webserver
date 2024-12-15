@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 
+BUILD_DIR=build
+
+clear
+
 # Exit immediately if any command fails
 set -e
 
-BUILD_DIR=build
-
-if [ -d "$BUILD_DIR" ]; then
-    echo "Cleaning build directory..."
-    rm -rf "$BUILD_DIR"
+if ! [ -d "$BUILD_DIR" ]; then
+    echo "Creating build directory..."
+    mkdir "$BUILD_DIR"
 fi
 
-mkdir "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 echo "Configuring project with CMake..."

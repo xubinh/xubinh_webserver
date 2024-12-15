@@ -21,6 +21,7 @@ bool HttpParser::parse(
         if (!_request_ptr->parse_request_line(
                 request_line_start, request_line_end
             )) {
+
             return false;
         }
 
@@ -109,6 +110,8 @@ goto_header_finished:
     }
 
     LOG_FATAL << "unknown http parsing state";
+
+    return false;
 }
 
 } // namespace xubinh_server

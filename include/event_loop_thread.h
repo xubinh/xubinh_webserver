@@ -21,7 +21,9 @@ public:
         const std::string &thread_name,
         ThreadInitializationCallbackType thread_initialization_callback
     )
-        : _thread(std::bind(_worker_function, this), thread_name),
+        : _thread(
+            std::bind(&EventLoopThread::_worker_function, this), thread_name
+        ),
           _thread_initialization_callback(
               std::move(thread_initialization_callback)
           ) {

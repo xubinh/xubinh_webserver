@@ -80,11 +80,7 @@ public:
     // not thread-safe
     void start();
 
-    void shutdown() {
-        _pollable_file_descriptor.get_loop()->run(
-            std::bind(_close_event_callback, shared_from_this())
-        );
-    }
+    void shutdown();
 
     // should be called only inside a worker loop
     void send(const char *data, size_t data_size);

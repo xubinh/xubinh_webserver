@@ -10,6 +10,10 @@ namespace xubinh_server {
 
 class TcpClient {
 public:
+    using PreconnectSocketfdPtr = PreconnectSocketfd::PreconnectSocketfdPtr;
+
+    using TcpConnectSocketfdPtr = TcpConnectSocketfd::TcpConnectSocketfdPtr;
+
     using MessageCallbackType = TcpConnectSocketfd::MessageCallbackType;
 
     using WriteCompleteCallbackType =
@@ -71,9 +75,9 @@ private:
 
     const InetAddress &_server_address;
 
-    std::shared_ptr<PreconnectSocketfd> _preconnect_socketfd_ptr;
+    PreconnectSocketfdPtr _preconnect_socketfd_ptr;
 
-    std::shared_ptr<TcpConnectSocketfd> _tcp_connect_socketfd_ptr;
+    TcpConnectSocketfdPtr _tcp_connect_socketfd_ptr;
 };
 
 } // namespace xubinh_server

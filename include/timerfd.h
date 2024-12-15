@@ -3,6 +3,7 @@
 
 #include <sys/timerfd.h>
 
+#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "util/time_point.h"
 
@@ -33,7 +34,7 @@ public:
         }
 
         _pollable_file_descriptor.register_read_event_callback(
-            std::bind(_read_event_callback, this)
+            std::bind(&Timerfd::_read_event_callback, this)
         );
     }
 

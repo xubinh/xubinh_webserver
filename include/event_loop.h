@@ -18,8 +18,6 @@ namespace xubinh_server {
 
 class EventLoop;
 
-extern template class util::BlockingQueue<EventLoop::FunctorType>;
-
 // Abstraction of an event loop
 //
 // - Note that user of this class should initialize the object in the owner
@@ -126,6 +124,8 @@ private:
 
     std::atomic<bool> _need_stop{false};
 };
+
+extern template class util::BlockingQueue<EventLoop::FunctorType>;
 
 } // namespace xubinh_server
 

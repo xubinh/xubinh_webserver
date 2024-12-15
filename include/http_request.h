@@ -63,7 +63,7 @@ public:
             return it->second;
         }
 
-        return {};
+        return _empty_string;
     }
 
     const std::unordered_map<std::string, std::string> &get_headers() const {
@@ -100,6 +100,8 @@ private:
 
     // true = success, false = fail
     bool _set_version_type(const char *start, const char *end);
+
+    static const std::string _empty_string;
 
     HttpMethodType _method = UNSUPPORTED_HTTP_METHOD;
     std::string _path;

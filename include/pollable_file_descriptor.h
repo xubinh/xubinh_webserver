@@ -3,17 +3,20 @@
 
 #include <cstdint>
 #include <functional>
-
-#include "event_loop.h"
+#include <memory>
+#include <sys/epoll.h>
+#include <unistd.h>
 
 namespace xubinh_server {
+
+class EventLoop;
 
 // non-copyable, non-movable, and pollable file descriptors
 //
 // - not thread-safe
 class PollableFileDescriptor {
 private:
-    using EpollEventsType = decltype(epoll_event().events);
+    using EpollEventsType = decltype(epoll_event{}.events);
 
 public:
     using CallbackType = std::function<void()>;

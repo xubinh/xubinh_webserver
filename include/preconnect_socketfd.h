@@ -15,14 +15,9 @@ class PreconnectSocketfd
 public:
     using PreconnectSocketfdPtr = std::shared_ptr<PreconnectSocketfd>;
 
-    using NewConnectionCallbackType = std::function<void(
-        const PreconnectSocketfdPtr &preconnect_socketfd_ptr,
-        int connect_socketfd
-    )>;
+    using NewConnectionCallbackType = std::function<void(int connect_socketfd)>;
 
-    using ConnectFailCallbackType =
-        std::function<void(const PreconnectSocketfdPtr &preconnect_socketfd_ptr
-        )>;
+    using ConnectFailCallbackType = std::function<void()>;
 
     PreconnectSocketfd(
         int fd,
@@ -47,13 +42,7 @@ public:
         _connect_fail_callback = std::move(connect_fail_callback);
     }
 
-    void start() {
-        if (!_new_connection_callback) {
-            LOG_FATAL << "missing new connection callback";
-        }
-
-        _event_loop->run(std::bind(_try_once, shared_from_this()));
-    }
+    void start();
 
 private:
     // simple wrapper for `::connect` with return values unchanged
@@ -64,7 +53,8 @@ private:
         static_cast<uint64_t>(500 * 1000 * 1000)}; // 0.5 sec
 
     static constexpr const util::TimeInterval _MAX_RETRY_TIME_INTERVAL{
-        static_cast<uint64_t>(30 * 1000 * 1000 * 1000)}; // 30 sec
+        static_cast<uint64_t>(30 * 1000 * 1000)
+        * static_cast<uint64_t>(1000)}; // 30 sec
 
     void _schedule_retry();
 

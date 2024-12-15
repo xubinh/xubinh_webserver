@@ -20,7 +20,7 @@ void TcpServer::start() {
     ListenSocketfd::listen(listen_socketfd);
     _listen_socketfd.reset(new ListenSocketfd(listen_socketfd, _loop));
     _listen_socketfd->register_new_connection_callback(std::bind(
-        _new_connection_callback,
+        &TcpServer::_new_connection_callback,
         this,
         std::placeholders::_1,
         std::placeholders::_2
@@ -74,7 +74,7 @@ void TcpServer::_new_connection_callback(
         _write_complete_callback
     );
     new_tcp_connect_socketfd_ptr->register_close_callback(
-        std::bind(_close_callback, this, std::placeholders::_1)
+        std::bind(&TcpServer::_close_callback, this, std::placeholders::_1)
     );
 
     new_tcp_connect_socketfd_ptr->start();

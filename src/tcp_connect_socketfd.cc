@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "event_loop.h"
 #include "log_builder.h"
 #include "tcp_connect_socketfd.h"
 #include "util/errno.h"
@@ -23,19 +24,19 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     }
 
     _pollable_file_descriptor.register_read_event_callback(
-        std::bind(_read_event_callback, this)
+        std::bind(&TcpConnectSocketfd::_read_event_callback, this)
     );
 
     _pollable_file_descriptor.register_write_event_callback(
-        std::bind(_write_event_callback, this)
+        std::bind(&TcpConnectSocketfd::_write_event_callback, this)
     );
 
     _pollable_file_descriptor.register_close_event_callback(
-        std::bind(_close_event_callback, this)
+        std::bind(&TcpConnectSocketfd::_close_event_callback, this)
     );
 
     _pollable_file_descriptor.register_error_event_callback(
-        std::bind(_error_event_callback, this)
+        std::bind(&TcpConnectSocketfd::_error_event_callback, this)
     );
 
     // must ensure lifetime safety as this exact object could be
@@ -54,6 +55,12 @@ void TcpConnectSocketfd::start() {
 
     _pollable_file_descriptor.enable_read_event();
     _is_reading = true;
+}
+
+void TcpConnectSocketfd::shutdown() {
+    _pollable_file_descriptor.get_loop()->run(std::bind(
+        &TcpConnectSocketfd::_close_event_callback, shared_from_this()
+    ));
 }
 
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {

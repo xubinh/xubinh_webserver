@@ -12,10 +12,10 @@ EventLoopThreadPool::EventLoopThreadPool(
     }
 
     for (int i = 0; i < capacity; i++) {
-        _thread_pool.emplace_back(
+        _thread_pool.push_back(std::make_shared<EventLoopThread>(
             "#" + std::to_string(i) + "@EventLoopThreadPool",
             thread_initialization_callback
-        );
+        ));
     }
 }
 
@@ -31,7 +31,7 @@ void EventLoopThreadPool::start() {
     }
 
     for (auto &thread : _thread_pool) {
-        thread.start();
+        thread->start();
     }
 
     _is_started = true;
@@ -47,22 +47,22 @@ void EventLoopThreadPool::stop() {
     }
 
     for (auto &thread : _thread_pool) {
-        thread.get_loop()->ask_to_stop();
+        thread->get_loop()->ask_to_stop();
     }
 
     for (auto &thread : _thread_pool) {
-        thread.join();
+        thread->join();
     }
 
     _is_stopped = true;
 }
 
-EventLoopThread *EventLoopThreadPool::get_next_thread() {
+EventLoop *EventLoopThreadPool::get_next_loop() {
     auto next_loop_index =
         _next_loop_index_counter.fetch_add(1, std::memory_order_relaxed)
         % _THREAD_POOL_CAPASITY;
 
-    return &_thread_pool[next_loop_index];
+    return _thread_pool[next_loop_index]->get_loop();
 }
 
 } // namespace xubinh_server

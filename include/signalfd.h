@@ -44,7 +44,7 @@ public:
         }
 
         _pollable_file_descriptor.register_read_event_callback(
-            std::bind(_read_event_callback, this)
+            std::bind(&Signalfd::_read_event_callback, this)
         );
     }
 

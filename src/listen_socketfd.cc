@@ -45,7 +45,7 @@ ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
     }
 
     _pollable_file_descriptor.register_read_event_callback(
-        std::bind(_read_event_callback, this)
+        std::bind(&ListenSocketfd::_read_event_callback, this)
     );
 
     _open_spare_fd();

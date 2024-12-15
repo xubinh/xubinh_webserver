@@ -1,6 +1,7 @@
 #ifndef XUBINH_SERVER_EVENT_LOOP_THREAD_POOL
 #define XUBINH_SERVER_EVENT_LOOP_THREAD_POOL
 
+#include <memory>
 #include <vector>
 
 #include "event_loop.h"
@@ -26,11 +27,7 @@ public:
 
     void stop();
 
-    EventLoopThread *get_next_thread();
-
-    EventLoop *get_next_loop() {
-        return get_next_thread()->get_loop();
-    }
+    EventLoop *get_next_loop();
 
 private:
     const size_t _THREAD_POOL_CAPASITY = 0;
@@ -38,7 +35,7 @@ private:
     bool _is_started = false;
     bool _is_stopped = false;
 
-    std::vector<EventLoopThread> _thread_pool;
+    std::vector<std::shared_ptr<EventLoopThread>> _thread_pool;
     std::atomic<int> _next_loop_index_counter{0};
 };
 

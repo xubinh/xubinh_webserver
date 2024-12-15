@@ -12,15 +12,15 @@ EventLoop::EventLoop()
       _timerfd(Timerfd::create_timerfd(0), this),
       _owner_thread_tid(util::current_thread::get_tid()) {
 
-    _eventfd.register_eventfd_message_callback(
-        std::bind(_eventfd_message_callback, this, std::placeholders::_1)
-    );
+    _eventfd.register_eventfd_message_callback(std::bind(
+        &EventLoop::_eventfd_message_callback, this, std::placeholders::_1
+    ));
 
     _eventfd.start();
 
-    _timerfd.register_timerfd_message_callback(
-        std::bind(_timerfd_message_callback, this, std::placeholders::_1)
-    );
+    _timerfd.register_timerfd_message_callback(std::bind(
+        &EventLoop::_timerfd_message_callback, this, std::placeholders::_1
+    ));
 
     _timerfd.start();
 }
@@ -86,7 +86,7 @@ TimerIdentifier EventLoop::run_at_time_point(
         std::move(functor)
     );
 
-    run(std::bind(_add_a_timer_and_update_alarm, this, timer_ptr));
+    run(std::bind(&EventLoop::_add_a_timer_and_update_alarm, this, timer_ptr));
 
     return TimerIdentifier{timer_ptr};
 }
@@ -112,7 +112,8 @@ TimerIdentifier EventLoop::run_after_time_interval(
 void EventLoop::cancel_a_timer(const TimerIdentifier &timer_identifier) {
     const Timer *timer_ptr = timer_identifier._timer_ptr;
 
-    run(std::bind(_cancel_a_timer_and_update_alarm, this, timer_ptr));
+    run(std::bind(&EventLoop::_cancel_a_timer_and_update_alarm, this, timer_ptr)
+    );
 }
 
 void EventLoop::ask_to_stop() {
