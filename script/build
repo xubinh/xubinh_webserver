@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 BUILD_DIR=build
+NEED_TEST=off
 
 clear
 
@@ -15,11 +16,15 @@ fi
 cd "$BUILD_DIR"
 
 echo "Configuring project with CMake..."
-cmake ..
+cmake .. -DENABLE_TESTING="$NEED_TEST"
 
 echo "Building project..."
 make -j"$(nproc)"
 
-echo "Running tests..."
-make test
-echo "All tests passed. ✔️"
+if [ "$NEED_TEST" = on ]; then
+    echo "Running tests..."
+    make test
+    echo "All tests passed. ✔️"
+else
+    echo "Build completed. ✔️"
+fi

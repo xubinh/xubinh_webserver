@@ -3,6 +3,7 @@
 
 #include "event_loop.h"
 #include "inet_address.h"
+#include "log_collector.h"
 #include "signalfd.h"
 #include "tcp_server.h"
 #include "util/datetime.h"
@@ -27,6 +28,8 @@ void signal_dispatcher(
     case SIGTSTP:
         loop->ask_to_stop();
 
+        LOG_INFO << "user interrupt, terminating server...";
+
         break;
 
     default:
@@ -50,6 +53,12 @@ void message_callback(
             break;
         }
 
+        // LOG_DEBUG << "recieve message, buffer image: "
+        //                  + std::string(
+        //                      input_buffer->get_current_read_position(),
+        //                      input_buffer->get_current_write_position()
+        //                  );
+
         const char *client_message_end = newline_position + 1;
 
         const char *client_message_start =
@@ -62,9 +71,12 @@ void message_callback(
             xubinh_server::util::TimePoint::DatetimePurpose::PRINTING
         );
 
-        auto msg = "[" + time_stamp + "]: " + client_message;
+        // auto msg = "[" + time_stamp + "]: " + client_message;
+        auto msg = client_message;
 
         tcp_connect_socketfd_ptr->send(msg.c_str(), msg.length());
+
+        LOG_DEBUG << "send message: " + msg;
 
         input_buffer->forward_read_position(
             client_message_end - client_message_start
@@ -73,6 +85,10 @@ void message_callback(
 }
 
 int main() {
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
+
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+
     xubinh_server::SignalSet signal_set;
 
     signal_set.add_signal(SIGHUP);
@@ -102,6 +118,16 @@ int main() {
     signalfd.start();
 
     server.register_message_callback(message_callback);
+
+    server.register_connect_success_callback([](const TcpConnectSocketfdPtr
+                                                    &tcp_connect_socketfd_ptr) {
+        LOG_DEBUG
+            << "established TCP connection (id: "
+                   + tcp_connect_socketfd_ptr->get_id() + ") from "
+                   + tcp_connect_socketfd_ptr->get_local_address().to_string()
+                   + " to "
+                   + tcp_connect_socketfd_ptr->get_remote_address().to_string();
+    });
 
     server.set_thread_pool_capacity(4);
 

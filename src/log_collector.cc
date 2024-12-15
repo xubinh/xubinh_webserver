@@ -17,6 +17,19 @@ LogCollector &LogCollector::get_instance() {
 }
 
 void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
+    if (_need_output_directly_to_terminal) {
+        ssize_t bytes_written =
+            ::write(STDOUT_FILENO, entry_address, entry_size);
+
+        if (bytes_written != entry_size) {
+            ::printf("error when try to print log into stdout\n");
+
+            ::abort();
+        }
+
+        return;
+    }
+
     {
         std::lock_guard<decltype(_mutex)> lock(_mutex);
 
@@ -51,6 +64,8 @@ void LogCollector::abort() {
     _stop(true);
 }
 
+bool LogCollector::_need_output_directly_to_terminal = false;
+
 std::string LogCollector::_base_name = "log_collector";
 
 constexpr std::chrono::seconds::rep
@@ -70,6 +85,10 @@ LogCollector::~LogCollector() {
 }
 
 void LogCollector::_background_io_thread_worker_functor() {
+    if (_need_output_directly_to_terminal) {
+        return;
+    }
+
     ChunkBufferPtr spare_chunk_buffer_for_current_chunk_buffer(
         new LogChunkBuffer
     );

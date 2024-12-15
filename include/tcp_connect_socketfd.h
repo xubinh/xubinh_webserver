@@ -42,12 +42,13 @@ public:
 
     ~TcpConnectSocketfd() {
         if (!_is_closed) {
-            LOG_ERROR << "tcp connection socketfd object being destroyed "
-                         "before closing the connection, id: "
-                      << _id;
+            LOG_WARN << "tcp connect socketfd object (id: " + get_id()
+                            + ") destroyed before the connection is closed";
 
             _close_event_callback();
         }
+
+        ::close(_pollable_file_descriptor.get_fd());
     }
 
     const std::string &get_id() const {
@@ -107,8 +108,12 @@ private:
 
     void _error_event_callback();
 
+    // only start reading when a read event is encountered
     void _receive_all_data();
 
+    // always start writing first and only enable write event when necessary
+    //
+    // - SIGPIPE is disabled internally
     size_t _send_as_many_data(const char *data, size_t data_size);
 
     // size of space the input buffer should expand each time

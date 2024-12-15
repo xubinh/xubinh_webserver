@@ -40,9 +40,9 @@ public:
     PollableFileDescriptor(PollableFileDescriptor &&) = delete;
     PollableFileDescriptor &operator=(PollableFileDescriptor &&) = delete;
 
-    ~PollableFileDescriptor() {
-        ::close(_fd);
-    }
+    // should not close the underlying fd, since wrapper class (i.e.
+    // PreconnectSocketfd) might want to transfer its ownership
+    ~PollableFileDescriptor() = default;
 
     int get_fd() {
         return _fd;

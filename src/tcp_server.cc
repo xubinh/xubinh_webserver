@@ -48,8 +48,20 @@ void TcpServer::stop() {
 
     _is_stopped = true;
 
+    LOG_INFO << "closing existing TCP connections...";
+
+    for (auto &pair : _tcp_connect_socketfds) {
+        pair.second->shutdown();
+    }
+
+    LOG_INFO << "completed";
+
     if (_thread_pool_capacity > 0) {
+        LOG_INFO << "shutting down thread pool";
+
         _thread_pool->stop();
+
+        LOG_INFO << "completed";
     }
 }
 

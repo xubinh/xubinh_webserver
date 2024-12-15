@@ -22,16 +22,16 @@ PreconnectSocketfd::PreconnectSocketfd(
     _pollable_file_descriptor.register_write_event_callback(
         std::bind(&PreconnectSocketfd::_write_event_callback, this)
     );
-
-    // must ensure lifetime safety as this exact object could be
-    // destroyed by the callbacks registered inside themselves
-    _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 }
 
 void PreconnectSocketfd::start() {
     if (!_new_connection_callback) {
         LOG_FATAL << "missing new connection callback";
     }
+
+    // must ensure lifetime safety as this exact object could be
+    // destroyed by the callbacks registered inside themselves
+    _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 
     _event_loop->run(
         std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
@@ -81,9 +81,9 @@ void PreconnectSocketfd::_write_event_callback() {
 
     // success
     if (saved_errno == 0) {
-        _new_connection_callback(socketfd);
-
         _pollable_file_descriptor.disable_write_event();
+
+        _new_connection_callback(socketfd);
     }
 
     // must be retryable errors since otherwise would have already been blocked
@@ -94,6 +94,8 @@ void PreconnectSocketfd::_write_event_callback() {
 }
 
 void PreconnectSocketfd::_try_once() {
+    LOG_DEBUG << "try connecting to " + _server_address.to_string() + " ...";
+
     int socketfd = _pollable_file_descriptor.get_fd();
 
     auto connect_status =

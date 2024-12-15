@@ -36,6 +36,8 @@ public:
 
     ~Eventfd() {
         _pollable_file_descriptor.disable_read_event();
+
+        ::close(_pollable_file_descriptor.get_fd());
     }
 
     void register_eventfd_message_callback(

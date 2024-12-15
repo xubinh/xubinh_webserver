@@ -17,6 +17,13 @@ public:
     // not thread-safe
     static void set_base_name(const std::string &path);
 
+    // not thread-safe
+    //
+    // - must be called before first visiting the singleton instance
+    static void set_if_need_output_directly_to_terminal(bool yes_or_no) {
+        _need_output_directly_to_terminal = yes_or_no;
+    }
+
     static LogCollector &get_instance();
 
     // no copy
@@ -36,6 +43,8 @@ public:
 private:
     using ChunkBufferPtr = std::unique_ptr<LogChunkBuffer>;
     using BufferVector = std::vector<ChunkBufferPtr>;
+
+    static bool _need_output_directly_to_terminal;
 
     static std::string _base_name;
 

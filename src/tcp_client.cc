@@ -30,14 +30,34 @@ void TcpClient::start() {
     _preconnect_socketfd_ptr->start();
 }
 
+void TcpClient::stop() {
+    if (_is_stopped) {
+        return;
+    }
+
+    if (!_is_started) {
+        LOG_FATAL << "tried to stop tcp client before starting it";
+    }
+
+    _is_stopped = true;
+
+    LOG_INFO << "closing existing (pre) TCP connections...";
+
+    if (_tcp_connect_socketfd_ptr) {
+        _tcp_connect_socketfd_ptr->shutdown();
+    }
+
+    LOG_INFO << "completed";
+}
+
 void TcpClient::close_preconnect_socketfd() {
-    _loop->run([=]() {
+    _loop->run([this]() {
         _preconnect_socketfd_ptr.reset();
     });
 }
 
 void TcpClient::close_tcp_connect_socketfd_ptr() {
-    _loop->run([=]() {
+    _loop->run([this]() {
         _tcp_connect_socketfd_ptr.reset();
     });
 }
@@ -55,9 +75,11 @@ void TcpClient::_new_connection_callback(int connect_socketfd) {
         _connect_success_callback(_tcp_connect_socketfd_ptr);
     }
 
-    _tcp_connect_socketfd_ptr->register_message_callback(_message_callback);
+    _tcp_connect_socketfd_ptr->register_message_callback(
+        std::move(_message_callback)
+    );
     _tcp_connect_socketfd_ptr->register_write_complete_callback(
-        _write_complete_callback
+        std::move(_write_complete_callback)
     );
     _tcp_connect_socketfd_ptr->register_close_callback(std::move(_close_callback
     ));

@@ -52,6 +52,10 @@ public:
         );
     }
 
+    std::string to_string() const {
+        return get_ip() + ":" + std::to_string(get_port());
+    }
+
 private:
     static sa_family_t _get_sa_family(const void *address) {
         return *reinterpret_cast<const sa_family_t *>(address);

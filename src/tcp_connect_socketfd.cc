@@ -38,10 +38,6 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     _pollable_file_descriptor.register_error_event_callback(
         std::bind(&TcpConnectSocketfd::_error_event_callback, this)
     );
-
-    // must ensure lifetime safety as this exact object could be
-    // destroyed by the callbacks registered inside themselves
-    _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 }
 
 void TcpConnectSocketfd::start() {
@@ -52,6 +48,10 @@ void TcpConnectSocketfd::start() {
     if (!_message_callback) {
         LOG_FATAL << "missing message callback";
     }
+
+    // must ensure lifetime safety as this exact object could be
+    // destroyed by the callbacks registered inside themselves
+    _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 
     _pollable_file_descriptor.enable_read_event();
     _is_reading = true;
@@ -98,14 +98,21 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
 }
 
 void TcpConnectSocketfd::_read_event_callback() {
+    LOG_DEBUG << "tcp connect socketfd read event encountered";
+
+    // fd -- W --> input buffer
     _receive_all_data();
 
     // user should call `send()` internally to send the data and possibly start
     // listening the writing event
+    //
+    // input buffer <-- R -- user -- W --> output buffer
     _message_callback(shared_from_this(), &_input_buffer, util::TimePoint());
 }
 
 void TcpConnectSocketfd::_write_event_callback() {
+    LOG_DEBUG << "tcp connect socketfd write event encountered";
+
     // could be called after the connection is closed, so check it first
     if (_is_closed) {
         return;
@@ -113,6 +120,7 @@ void TcpConnectSocketfd::_write_event_callback() {
 
     auto total_number_of_bytes = _output_buffer.get_readable_size();
 
+    // output buffer -- W --> fd
     auto number_of_bytes_sent = _send_as_many_data(
         _output_buffer.get_current_read_position(), total_number_of_bytes
     );
@@ -138,6 +146,8 @@ void TcpConnectSocketfd::_write_event_callback() {
 }
 
 void TcpConnectSocketfd::_close_event_callback() {
+    LOG_DEBUG << "tcp connect socketfd close event encountered";
+
     if (_is_closed) {
         return;
     }
@@ -156,6 +166,8 @@ void TcpConnectSocketfd::_close_event_callback() {
 }
 
 void TcpConnectSocketfd::_error_event_callback() {
+    LOG_DEBUG << "tcp connect socketfd error event encountered";
+
     auto saved_errno = get_socketfd_errno(_pollable_file_descriptor.get_fd());
 
     LOG_ERROR << "TCP connection socket error, id: " << _id
@@ -169,13 +181,15 @@ void TcpConnectSocketfd::_receive_all_data() {
 
         ssize_t bytes_read = ::recv(
             _pollable_file_descriptor.get_fd(),
-            _input_buffer.get_current_read_position(),
+            _input_buffer.get_current_write_position(),
             _RECEIVE_DATA_SIZE,
             0
         );
 
         // have read in some data but maybe not all
         if (bytes_read > 0) {
+            _input_buffer.forward_write_position(bytes_read);
+
             continue;
         }
 
@@ -212,6 +226,10 @@ void TcpConnectSocketfd::_receive_all_data() {
 
 size_t
 TcpConnectSocketfd::_send_as_many_data(const char *data, size_t data_size) {
+    if (data_size == 0) {
+        return 0;
+    }
+
     size_t total_number_of_bytes_sent = 0;
 
     while (total_number_of_bytes_sent < data_size) {

@@ -40,6 +40,8 @@ public:
 
     ~Timerfd() {
         _pollable_file_descriptor.disable_read_event();
+
+        ::close(_pollable_file_descriptor.get_fd());
     }
 
     void register_timerfd_message_callback(

@@ -50,6 +50,8 @@ public:
 
     ~Signalfd() {
         _pollable_file_descriptor.disable_read_event();
+
+        ::close(_pollable_file_descriptor.get_fd());
     }
 
     void register_signal_dispatcher(SignalDispatcherType signal_dispatcher) {

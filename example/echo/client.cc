@@ -1,9 +1,11 @@
 #include <csignal>
+#include <memory>
 #include <string>
 #include <unistd.h>
 
 #include "event_loop.h"
 #include "inet_address.h"
+#include "log_collector.h"
 #include "signalfd.h"
 #include "tcp_client.h"
 #include "util/datetime.h"
@@ -82,10 +84,14 @@ public:
 
     ~Stdin() {
         _pollable_file_descriptor.disable_read_event();
+
+        ::close(_pollable_file_descriptor.get_fd());
     }
 
 private:
     void _read_event_callback() {
+        LOG_DEBUG << "stdin read event encountered";
+
         auto _tcp_connect_socketfd_ptr = _tcp_connect_socketfd_weak_ptr.lock();
 
         if (!_tcp_connect_socketfd_ptr) {
@@ -103,6 +109,9 @@ private:
 
             if (bytes_read > 0) {
                 _tcp_connect_socketfd_ptr->send(buffer, bytes_read);
+
+                LOG_DEBUG << "send message: "
+                                 + std::string(buffer, buffer + bytes_read - 1);
 
                 continue;
             }
@@ -129,15 +138,11 @@ private:
     xubinh_server::PollableFileDescriptor _pollable_file_descriptor;
 };
 
-void connect_success_callback(
-    std::shared_ptr<Stdin> stdin_ptr,
-    xubinh_server::EventLoop *loop,
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
-) {
-    stdin_ptr.reset(new Stdin(loop, tcp_connect_socketfd_ptr));
-}
-
 int main() {
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
+
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+
     xubinh_server::SignalSet signal_set;
 
     signal_set.add_signal(SIGHUP);
@@ -168,9 +173,17 @@ int main() {
 
     std::shared_ptr<Stdin> stdin_ptr;
 
-    client.register_connect_success_callback(std::bind(
-        connect_success_callback, stdin_ptr, &loop, std::placeholders::_1
-    ));
+    client.register_connect_success_callback([&](const TcpConnectSocketfdPtr &
+                                                     tcp_connect_socketfd_ptr) {
+        LOG_DEBUG
+            << "establishing TCP connection (id: "
+                   + tcp_connect_socketfd_ptr->get_id() + ") from "
+                   + tcp_connect_socketfd_ptr->get_local_address().to_string()
+                   + " to "
+                   + tcp_connect_socketfd_ptr->get_remote_address().to_string();
+
+        stdin_ptr = std::make_shared<Stdin>(&loop, tcp_connect_socketfd_ptr);
+    });
 
     client.register_message_callback(message_callback);
 
@@ -181,6 +194,8 @@ int main() {
     client.start();
 
     loop.loop();
+
+    client.stop();
 
     return 0;
 }

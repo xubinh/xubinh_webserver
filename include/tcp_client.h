@@ -66,6 +66,8 @@ public:
 
     void start();
 
+    void stop();
+
     void close_preconnect_socketfd();
 
     void close_tcp_connect_socketfd_ptr();
@@ -77,6 +79,7 @@ private:
     static constexpr int _MAX_NUMBER_OF_RETRIES = 5;
 
     bool _is_started = false;
+    bool _is_stopped = false;
 
     ConnectSuccessCallbackType _connect_success_callback;
 

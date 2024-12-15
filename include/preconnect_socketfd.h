@@ -26,9 +26,9 @@ public:
         int max_number_of_retries
     );
 
-    ~PreconnectSocketfd() {
-        _pollable_file_descriptor.disable_write_event();
-    }
+    // should not modify the listening state of the underlying fd since the
+    // ownership will be transfered later to the newly established connection
+    ~PreconnectSocketfd() = default;
 
     void register_new_connection_callback(
         NewConnectionCallbackType new_connection_callback

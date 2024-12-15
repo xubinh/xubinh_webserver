@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+APP_NAME="echo"
+APP_DIR="./build/example/$APP_NAME"
+
+clear
+
+"$APP_DIR/$APP_NAME""_client"

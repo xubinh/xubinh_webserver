@@ -27,6 +27,8 @@ public:
         _close_spare_fd();
 
         _pollable_file_descriptor.disable_read_event();
+
+        ::close(_pollable_file_descriptor.get_fd());
     }
 
     // used by internal framework

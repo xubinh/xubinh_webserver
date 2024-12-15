@@ -14,8 +14,7 @@ EventPoller::EventPoller() : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
 
 EventPoller::~EventPoller() {
     if (!_fds_that_are_listening_on.empty()) {
-        LOG_ERROR
-            << "poller closed while there are still fds being listened on";
+        LOG_WARN << "poller closed while there are still fds being listened on";
     }
 
     ::close(_epoll_fd);
