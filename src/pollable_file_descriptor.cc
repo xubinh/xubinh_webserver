@@ -41,12 +41,18 @@ void PollableFileDescriptor::disable_write_event() {
     _register_event(_event.events & ~EventPoller::EVENT_TYPE_WRITE);
 }
 
-void PollableFileDescriptor::enable_all_event() {
-    _register_event(_event.events | EventPoller::EVENT_TYPE_ALL);
-}
+void PollableFileDescriptor::detach_from_poller() {
+    if (!_is_attached) {
+        return;
+    }
 
-void PollableFileDescriptor::disable_all_event() {
-    _register_event(_event.events & ~EventPoller::EVENT_TYPE_ALL);
+    _event_loop->run(
+        std::bind(&EventLoop::detach_fd_from_poller, _event_loop, _fd)
+    );
+
+    _event.events = _INITIAL_EPOLL_EVENT; // reset
+
+    _is_attached = false;
 }
 
 void PollableFileDescriptor::dispatch_active_events() {
@@ -82,6 +88,8 @@ void PollableFileDescriptor::_register_event(EpollEventsType new_events) {
     _event_loop->run(
         std::bind(&EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
     );
+
+    _is_attached = true;
 }
 
 void PollableFileDescriptor::_dispatch_active_events() {

@@ -27,7 +27,7 @@ public:
         : _fd(fd), _event_loop(event_loop) {
 
         _event.data.ptr = this;
-        _event.events |= EPOLLET;
+        _event.events = _INITIAL_EPOLL_EVENT;
 
         set_fd_as_nonblocking(_fd);
     }
@@ -76,9 +76,7 @@ public:
 
     void disable_write_event();
 
-    void enable_all_event();
-
-    void disable_all_event();
+    void detach_from_poller();
 
     // used by poller
     void set_active_events(uint32_t active_events) {
@@ -99,6 +97,10 @@ private:
     void _register_event(EpollEventsType new_events);
 
     void _dispatch_active_events();
+
+    static constexpr EpollEventsType _INITIAL_EPOLL_EVENT = EPOLLET;
+
+    bool _is_attached = false;
 
     int _fd;
     EventLoop *_event_loop;

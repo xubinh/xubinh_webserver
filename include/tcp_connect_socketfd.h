@@ -45,7 +45,11 @@ public:
             LOG_WARN << "tcp connect socketfd object (id: " + get_id()
                             + ") destroyed before the connection is closed";
 
-            _close_event_callback();
+            // must be called in the loop to ensure thread-safety of internal
+            // state
+            _pollable_file_descriptor.get_loop()->run(std::bind(
+                &TcpConnectSocketfd::_close_event_callback, shared_from_this()
+            ));
         }
 
         ::close(_pollable_file_descriptor.get_fd());

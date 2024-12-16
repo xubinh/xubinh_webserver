@@ -26,7 +26,7 @@ public:
     ~ListenSocketfd() {
         _close_spare_fd();
 
-        _pollable_file_descriptor.disable_read_event();
+        _pollable_file_descriptor.detach_from_poller();
 
         ::close(_pollable_file_descriptor.get_fd());
     }

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 APP_NAME="echo"
-APP_DIR="./build/example/$APP_NAME"
+CLIENT_EXECUTABLE_PATH="./build/example/$APP_NAME/client/client"
 
 clear
 
-"$APP_DIR/$APP_NAME""_client"
+# execute
+"$CLIENT_EXECUTABLE_PATH"

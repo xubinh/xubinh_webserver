@@ -45,6 +45,10 @@ public:
         _event_poller.register_event_for_fd(fd, event);
     }
 
+    void detach_fd_from_poller(int fd) {
+        _event_poller.detach_fd(fd);
+    }
+
     void run(FunctorType functor);
 
     TimerIdentifier run_at_time_point(

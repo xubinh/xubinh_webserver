@@ -21,44 +21,16 @@ EventPoller::~EventPoller() {
 }
 
 void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
-    auto found_iterator = _fds_that_are_listening_on.find(fd);
+    auto it = _fds_that_are_listening_on.find(fd);
 
-    bool is_already_listening_on =
-        found_iterator != _fds_that_are_listening_on.end();
+    bool is_attached = it != _fds_that_are_listening_on.end();
 
-    bool need_to_delete = !(event->events & EventPoller::EVENT_TYPE_ALL);
+    decltype(EPOLL_CTL_ADD) epoll_ctl_method_type =
+        is_attached ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
 
-    decltype(EPOLL_CTL_ADD) which_epoll_ctl_function = EPOLL_CTL_ADD;
-
-    if (is_already_listening_on) {
-        if (need_to_delete) {
-            which_epoll_ctl_function = EPOLL_CTL_DEL;
-
-            _fds_that_are_listening_on.erase(found_iterator);
-        }
-
-        else {
-            which_epoll_ctl_function = EPOLL_CTL_MOD;
-        }
-    }
-
-    else {
-        if (need_to_delete) {
-            LOG_WARN << "try to EPOLL_CTL_DEL a fd that hasn't meet before";
-
-            return;
-        }
-
-        else {
-            which_epoll_ctl_function = EPOLL_CTL_ADD;
-
-            _fds_that_are_listening_on.insert(fd);
-        }
-    }
-
-    if (epoll_ctl(
+    if (::epoll_ctl(
             _epoll_fd,
-            which_epoll_ctl_function,
+            epoll_ctl_method_type,
             fd,
             const_cast<epoll_event *>(event)
         )
@@ -66,6 +38,33 @@ void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
 
         LOG_SYS_FATAL << "epoll_ctl failed";
     }
+
+    if (!is_attached) {
+        _fds_that_are_listening_on.insert(fd);
+    }
+}
+
+void EventPoller::detach_fd(int fd) {
+    auto it = _fds_that_are_listening_on.find(fd);
+
+    bool is_attached = it != _fds_that_are_listening_on.end();
+
+    if (!is_attached) {
+        LOG_WARN << "try to detach a fd that is not yet attached";
+    }
+
+    if (::epoll_ctl(
+            _epoll_fd,
+            EPOLL_CTL_DEL,
+            fd,
+            nullptr // buggy in kernel versions before 2.6.9
+        )
+        == -1) {
+
+        LOG_SYS_FATAL << "epoll_ctl failed";
+    }
+
+    _fds_that_are_listening_on.erase(fd);
 }
 
 std::vector<PollableFileDescriptor *>

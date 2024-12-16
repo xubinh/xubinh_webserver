@@ -18,16 +18,16 @@ PreconnectSocketfd::PreconnectSocketfd(
     if (fd < 0) {
         LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
     }
-
-    _pollable_file_descriptor.register_write_event_callback(
-        std::bind(&PreconnectSocketfd::_write_event_callback, this)
-    );
 }
 
 void PreconnectSocketfd::start() {
     if (!_new_connection_callback) {
         LOG_FATAL << "missing new connection callback";
     }
+
+    _pollable_file_descriptor.register_write_event_callback(std::bind(
+        &PreconnectSocketfd::_write_event_callback, shared_from_this()
+    ));
 
     // must ensure lifetime safety as this exact object could be
     // destroyed by the callbacks registered inside themselves
@@ -81,7 +81,9 @@ void PreconnectSocketfd::_write_event_callback() {
 
     // success
     if (saved_errno == 0) {
-        _pollable_file_descriptor.disable_write_event();
+        // must be called before invoking the following new connection callback
+        // to avoid potential overrides
+        _pollable_file_descriptor.detach_from_poller();
 
         _new_connection_callback(socketfd);
     }
@@ -94,7 +96,7 @@ void PreconnectSocketfd::_write_event_callback() {
 }
 
 void PreconnectSocketfd::_try_once() {
-    LOG_DEBUG << "try connecting to " + _server_address.to_string() + " ...";
+    LOG_DEBUG << "trying to connect to " + _server_address.to_string() + "...";
 
     int socketfd = _pollable_file_descriptor.get_fd();
 
@@ -103,9 +105,9 @@ void PreconnectSocketfd::_try_once() {
 
     // success
     if (connect_status == 0) {
-        _new_connection_callback(socketfd);
+        _pollable_file_descriptor.detach_from_poller();
 
-        _pollable_file_descriptor.disable_write_event();
+        _new_connection_callback(socketfd);
     }
 
     // error

@@ -49,7 +49,7 @@ public:
     }
 
     ~Signalfd() {
-        _pollable_file_descriptor.disable_read_event();
+        _pollable_file_descriptor.detach_from_poller();
 
         ::close(_pollable_file_descriptor.get_fd());
     }

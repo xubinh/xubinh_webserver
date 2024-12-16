@@ -7,7 +7,7 @@ void TcpServer::start() {
         return;
     }
 
-    _is_started = true;
+    LOG_INFO << "starting TCP server...";
 
     if (!_message_callback) {
         LOG_FATAL << "missing message callback";
@@ -35,6 +35,10 @@ void TcpServer::start() {
 
         _thread_pool->start();
     }
+
+    _is_started = true;
+
+    LOG_INFO << "TCP server has started";
 }
 
 void TcpServer::stop() {
@@ -46,7 +50,7 @@ void TcpServer::stop() {
         LOG_FATAL << "tried to stop tcp server before starting it";
     }
 
-    _is_stopped = true;
+    LOG_INFO << "stopping TCP server...";
 
     LOG_INFO << "closing existing TCP connections...";
 
@@ -54,15 +58,19 @@ void TcpServer::stop() {
         pair.second->shutdown();
     }
 
-    LOG_INFO << "completed";
+    LOG_INFO << "finished closing existing TCP connections";
 
     if (_thread_pool_capacity > 0) {
         LOG_INFO << "shutting down thread pool";
 
         _thread_pool->stop();
 
-        LOG_INFO << "completed";
+        LOG_INFO << "finished shutting down thread pool";
     }
+
+    _is_stopped = true;
+
+    LOG_INFO << "TCP server has stopped";
 }
 
 void TcpServer::_new_connection_callback(

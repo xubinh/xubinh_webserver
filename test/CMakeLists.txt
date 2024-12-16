@@ -8,11 +8,10 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
-# gather test files
 file(GLOB TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
 
-add_executable(webserver_test ${TEST_FILES})
+add_executable(xubinh_server_test ${TEST_FILES})
 
-target_link_libraries(webserver_test PRIVATE webserver gtest gtest_main)
+target_link_libraries(xubinh_server_test PRIVATE xubinh_server_library gtest gtest_main)
 
-add_test(NAME WebserverTest COMMAND webserver_test)
+add_test(NAME XubinhServerTest COMMAND xubinh_server_test)

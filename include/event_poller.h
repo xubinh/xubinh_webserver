@@ -36,6 +36,8 @@ public:
 
     void register_event_for_fd(int fd, const epoll_event *event);
 
+    void detach_fd(int fd);
+
     std::vector<PollableFileDescriptor *> poll_for_active_events_of_all_fds();
 
 private:

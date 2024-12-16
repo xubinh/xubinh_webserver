@@ -22,26 +22,12 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     if (fd < 0) {
         LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
     }
-
-    _pollable_file_descriptor.register_read_event_callback(
-        std::bind(&TcpConnectSocketfd::_read_event_callback, this)
-    );
-
-    _pollable_file_descriptor.register_write_event_callback(
-        std::bind(&TcpConnectSocketfd::_write_event_callback, this)
-    );
-
-    _pollable_file_descriptor.register_close_event_callback(
-        std::bind(&TcpConnectSocketfd::_close_event_callback, this)
-    );
-
-    _pollable_file_descriptor.register_error_event_callback(
-        std::bind(&TcpConnectSocketfd::_error_event_callback, this)
-    );
 }
 
 void TcpConnectSocketfd::start() {
     if (_is_reading) {
+        LOG_ERROR << "try to start an already started tcp connect socketfd";
+
         return;
     }
 
@@ -49,15 +35,32 @@ void TcpConnectSocketfd::start() {
         LOG_FATAL << "missing message callback";
     }
 
+    _pollable_file_descriptor.register_read_event_callback(
+        std::bind(&TcpConnectSocketfd::_read_event_callback, shared_from_this())
+    );
+
+    _pollable_file_descriptor.register_write_event_callback(std::bind(
+        &TcpConnectSocketfd::_write_event_callback, shared_from_this()
+    ));
+
+    _pollable_file_descriptor.register_close_event_callback(std::bind(
+        &TcpConnectSocketfd::_close_event_callback, shared_from_this()
+    ));
+
+    _pollable_file_descriptor.register_error_event_callback(std::bind(
+        &TcpConnectSocketfd::_error_event_callback, shared_from_this()
+    ));
+
     // must ensure lifetime safety as this exact object could be
     // destroyed by the callbacks registered inside themselves
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 
+    _is_reading = true; // must set before the enabling to ensure thread-safety
     _pollable_file_descriptor.enable_read_event();
-    _is_reading = true;
 }
 
 void TcpConnectSocketfd::shutdown() {
+    // must be called in the loop to ensure thread-safety of internal state
     _pollable_file_descriptor.get_loop()->run(std::bind(
         &TcpConnectSocketfd::_close_event_callback, shared_from_this()
     ));
@@ -108,6 +111,12 @@ void TcpConnectSocketfd::_read_event_callback() {
     //
     // input buffer <-- R -- user -- W --> output buffer
     _message_callback(shared_from_this(), &_input_buffer, util::TimePoint());
+
+    // close connection if (1) the peer has closed its write end, (2) all data
+    // is read and processed, and (3) no data needs to be sent to the peer
+    if (!_is_reading && !_output_buffer.get_readable_size()) {
+        _close_event_callback();
+    }
 }
 
 void TcpConnectSocketfd::_write_event_callback() {
@@ -139,7 +148,8 @@ void TcpConnectSocketfd::_write_event_callback() {
     _pollable_file_descriptor.disable_write_event();
     _is_writing = false;
 
-    // connection is essentially closed: no data could be read in, nor sent out
+    // close connection if (1) the peer has closed its write end, (2) all data
+    // is read and processed, and (3) no data needs to be sent to the peer
     if (!_is_reading) {
         _close_event_callback();
     }
@@ -152,9 +162,9 @@ void TcpConnectSocketfd::_close_event_callback() {
         return;
     }
 
-    // no more reads or writes will come in ET mode; OK to shut them down
-    _pollable_file_descriptor.disable_all_event();
-
+    // no more reads or writes will come in ET mode; OK to disconnect it from
+    // the loop
+    _pollable_file_descriptor.detach_from_poller();
     _is_closed = true;
 
     // [NOTE]: still needs to read in data, which can be done within this

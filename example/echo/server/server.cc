@@ -8,6 +8,8 @@
 #include "tcp_server.h"
 #include "util/datetime.h"
 
+using TcpConnectSocketfdPtr = xubinh_server::TcpServer::TcpConnectSocketfdPtr;
+
 // placeholder
 void reload_server_config(xubinh_server::TcpServer *server) {
 }
@@ -38,8 +40,6 @@ void signal_dispatcher(
         break;
     }
 }
-
-using TcpConnectSocketfdPtr = xubinh_server::TcpServer::TcpConnectSocketfdPtr;
 
 void message_callback(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
@@ -76,7 +76,10 @@ void message_callback(
 
         tcp_connect_socketfd_ptr->send(msg.c_str(), msg.length());
 
-        LOG_DEBUG << "send message: " + msg;
+        LOG_DEBUG << "send message: "
+                         + std::string(
+                             msg.c_str(), msg.c_str() + msg.length() - 1
+                         );
 
         input_buffer->forward_read_position(
             client_message_end - client_message_start
@@ -85,50 +88,48 @@ void message_callback(
 }
 
 int main() {
+    // logging config
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::WARN);
 
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
-
+    // signal config
     xubinh_server::SignalSet signal_set;
-
     signal_set.add_signal(SIGHUP);
     signal_set.add_signal(SIGINT);
     signal_set.add_signal(SIGQUIT);
     signal_set.add_signal(SIGTERM);
     signal_set.add_signal(SIGTSTP);
-
     xubinh_server::Signalfd::block_signals(signal_set);
 
+    // create loop
     xubinh_server::EventLoop loop;
 
+    // create server
     xubinh_server::InetAddress server_address(
         "127.0.0.1", 8080, xubinh_server::InetAddress::IPv4
     );
-
     xubinh_server::TcpServer server(&loop, server_address);
 
+    // signalfd config
     xubinh_server::Signalfd signalfd(
         xubinh_server::Signalfd::create_signalfd(signal_set, 0), &loop
     );
-
     signalfd.register_signal_dispatcher(
         std::bind(signal_dispatcher, &server, &loop, std::placeholders::_1)
     );
-
     signalfd.start();
 
+    // server config
     server.register_message_callback(message_callback);
-
     server.register_connect_success_callback([](const TcpConnectSocketfdPtr
                                                     &tcp_connect_socketfd_ptr) {
         LOG_DEBUG
             << "established TCP connection (id: "
-                   + tcp_connect_socketfd_ptr->get_id() + ") from "
+                   + tcp_connect_socketfd_ptr->get_id() + "): "
                    + tcp_connect_socketfd_ptr->get_local_address().to_string()
-                   + " to "
+                   + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-
     server.set_thread_pool_capacity(4);
 
     server.start();

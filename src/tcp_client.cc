@@ -7,7 +7,7 @@ void TcpClient::start() {
         return;
     }
 
-    _is_started = true;
+    LOG_INFO << "starting TCP client...";
 
     if (!_message_callback) {
         LOG_FATAL << "missing message callback";
@@ -28,6 +28,10 @@ void TcpClient::start() {
     );
 
     _preconnect_socketfd_ptr->start();
+
+    _is_started = true;
+
+    LOG_INFO << "TCP client has started";
 }
 
 void TcpClient::stop() {
@@ -39,7 +43,7 @@ void TcpClient::stop() {
         LOG_FATAL << "tried to stop tcp client before starting it";
     }
 
-    _is_stopped = true;
+    LOG_INFO << "stopping TCP server...";
 
     LOG_INFO << "closing existing (pre) TCP connections...";
 
@@ -47,7 +51,11 @@ void TcpClient::stop() {
         _tcp_connect_socketfd_ptr->shutdown();
     }
 
-    LOG_INFO << "completed";
+    LOG_INFO << "finished closing existing (pre) TCP connections";
+
+    _is_stopped = true;
+
+    LOG_INFO << "TCP client has stopped";
 }
 
 void TcpClient::close_preconnect_socketfd() {
