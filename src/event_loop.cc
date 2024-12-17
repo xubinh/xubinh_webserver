@@ -32,7 +32,12 @@ void EventLoop::loop() {
         auto event_dispatchers =
             _event_poller.poll_for_active_events_of_all_fds();
 
+        // if the event dispatcher pointer is polled out, it is ensured to be a
+        // valid pointer since the unregistering of event dispatchers is fully
+        // delegated to the loop itself and is therefore thread-safe
         for (auto event_dispatcher_ptr : event_dispatchers) {
+            // the lifetime guard inside the event dispatcher is for preventing
+            // self-destruction done by itself
             event_dispatcher_ptr->dispatch_active_events();
         }
 

@@ -78,6 +78,18 @@ public:
 
     void detach_from_poller();
 
+    bool is_reading() const {
+        return _is_reading;
+    }
+
+    bool is_writing() const {
+        return _is_writing;
+    }
+
+    bool is_detached() const {
+        return _is_detached;
+    }
+
     // used by poller
     void set_active_events(uint32_t active_events) {
         _active_events = active_events;
@@ -94,13 +106,15 @@ public:
     }
 
 private:
-    void _register_event(EpollEventsType new_events);
+    void _register_event();
 
     void _dispatch_active_events();
 
     static constexpr EpollEventsType _INITIAL_EPOLL_EVENT = EPOLLET;
 
-    bool _is_attached = false;
+    bool _is_reading = false;
+    bool _is_writing = false;
+    bool _is_detached = true;
 
     int _fd;
     EventLoop *_event_loop;

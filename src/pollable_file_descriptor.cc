@@ -26,38 +26,73 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
 }
 
 void PollableFileDescriptor::enable_read_event() {
-    _register_event(_event.events | EventPoller::EVENT_TYPE_READ);
+    if (_is_reading) {
+        return;
+    }
+
+    _is_reading = true;
+
+    _event.events |= EventPoller::EVENT_TYPE_READ;
+
+    _register_event();
 }
 
 void PollableFileDescriptor::disable_read_event() {
-    _register_event(_event.events & ~EventPoller::EVENT_TYPE_READ);
+    if (!_is_reading) {
+        return;
+    }
+
+    _is_reading = false;
+
+    _event.events &= ~EventPoller::EVENT_TYPE_READ;
+
+    _register_event();
 }
 
 void PollableFileDescriptor::enable_write_event() {
-    _register_event(_event.events | EventPoller::EVENT_TYPE_WRITE);
+    if (_is_writing) {
+        return;
+    }
+
+    _is_writing = true;
+
+    _event.events |= EventPoller::EVENT_TYPE_WRITE;
+
+    _register_event();
 }
 
 void PollableFileDescriptor::disable_write_event() {
-    _register_event(_event.events & ~EventPoller::EVENT_TYPE_WRITE);
+    if (!_is_writing) {
+        return;
+    }
+
+    _is_writing = false;
+
+    _event.events &= ~EventPoller::EVENT_TYPE_WRITE;
+
+    _register_event();
 }
 
 void PollableFileDescriptor::detach_from_poller() {
-    if (!_is_attached) {
+    if (_is_detached) {
         return;
     }
+
+    _is_detached = true;
+
+    _is_reading = false;
+    _is_writing = false;
+
+    _event.events = _INITIAL_EPOLL_EVENT;
 
     _event_loop->run(
         std::bind(&EventLoop::detach_fd_from_poller, _event_loop, _fd)
     );
-
-    _event.events = _INITIAL_EPOLL_EVENT; // reset
-
-    _is_attached = false;
 }
 
 void PollableFileDescriptor::dispatch_active_events() {
-    // if lifetime guard is registed, dispatch events only after locking up the
-    // guard
+    // if lifetime guard is registered, dispatch events only after locking up
+    // the guard to prevent self-destruction
     if (_is_weak_lifetime_guard_registered) {
         auto strong_lifetime_guard = _weak_lifetime_guard.lock();
 
@@ -66,9 +101,7 @@ void PollableFileDescriptor::dispatch_active_events() {
         }
 
         else {
-            // the wrapper object is just in the process of destruction right
-            // now
-            return;
+            LOG_FATAL << "assert: execution flow never reaches here";
         }
     }
 
@@ -78,18 +111,12 @@ void PollableFileDescriptor::dispatch_active_events() {
     }
 }
 
-void PollableFileDescriptor::_register_event(EpollEventsType new_events) {
-    if (new_events == _event.events) {
-        return;
-    }
-
-    _event.events = new_events;
+void PollableFileDescriptor::_register_event() {
+    _is_detached = false;
 
     _event_loop->run(
         std::bind(&EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
     );
-
-    _is_attached = true;
 }
 
 void PollableFileDescriptor::_dispatch_active_events() {

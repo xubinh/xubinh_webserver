@@ -41,7 +41,7 @@ public:
     );
 
     ~TcpConnectSocketfd() {
-        if (!_is_closed) {
+        if (!_pollable_file_descriptor.is_detached()) {
             LOG_WARN << "tcp connect socketfd object (id: " + get_id()
                             + ") destroyed before the connection is closed";
 
@@ -51,8 +51,6 @@ public:
                 &TcpConnectSocketfd::_close_event_callback, shared_from_this()
             ));
         }
-
-        ::close(_pollable_file_descriptor.get_fd());
     }
 
     const std::string &get_id() const {
@@ -85,6 +83,8 @@ public:
     // not thread-safe
     void start();
 
+    // close local write-end; calling this means the user knows there will be no
+    // more data to be sent
     void shutdown();
 
     // should be called only inside a worker loop
@@ -112,6 +112,20 @@ private:
 
     void _error_event_callback();
 
+    bool _is_reading() const {
+        return _pollable_file_descriptor.is_reading();
+    }
+
+    bool _is_writing() const {
+        return _pollable_file_descriptor.is_writing();
+    }
+
+    bool _is_closed() const {
+        return _pollable_file_descriptor.is_detached();
+    }
+
+    void _shutdown();
+
     // only start reading when a read event is encountered
     void _receive_all_data();
 
@@ -135,10 +149,6 @@ private:
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;
     CloseCallbackType _close_callback;
-
-    bool _is_reading = false;
-    bool _is_writing = false;
-    bool _is_closed = false;
 
     PollableFileDescriptor _pollable_file_descriptor;
 };

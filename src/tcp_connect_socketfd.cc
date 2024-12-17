@@ -25,7 +25,7 @@ TcpConnectSocketfd::TcpConnectSocketfd(
 }
 
 void TcpConnectSocketfd::start() {
-    if (_is_reading) {
+    if (_is_reading()) {
         LOG_ERROR << "try to start an already started tcp connect socketfd";
 
         return;
@@ -55,25 +55,24 @@ void TcpConnectSocketfd::start() {
     // destroyed by the callbacks registered inside themselves
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
 
-    _is_reading = true; // must set before the enabling to ensure thread-safety
     _pollable_file_descriptor.enable_read_event();
 }
 
 void TcpConnectSocketfd::shutdown() {
     // must be called in the loop to ensure thread-safety of internal state
-    _pollable_file_descriptor.get_loop()->run(std::bind(
-        &TcpConnectSocketfd::_close_event_callback, shared_from_this()
-    ));
+    _pollable_file_descriptor.get_loop()->run(
+        std::bind(&TcpConnectSocketfd::_shutdown, shared_from_this())
+    );
 }
 
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     // could be called after the connection is closed, so check it first
-    if (_is_closed) {
+    if (_is_closed()) {
         return;
     }
 
     // leave the writing to the event callback if already started listening
-    if (_is_writing) {
+    if (_is_writing()) {
         _output_buffer.write(data, data_size);
 
         return;
@@ -97,7 +96,6 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     );
 
     _pollable_file_descriptor.enable_write_event();
-    _is_writing = true;
 }
 
 void TcpConnectSocketfd::_read_event_callback() {
@@ -114,7 +112,7 @@ void TcpConnectSocketfd::_read_event_callback() {
 
     // close connection if (1) the peer has closed its write end, (2) all data
     // is read and processed, and (3) no data needs to be sent to the peer
-    if (!_is_reading && !_output_buffer.get_readable_size()) {
+    if (!_is_reading() && !_is_writing()) {
         _close_event_callback();
     }
 }
@@ -122,35 +120,41 @@ void TcpConnectSocketfd::_read_event_callback() {
 void TcpConnectSocketfd::_write_event_callback() {
     LOG_DEBUG << "tcp connect socketfd write event encountered";
 
-    // could be called after the connection is closed, so check it first
-    if (_is_closed) {
+    // this callback could be called after the connection is closed, so check it
+    // first
+    if (_is_closed()) {
         return;
     }
 
     auto total_number_of_bytes = _output_buffer.get_readable_size();
 
-    // output buffer -- W --> fd
-    auto number_of_bytes_sent = _send_as_many_data(
-        _output_buffer.get_current_read_position(), total_number_of_bytes
-    );
+    // might be zero if the outside wants to deal with the writing by himself,
+    // e.g. using zero-copy rather than copying the data back and forth1
+    if (total_number_of_bytes > 0) {
+        // output buffer -- W --> fd
+        auto number_of_bytes_sent = _send_as_many_data(
+            _output_buffer.get_current_read_position(), total_number_of_bytes
+        );
 
-    _output_buffer.forward_read_position(number_of_bytes_sent);
+        _output_buffer.forward_read_position(number_of_bytes_sent);
 
-    // TCP buffer is full, leave what's left till the next time
-    if (number_of_bytes_sent < total_number_of_bytes) {
-        return;
+        // TCP buffer is full, leave what's left till the next time
+        if (number_of_bytes_sent < total_number_of_bytes) {
+            return;
+        }
     }
+
+    // might be re-enabled by the outside, so disable it first for it to be
+    // overrided
+    _pollable_file_descriptor.disable_write_event();
 
     if (_write_complete_callback) {
         _write_complete_callback(shared_from_this());
     }
 
-    _pollable_file_descriptor.disable_write_event();
-    _is_writing = false;
-
     // close connection if (1) the peer has closed its write end, (2) all data
     // is read and processed, and (3) no data needs to be sent to the peer
-    if (!_is_reading) {
+    if (!_is_reading() && !_is_writing()) {
         _close_event_callback();
     }
 }
@@ -158,17 +162,19 @@ void TcpConnectSocketfd::_write_event_callback() {
 void TcpConnectSocketfd::_close_event_callback() {
     LOG_DEBUG << "tcp connect socketfd close event encountered";
 
-    if (_is_closed) {
+    if (_is_closed()) {
         return;
     }
 
     // no more reads or writes will come in ET mode; OK to disconnect it from
     // the loop
     _pollable_file_descriptor.detach_from_poller();
-    _is_closed = true;
 
-    // [NOTE]: still needs to read in data, which can be done within this
-    // iteration
+    ::close(_pollable_file_descriptor.get_fd());
+
+    // [NOTE]: the local still needs to read in the data inside the local buffer
+    // even though the peer has closed its write end, which can be done within
+    // this iteration
 
     if (_close_callback) {
         _close_callback(shared_from_this());
@@ -183,6 +189,16 @@ void TcpConnectSocketfd::_error_event_callback() {
     LOG_ERROR << "TCP connection socket error, id: " << _id
               << ", errno: " << saved_errno
               << ", description: " << util::strerror_tl(saved_errno);
+}
+
+void TcpConnectSocketfd::_shutdown() {
+    _pollable_file_descriptor.disable_write_event();
+
+    if (::shutdown(_pollable_file_descriptor.get_fd(), SHUT_WR) == -1) {
+        LOG_SYS_FATAL << "unknown error when shutting down write end of a TCP "
+                         "connection, id: "
+                             + _id;
+    }
 }
 
 void TcpConnectSocketfd::_receive_all_data() {
@@ -207,7 +223,6 @@ void TcpConnectSocketfd::_receive_all_data() {
         // connection
         else if (bytes_read == 0) {
             _pollable_file_descriptor.disable_read_event();
-            _is_reading = false;
 
             // did not close connection here as the peer might still have its
             // read end opened
@@ -261,10 +276,9 @@ TcpConnectSocketfd::_send_as_many_data(const char *data, size_t data_size) {
                 break;
             }
 
-            // tries to write after the peer has closed the connection
+            // the peer abruptly closed its read end
             else if (errno == EPIPE) {
-                LOG_WARN << "SIGPIPE encountered when trying to write to a tcp "
-                            "connection";
+                LOG_WARN << "EPIPE encountered, id: " + _id;
 
                 break;
             }
