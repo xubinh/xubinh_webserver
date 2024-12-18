@@ -1,6 +1,11 @@
+#ifndef __XUBINH_SERVER_STDINFD
+#define __XUBINH_SERVER_STDINFD
+
 #include "event_loop.h"
 #include "tcp_connect_socketfd.h"
 #include "util/time_point.h"
+
+namespace xubinh_server {
 
 using TcpConnectSocketfdPtr =
     xubinh_server::TcpConnectSocketfd::TcpConnectSocketfdPtr;
@@ -43,3 +48,7 @@ private:
 
     xubinh_server::PollableFileDescriptor _pollable_file_descriptor;
 };
+
+} // namespace xubinh_server
+
+#endif

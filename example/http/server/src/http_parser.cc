@@ -1,14 +1,18 @@
 #include <cstring>
 #include <string>
 
-#include "http_parser.h"
+#include "../include/http_parser.h"
 #include "log_builder.h"
 
 namespace xubinh_server {
 
 bool HttpParser::parse(
-    MutableSizeTcpBuffer &buffer, const util::TimePoint &receive_time_point
+    MutableSizeTcpBuffer &buffer, const util::TimePoint &time_stamp
 ) {
+    if (_parsing_state == FAIL) {
+        return false;
+    }
+
     if (_parsing_state == EXPECT_REQUEST_LINE) {
         auto request_line_end = buffer.get_next_crlf_position();
 
@@ -21,6 +25,8 @@ bool HttpParser::parse(
         if (!_request_ptr->parse_request_line(
                 request_line_start, request_line_end
             )) {
+
+            _parsing_state = FAIL;
 
             return false;
         }
@@ -59,6 +65,8 @@ bool HttpParser::parse(
                     && it != headers.end();
 
                 if (!has_body) {
+                    _request_ptr->set_receive_time_point(time_stamp);
+
                     _parsing_state = SUCCESS;
 
                     return true;
@@ -77,6 +85,8 @@ bool HttpParser::parse(
             if (!_request_ptr->parse_header_line(
                     header_line_start, header_line_end
                 )) {
+
+                _parsing_state = FAIL;
 
                 return false;
             }
@@ -104,12 +114,16 @@ goto_header_finished:
 
         buffer.forward_read_position(_body_length);
 
+        _request_ptr->set_receive_time_point(time_stamp);
+
         _parsing_state = SUCCESS;
 
         return true;
     }
 
     LOG_FATAL << "unknown http parsing state";
+
+    _parsing_state = FAIL;
 
     return false;
 }

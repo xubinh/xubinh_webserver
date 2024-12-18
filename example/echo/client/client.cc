@@ -12,6 +12,8 @@
 
 #include "./include/stdinfd.h"
 
+using Stdinfd = xubinh_server::Stdinfd;
+
 using TcpConnectSocketfdPtr = xubinh_server::TcpClient::TcpConnectSocketfdPtr;
 
 std::unique_ptr<xubinh_server::Signalfd>

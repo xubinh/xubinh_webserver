@@ -1,5 +1,7 @@
 #include "../include/stdinfd.h"
 
+namespace xubinh_server {
+
 void Stdinfd::_read_event_callback(xubinh_server::util::TimePoint time_stamp) {
     LOG_DEBUG << "stdin read event encountered";
 
@@ -42,3 +44,5 @@ void Stdinfd::_read_event_callback(xubinh_server::util::TimePoint time_stamp) {
         }
     }
 }
+
+} // namespace xubinh_server

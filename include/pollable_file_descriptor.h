@@ -52,10 +52,6 @@ public:
 
     void close_fd() const;
 
-    EventLoop *get_loop() const {
-        return _event_loop;
-    }
-
     void register_read_event_callback(ReadEventCallbackType read_event_callback
     ) {
         _read_event_callback = std::move(read_event_callback);

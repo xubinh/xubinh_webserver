@@ -11,13 +11,13 @@ namespace xubinh_server {
 
 TcpConnectSocketfd::TcpConnectSocketfd(
     int fd,
-    EventLoop *event_loop,
+    EventLoop *loop,
     const std::string &id,
     const InetAddress &local_address,
     const InetAddress &remote_address
 )
     : _id(id), _local_address(local_address), _remote_address(remote_address),
-      _pollable_file_descriptor(fd, event_loop) {
+      _loop(loop), _pollable_file_descriptor(fd, loop) {
 }
 
 void TcpConnectSocketfd::start() {
@@ -78,6 +78,35 @@ void TcpConnectSocketfd::shutdown_write() {
     // empty the output buffer, and after which it is the caller's
     // responsibility to keep it that way
     _output_buffer.forward_read_position(_output_buffer.get_readable_size());
+}
+
+void TcpConnectSocketfd::abort() {
+    if (_is_abotrted) {
+        return;
+    }
+
+    auto fd = _pollable_file_descriptor.get_fd();
+
+    struct linger linger_opt;
+
+    linger_opt.l_onoff = 1;  // enable linger
+    linger_opt.l_linger = 0; // timeout of 0 seconds (immediate reset)
+
+    // set SO_LINGER with a timeout of 0 to force a TCP RST
+    if (::setsockopt(fd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt))
+        == -1) {
+        LOG_FATAL << "setsockopt failed";
+    }
+
+    // close the socket to trigger the RST
+    if (::close(fd) == -1) {
+        LOG_FATAL << "close failed";
+    }
+
+    _is_abotrted = true;
+
+    // releasing resources
+    _close_event_callback();
 }
 
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {

@@ -71,7 +71,7 @@ public:
     void stop();
 
     void run_for_each_connection(RunForEachConnectionCallbackType callback) {
-        _loop->run([=]() {
+        _loop->run([&]() {
             for (const auto &pair : _tcp_connect_socketfds) {
                 callback(pair.second);
             }

@@ -21,7 +21,7 @@ public:
     using MessageCallbackType = std::function<void(
         const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
         MutableSizeTcpBuffer *input_buffer,
-        const util::TimePoint &time_point
+        const util::TimePoint &time_stamp
     )>;
 
     using WriteCompleteCallbackType =
@@ -32,9 +32,11 @@ public:
         std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
         )>;
 
+    using PredicateType = std::function<bool()>;
+
     TcpConnectSocketfd(
         int fd,
-        EventLoop *event_loop,
+        EventLoop *loop,
         const std::string &id,
         const InetAddress &local_address,
         const InetAddress &remote_address
@@ -46,7 +48,9 @@ public:
                              + ") destroyed before the connection is closed";
         }
 
-        _pollable_file_descriptor.close_fd();
+        if (!_is_abotrted) {
+            _pollable_file_descriptor.close_fd();
+        }
     }
 
     const std::string &get_id() const {
@@ -81,10 +85,33 @@ public:
 
     // close local write-end
     //
-    // - can be called by user to start the four-way handshake, and after which
+    // - can be called by user to start the four-way handshake; after which
     // it is the user's responsibility to ensure there will be no data sent to
     // the output buffer
+    // - must be called in the worker loop
     void shutdown_write();
+
+    // abruptly reset the entire connection
+    //
+    // - can be called by user to reset the connection; after which
+    // it is the user's responsibility to ensure there will be no data sent to
+    // the output buffer
+    // - must be called in the worker loop
+    void abort();
+
+    // abruptly reset the entire connection when certain condition is met
+    //
+    // - can be called by user to reset the connection; after which
+    // it is the user's responsibility to ensure there will be no data sent to
+    // the output buffer
+    // - can be called either in main loop or in worker loop
+    void check_and_abort(PredicateType predicate) {
+        _loop->run([&]() {
+            if (predicate()) {
+                abort();
+            }
+        });
+    }
 
     // should be called only inside a worker loop
     void send(const char *data, size_t data_size);
@@ -138,16 +165,22 @@ private:
     const InetAddress _local_address;
     const InetAddress _remote_address;
 
+    EventLoop *_loop;
+
     std::atomic<util::TimePoint> _time_stamp;
 
     MutableSizeTcpBuffer _input_buffer;
-    MutableSizeTcpBuffer _output_buffer;
+    MutableSizeTcpBuffer
+        _output_buffer; // [TODO]: make it a queue of heterogeneous data
+                        // sources, e.g. std::vector<char>, sendFile, mmap,
+                        // etc., for better performance
 
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;
     CloseCallbackType _close_callback;
 
     bool _is_write_end_shutdown = false;
+    bool _is_abotrted = false;
 
     PollableFileDescriptor _pollable_file_descriptor;
 };

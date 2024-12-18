@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "http_request.h"
+#include "../include/http_request.h"
 #include "tcp_buffer.h"
 #include "util/time_point.h"
 
@@ -15,18 +15,33 @@ public:
         EXPECT_REQUEST_LINE,
         EXPECT_HEADERS,
         EXPECT_BODY,
-        SUCCESS
+        SUCCESS,
+        FAIL,
     };
 
     // true = success, false = fail
-    bool parse(
-        MutableSizeTcpBuffer &buffer, const util::TimePoint &receive_time_point
-    );
+    bool parse(MutableSizeTcpBuffer &buffer, const util::TimePoint &time_stamp);
 
     void reset() {
         _parsing_state = EXPECT_REQUEST_LINE;
 
         _request_ptr.reset(new HttpRequest{});
+    }
+
+    ParsingState get_state() const {
+        return _parsing_state;
+    }
+
+    bool is_success() const {
+        return get_state() == SUCCESS;
+    }
+
+    const HttpRequest &get_request() const {
+        if (!is_success()) {
+            throw std::logic_error("HTTP request is not ready");
+        }
+
+        return *_request_ptr;
     }
 
 private:

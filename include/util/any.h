@@ -11,6 +11,15 @@ namespace xubinh_server {
 
 namespace util {
 
+// mimicking boost::Any
+//
+// syntax:
+//
+// - `int value = 0; Any any = value; // asign`
+// - `int *value_ptr = any_cast<int *>(&any); // cast as pointer`
+// - `int &value_ref = any_cast<int &>(any); // cast as reference`
+// - ``AnotherClass another_value = any_cast<AnotherClass>(value); // fail,
+//   throw `bad_any_cast` ``
 class Any {
 private:
     class HolderBase {
