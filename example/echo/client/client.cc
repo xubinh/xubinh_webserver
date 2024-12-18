@@ -14,13 +14,28 @@
 
 using TcpConnectSocketfdPtr = xubinh_server::TcpClient::TcpConnectSocketfdPtr;
 
-void signal_dispatcher(xubinh_server::EventLoop *loop, int signal) {
+std::unique_ptr<xubinh_server::Signalfd>
+    signalfd_ptr;                   // for lazy initialization
+std::unique_ptr<Stdinfd> stdin_ptr; // for lazy initialization
+
+void signal_dispatcher(
+    xubinh_server::TcpClient *client, xubinh_server::EventLoop *loop, int signal
+) {
     switch (signal) {
     case SIGHUP:
     case SIGINT:
     case SIGQUIT:
     case SIGTERM:
     case SIGTSTP:
+        LOG_INFO << "user interrupt, terminating client...";
+
+        stdin_ptr.reset();
+
+        signalfd_ptr->stop();
+
+        client->stop();
+
+        // loop will only stop when all fd's are detached from it
         loop->ask_to_stop();
 
         break;
@@ -63,10 +78,7 @@ void message_callback(
 int main() {
     // logging config
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::WARN);
-
-    // create loop
-    xubinh_server::EventLoop loop;
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
 
     // signal config
     xubinh_server::SignalSet signal_set;
@@ -77,21 +89,26 @@ int main() {
     signal_set.add_signal(SIGTSTP);
     xubinh_server::Signalfd::block_signals(signal_set);
 
-    // signalfd config
-    xubinh_server::Signalfd signalfd(
-        xubinh_server::Signalfd::create_signalfd(signal_set, 0), &loop
-    );
-    signalfd.register_signal_dispatcher(
-        std::bind(signal_dispatcher, &loop, std::placeholders::_1)
-    );
-    signalfd.start();
+    // create loop
+    xubinh_server::EventLoop loop;
 
-    // client config
+    // create client
     xubinh_server::InetAddress server_address(
         "127.0.0.1", 8080, xubinh_server::InetAddress::IPv4
     );
     xubinh_server::TcpClient client(&loop, server_address);
-    std::shared_ptr<Stdinfd> stdin_ptr; // for lazy initialization
+
+    // signalfd config
+    signalfd_ptr.reset(new xubinh_server::Signalfd(
+        xubinh_server::Signalfd::create_signalfd(signal_set, 0), &loop
+    ));
+    signalfd_ptr->register_signal_dispatcher(
+        std::bind(signal_dispatcher, &client, &loop, std::placeholders::_1)
+    );
+    signalfd_ptr->start();
+
+    // client config
+    client.register_message_callback(message_callback);
     client.register_connect_success_callback([&](const TcpConnectSocketfdPtr &
                                                      tcp_connect_socketfd_ptr) {
         LOG_DEBUG
@@ -101,31 +118,17 @@ int main() {
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
 
-        stdin_ptr = std::make_shared<Stdinfd>(&loop, tcp_connect_socketfd_ptr);
+        stdin_ptr.reset(new Stdinfd(&loop, tcp_connect_socketfd_ptr));
 
         stdin_ptr->start();
-
-        std::cout << "---------------- Session Begin ----------------"
-                  << std::endl;
     });
     client.register_connect_fail_callback([]() {
-        LOG_ERROR << "connection timeout";
+        LOG_ERROR << "connection failed";
     });
-    client.register_message_callback(message_callback);
-    client.register_close_callback(
-        [&](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
-            loop.ask_to_stop();
-
-            std::cout << "----------------- Session End -----------------"
-                      << std::endl;
-        }
-    );
 
     client.start();
 
     loop.loop();
-
-    client.stop();
 
     return 0;
 }

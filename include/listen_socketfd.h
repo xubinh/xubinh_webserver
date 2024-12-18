@@ -7,6 +7,7 @@
 #include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "socketfd.h"
+#include "util/time_point.h"
 
 namespace xubinh_server {
 
@@ -28,7 +29,7 @@ public:
 
         _pollable_file_descriptor.detach_from_poller();
 
-        ::close(_pollable_file_descriptor.get_fd());
+        _pollable_file_descriptor.close_fd();
     }
 
     // used by internal framework
@@ -42,6 +43,12 @@ public:
         if (!_new_connection_callback) {
             LOG_FATAL << "missing new connection callback";
         }
+
+        _pollable_file_descriptor.register_read_event_callback(std::bind(
+            &ListenSocketfd::_read_event_callback, this, std::placeholders::_1
+        ));
+
+        _open_spare_fd();
 
         _pollable_file_descriptor.enable_read_event();
     }
@@ -60,7 +67,7 @@ private:
     // number of file descriptors allowed (RLIMIT_NOFILE)
     void _drop_connection_using_spare_fd();
 
-    void _read_event_callback();
+    void _read_event_callback(util::TimePoint time_stamp);
 
     int _spare_fd = -1;
 

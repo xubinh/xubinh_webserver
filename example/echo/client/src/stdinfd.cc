@@ -1,6 +1,6 @@
 #include "../include/stdinfd.h"
 
-void Stdinfd::_read_event_callback() {
+void Stdinfd::_read_event_callback(xubinh_server::util::TimePoint time_stamp) {
     LOG_DEBUG << "stdin read event encountered";
 
     auto _tcp_connect_socketfd_ptr = _tcp_connect_socketfd_weak_ptr.lock();

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "log_builder.h"
 #include "util/time_point.h"
 
 namespace xubinh_server {
@@ -29,6 +30,15 @@ public:
           )),
           _number_of_repetitions_left(std::max(-1, number_of_repetitions_left)),
           _callback(std::move(callback)) {
+        LOG_DEBUG << "Timer::Timer";
+
+        LOG_DEBUG << "address: " << this
+                  << ", expiration time: "
+                         + _expiration_time_point.to_datetime_string(
+                             TimePoint::DatetimePurpose::PRINTING
+                         )
+                         + ", number of repetitions left: "
+                         + std::to_string(_number_of_repetitions_left);
     }
 
     // no copying

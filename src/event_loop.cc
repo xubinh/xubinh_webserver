@@ -24,13 +24,24 @@ EventLoop::EventLoop()
 
 void EventLoop::loop() {
     while (true) {
-        // check for stop signal (either external or from within)
-        if (_need_stop.load(std::memory_order_relaxed)) {
+        // checks for stop signal (either external or from within) and stops
+        // only when the polling list is logically empty (which really is not
+        // since each event loop always got two fixed fd's being listened on,
+        // i.e. a timerfd and an eventfd)
+        if (_need_stop.load(std::memory_order_relaxed)
+            && _event_poller.size() == 2) {
             break;
         }
 
+        LOG_DEBUG << "event loop sleep for polling";
+
         auto event_dispatchers =
             _event_poller.poll_for_active_events_of_all_fds();
+
+        LOG_DEBUG << "event loop resume, number of active fd's: "
+                         + std::to_string(event_dispatchers.size());
+
+        util::TimePoint time_stamp;
 
         // if the event dispatcher pointer is polled out, it is ensured to be a
         // valid pointer since the unregistering of event dispatchers is fully
@@ -38,10 +49,12 @@ void EventLoop::loop() {
         for (auto event_dispatcher_ptr : event_dispatchers) {
             // the lifetime guard inside the event dispatcher is for preventing
             // self-destruction done by itself
-            event_dispatcher_ptr->dispatch_active_events();
+            event_dispatcher_ptr->dispatch_active_events(time_stamp);
         }
 
         if (_eventfd_triggered) {
+            LOG_DEBUG << "eventfd triggered";
+
             const auto &queued_functors = _functor_blocking_queue.pop_all();
 
             for (auto &functor : queued_functors) {
@@ -52,11 +65,11 @@ void EventLoop::loop() {
         }
 
         if (_timerfd_triggered) {
+            LOG_DEBUG << "timerfd triggered";
+
             TimePoint current_time_point;
 
-            _expire_all_timers_before_or_at_given_time_point_and_update_alarm(
-                current_time_point
-            );
+            _expire_and_update_alarm(current_time_point);
 
             _timerfd_triggered = false;
         }
@@ -176,15 +189,21 @@ void EventLoop::_cancel_a_timer_and_update_alarm(const Timer *timer_ptr) {
     delete timer_ptr;
 }
 
-void EventLoop::
-    _expire_all_timers_before_or_at_given_time_point_and_update_alarm(
-        const TimePoint &time_point
-    ) {
+void EventLoop::_expire_and_update_alarm(const TimePoint &time_point) {
+    // [NOTE] entering this function means the timer, which is always one-shot,
+    // has expired and the event loop is awakened by timerfd to execute this
+    // function, so one can assume the timer is clean right now
+
     std::vector<const Timer *> expired_timers =
         _timer_container.move_out_before_or_at(time_point);
 
+    const TimePoint &exp_after_moving_out =
+        _timer_container.get_earliest_expiration_time_point();
+
     std::vector<const Timer *> timers_that_are_still_valid;
 
+    // the callbacks themself might also add their new timers and update the
+    // alarm
     for (const Timer *timer_ptr : expired_timers) {
         auto temp_mutable_timer_ptr = const_cast<Timer *>(timer_ptr);
 
@@ -197,14 +216,35 @@ void EventLoop::
         }
     }
 
-    _timer_container.insert_all(timers_that_are_still_valid);
+    if (timers_that_are_still_valid.empty()) {
+        return;
+    }
 
-    const TimePoint &earliest_expiration_time_point_after_expiration =
+    const TimePoint &exp_after_executing_callbacks =
         _timer_container.get_earliest_expiration_time_point();
 
-    if (earliest_expiration_time_point_after_expiration < TimePoint::FOREVER) {
-        _set_alarm_at_time_point(earliest_expiration_time_point_after_expiration
-        );
+    bool _new_callbacks_have_been_inserted =
+        exp_after_executing_callbacks < exp_after_moving_out;
+
+    _timer_container.insert_all(timers_that_are_still_valid);
+
+    const TimePoint &exp_after_inserting_all =
+        _timer_container.get_earliest_expiration_time_point();
+
+    // set the alarm if it is not set inside the callback, or it is set inside
+    // the callback but will be advanced by the insertion here
+    if (!_new_callbacks_have_been_inserted
+        || exp_after_inserting_all < exp_after_executing_callbacks) {
+        _set_alarm_at_time_point(exp_after_inserting_all);
+    }
+}
+
+void EventLoop::_release_all_timers() {
+    std::vector<const Timer *> all_timers =
+        _timer_container.move_out_before_or_at(TimePoint::FOREVER);
+
+    for (const Timer *timer_ptr : all_timers) {
+        delete timer_ptr;
     }
 }
 

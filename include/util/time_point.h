@@ -147,7 +147,7 @@ struct TimePoint {
         return !operator==(other_nanoseconds_from_epoch);
     }
 
-    static constexpr int64_t FOREVER = 0xffffffffffffffff;
+    static constexpr int64_t FOREVER = 0x7fffffffffffffff;
 
     int64_t nanoseconds_from_epoch = 0;
 };

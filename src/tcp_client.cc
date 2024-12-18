@@ -13,12 +13,9 @@ void TcpClient::start() {
         LOG_FATAL << "missing message callback";
     }
 
-    _preconnect_socketfd_ptr.reset(new PreconnectSocketfd(
-        Socketfd::create_socketfd(),
-        _loop,
-        _server_address,
-        _MAX_NUMBER_OF_RETRIES
-    ));
+    _preconnect_socketfd_ptr.reset(
+        new PreconnectSocketfd(_loop, _server_address, _MAX_NUMBER_OF_RETRIES)
+    );
 
     _preconnect_socketfd_ptr->register_new_connection_callback(std::bind(
         &TcpClient::_new_connection_callback, this, std::placeholders::_1
@@ -45,13 +42,21 @@ void TcpClient::stop() {
 
     LOG_INFO << "stopping TCP server...";
 
-    LOG_INFO << "closing existing (pre) TCP connections...";
+    if (_preconnect_socketfd_ptr) {
+        LOG_INFO << "cancelling connecting to the server...";
 
-    if (_tcp_connect_socketfd_ptr) {
-        _tcp_connect_socketfd_ptr->shutdown();
+        _preconnect_socketfd_ptr->cancel();
+
+        LOG_INFO << "finished cancelling connecting to the server";
     }
 
-    LOG_INFO << "finished closing existing (pre) TCP connections";
+    if (_tcp_connect_socketfd_ptr) {
+        LOG_INFO << "shutting down connection to the server...";
+
+        _tcp_connect_socketfd_ptr->shutdown_write();
+
+        LOG_INFO << "finished shutting down connection to the server";
+    }
 
     _is_stopped = true;
 

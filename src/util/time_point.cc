@@ -2,6 +2,7 @@
 #include <ctime>
 #include <unordered_map>
 
+#include "log_builder.h"
 #include "util/time_point.h"
 
 namespace xubinh_server {
@@ -11,21 +12,23 @@ namespace util {
 int64_t TimePoint::get_nanoseconds_from_epoch() {
     struct timespec ts;
 
-    clock_gettime(CLOCK_REALTIME, &ts);
+    if (::clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+        LOG_SYS_FATAL << "unknown error when calling clock_gettime";
+    }
 
-    return static_cast<int64_t>(ts.tv_sec) * 1000000000
+    return static_cast<int64_t>(ts.tv_sec) * 1000 * 1000 * 1000
            + static_cast<int64_t>(ts.tv_nsec);
 }
 
 void TimePoint::to_timespec(timespec *time_specification) const {
     time_specification->tv_sec =
         static_cast<decltype(time_specification->tv_sec)>(
-            nanoseconds_from_epoch / static_cast<int64_t>(1000000000)
+            nanoseconds_from_epoch / static_cast<int64_t>(1000 * 1000 * 1000)
         );
 
     time_specification->tv_nsec =
         static_cast<decltype(time_specification->tv_nsec)>(
-            nanoseconds_from_epoch % static_cast<int64_t>(1000000000)
+            nanoseconds_from_epoch % static_cast<int64_t>(1000 * 1000 * 1000)
         );
 }
 

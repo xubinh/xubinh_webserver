@@ -33,7 +33,9 @@ public:
     // properly
     EventLoop();
 
-    ~EventLoop() = default;
+    ~EventLoop() {
+        _release_all_timers();
+    };
 
     void loop();
 
@@ -101,10 +103,13 @@ private:
     // may be called by both the user and the loop itself
     void _cancel_a_timer_and_update_alarm(const Timer *timer_ptr);
 
-    // only be called by the loop itself
-    void _expire_all_timers_before_or_at_given_time_point_and_update_alarm(
-        const TimePoint &time_point
-    );
+    // expire all timers before or at given time point and update alarm
+    //
+    // - only be called by the loop itself
+    void _expire_and_update_alarm(const TimePoint &time_point);
+
+    // for releasing resources
+    void _release_all_timers();
 
     // for async-handling of eventfd notifications
     void _eventfd_message_callback(uint64_t value);

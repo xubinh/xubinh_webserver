@@ -2,22 +2,18 @@
 
 #include "event_loop.h"
 #include "preconnect_socketfd.h"
+#include "util/errno.h"
 
 namespace xubinh_server {
 
 PreconnectSocketfd::PreconnectSocketfd(
-    int fd,
     EventLoop *event_loop,
     const InetAddress &server_address,
     int max_number_of_retries
 )
     : _event_loop(event_loop), _MAX_NUMBER_OF_RETRIES(max_number_of_retries),
       _server_address(server_address),
-      _pollable_file_descriptor(fd, event_loop) {
-
-    if (fd < 0) {
-        LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
-    }
+      _pollable_file_descriptor(Socketfd::create_socketfd(), event_loop) {
 }
 
 void PreconnectSocketfd::start() {
@@ -38,6 +34,22 @@ void PreconnectSocketfd::start() {
     );
 }
 
+void PreconnectSocketfd::cancel() {
+    if (_timer_identifier_ptr) {
+        _event_loop->cancel_a_timer(*_timer_identifier_ptr);
+
+        _timer_identifier_ptr.reset();
+
+        _pollable_file_descriptor.detach_from_poller();
+
+        _pollable_file_descriptor.close_fd();
+
+        if (_connect_fail_callback) {
+            _connect_fail_callback();
+        }
+    }
+}
+
 int PreconnectSocketfd::_connect_to_server(
     int socketfd, const InetAddress &server_address
 ) {
@@ -52,6 +64,12 @@ void PreconnectSocketfd::_schedule_retry() {
     if (_number_of_retries >= _MAX_NUMBER_OF_RETRIES) {
         LOG_ERROR << "max number of retries reached";
 
+        _timer_identifier_ptr.reset();
+
+        _pollable_file_descriptor.detach_from_poller();
+
+        _pollable_file_descriptor.close_fd();
+
         if (_connect_fail_callback) {
             _connect_fail_callback();
         }
@@ -61,15 +79,24 @@ void PreconnectSocketfd::_schedule_retry() {
 
     _number_of_retries += 1;
 
-    _event_loop->run_after_time_interval(
-        std::min(
-            PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL,
-            _current_retry_time_interval
-        ),
-        0,
-        0,
-        std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
-    );
+    LOG_DEBUG << "scheduling retry, number of times: "
+                     + std::to_string(_number_of_retries);
+
+    _pollable_file_descriptor.reset_to(Socketfd::create_socketfd());
+
+    {
+        auto timer_identifier = _event_loop->run_after_time_interval(
+            std::min(
+                PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL,
+                _current_retry_time_interval
+            ),
+            0,
+            0,
+            std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
+        );
+
+        _timer_identifier_ptr.reset(new TimerIdentifier(timer_identifier));
+    }
 
     _current_retry_time_interval *= 2;
 }
@@ -81,6 +108,8 @@ void PreconnectSocketfd::_write_event_callback() {
 
     // success
     if (saved_errno == 0) {
+        LOG_DEBUG << "connected";
+
         // must be called before invoking the following new connection callback
         // to avoid potential overrides
         _pollable_file_descriptor.detach_from_poller();
@@ -91,6 +120,13 @@ void PreconnectSocketfd::_write_event_callback() {
     // must be retryable errors since otherwise would have already been blocked
     // by `_try_once()`
     else {
+        LOG_DEBUG << "error when trying to connect to server: "
+                         + util::strerror_tl(saved_errno)
+                         + " (errno=" + std::to_string(saved_errno)
+                  << ")";
+
+        LOG_DEBUG << "something went wrong; schedule retry";
+
         _schedule_retry();
     }
 }
@@ -105,6 +141,8 @@ void PreconnectSocketfd::_try_once() {
 
     // success
     if (connect_status == 0) {
+        LOG_DEBUG << "connected";
+
         _pollable_file_descriptor.detach_from_poller();
 
         _new_connection_callback(socketfd);
@@ -112,9 +150,16 @@ void PreconnectSocketfd::_try_once() {
 
     // error
     else {
+        LOG_DEBUG << "error when trying to connect to server: "
+                         + util::strerror_tl(errno)
+                         + " (errno=" + std::to_string(errno)
+                  << ")";
+
         switch (errno) {
         // for non-blocking socketfd: success later, not now
         case EINPROGRESS:
+            LOG_DEBUG << "did not connect immediately; handover to poller";
+
             _pollable_file_descriptor.enable_write_event();
 
             break;
@@ -125,6 +170,8 @@ void PreconnectSocketfd::_try_once() {
         case EAGAIN:
         case ECONNREFUSED:
         case ENETUNREACH:
+            LOG_DEBUG << "something went wrong; schedule retry";
+
             _schedule_retry();
 
             break;

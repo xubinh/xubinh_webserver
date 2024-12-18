@@ -41,16 +41,12 @@ public:
     );
 
     ~TcpConnectSocketfd() {
-        if (!_pollable_file_descriptor.is_detached()) {
-            LOG_WARN << "tcp connect socketfd object (id: " + get_id()
-                            + ") destroyed before the connection is closed";
-
-            // must be called in the loop to ensure thread-safety of internal
-            // state
-            _pollable_file_descriptor.get_loop()->run(std::bind(
-                &TcpConnectSocketfd::_close_event_callback, shared_from_this()
-            ));
+        if (!_is_closed()) {
+            LOG_FATAL << "tcp connect socketfd object (id: " + get_id()
+                             + ") destroyed before the connection is closed";
         }
+
+        _pollable_file_descriptor.close_fd();
     }
 
     const std::string &get_id() const {
@@ -83,9 +79,12 @@ public:
     // not thread-safe
     void start();
 
-    // close local write-end; calling this means the user knows there will be no
-    // more data to be sent
-    void shutdown();
+    // close local write-end
+    //
+    // - can be called by user to start the four-way handshake, and after which
+    // it is the user's responsibility to ensure there will be no data sent to
+    // the output buffer
+    void shutdown_write();
 
     // should be called only inside a worker loop
     void send(const char *data, size_t data_size);
@@ -104,7 +103,7 @@ public:
     util::Any context{};
 
 private:
-    void _read_event_callback();
+    void _read_event_callback(util::TimePoint time_stamp);
 
     void _write_event_callback();
 
@@ -123,8 +122,6 @@ private:
     bool _is_closed() const {
         return _pollable_file_descriptor.is_detached();
     }
-
-    void _shutdown();
 
     // only start reading when a read event is encountered
     void _receive_all_data();
@@ -149,6 +146,8 @@ private:
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;
     CloseCallbackType _close_callback;
+
+    bool _is_write_end_shutdown = false;
 
     PollableFileDescriptor _pollable_file_descriptor;
 };

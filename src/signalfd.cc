@@ -50,7 +50,7 @@ int Signalfd::create_signalfd(SignalSet initial_listening_set, int flags) {
     return fd;
 }
 
-void Signalfd::_read_event_callback() {
+void Signalfd::_read_event_callback(util::TimePoint time_stamp) {
     struct signalfd_siginfo signal_info;
 
     // one signal at a time

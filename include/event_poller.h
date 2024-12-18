@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "util/type_traits.h"
 
@@ -37,6 +38,14 @@ public:
     void register_event_for_fd(int fd, const epoll_event *event);
 
     void detach_fd(int fd);
+
+    size_t size() const {
+        return _fds_that_are_listening_on.size();
+    }
+
+    bool empty() const {
+        return size() == 0;
+    }
 
     std::vector<PollableFileDescriptor *> poll_for_active_events_of_all_fds();
 

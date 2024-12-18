@@ -9,6 +9,7 @@
 
 namespace xubinh_server {
 
+// not-thread-safe
 class PreconnectSocketfd
     : public std::enable_shared_from_this<PreconnectSocketfd>,
       public Socketfd {
@@ -20,7 +21,6 @@ public:
     using ConnectFailCallbackType = std::function<void()>;
 
     PreconnectSocketfd(
-        int fd,
         EventLoop *event_loop,
         const InetAddress &server_address,
         int max_number_of_retries
@@ -28,7 +28,9 @@ public:
 
     // should not modify the listening state of the underlying fd since the
     // ownership will be transfered later to the newly established connection
-    ~PreconnectSocketfd() = default;
+    ~PreconnectSocketfd() {
+        LOG_DEBUG << "preconnect socketfd destructed";
+    };
 
     void register_new_connection_callback(
         NewConnectionCallbackType new_connection_callback
@@ -43,6 +45,9 @@ public:
     }
 
     void start();
+
+    // cancel all retries and close immediately
+    void cancel();
 
 private:
     // simple wrapper for `::connect` with return values unchanged
@@ -68,6 +73,8 @@ private:
 
     util::TimeInterval _current_retry_time_interval{
         _INITIAL_RETRY_TIME_INTERVAL};
+
+    std::unique_ptr<TimerIdentifier> _timer_identifier_ptr;
 
     const InetAddress _server_address;
 

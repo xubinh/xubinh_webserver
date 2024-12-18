@@ -52,13 +52,12 @@ void TcpServer::stop() {
 
     LOG_INFO << "stopping TCP server...";
 
-    LOG_INFO << "closing existing TCP connections...";
+    LOG_INFO << "stopping listening for new connections...";
 
-    for (auto &pair : _tcp_connect_socketfds) {
-        pair.second->shutdown();
-    }
+    // stop accepting new connections
+    _listen_socketfd.reset();
 
-    LOG_INFO << "finished closing existing TCP connections";
+    LOG_INFO << "finished stopping listening for new connections";
 
     if (_thread_pool_capacity > 0) {
         LOG_INFO << "shutting down thread pool";

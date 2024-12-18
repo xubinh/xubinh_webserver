@@ -7,6 +7,7 @@
 
 #include "event_loop.h"
 #include "pollable_file_descriptor.h"
+#include "util/time_point.h"
 
 namespace xubinh_server {
 
@@ -39,19 +40,10 @@ public:
     static int create_signalfd(SignalSet initial_listening_set, int flags);
 
     Signalfd(int fd, EventLoop *loop) : _pollable_file_descriptor(fd, loop) {
-        if (fd < 0) {
-            LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
-        }
-
-        _pollable_file_descriptor.register_read_event_callback(
-            std::bind(&Signalfd::_read_event_callback, this)
-        );
     }
 
     ~Signalfd() {
-        _pollable_file_descriptor.detach_from_poller();
-
-        ::close(_pollable_file_descriptor.get_fd());
+        _pollable_file_descriptor.close_fd();
     }
 
     void register_signal_dispatcher(SignalDispatcherType signal_dispatcher) {
@@ -63,13 +55,21 @@ public:
             LOG_FATAL << "missing signal dispatcher";
         }
 
+        _pollable_file_descriptor.register_read_event_callback(std::bind(
+            &Signalfd::_read_event_callback, this, std::placeholders::_1
+        ));
+
         _pollable_file_descriptor.enable_read_event();
+    }
+
+    void stop() {
+        _pollable_file_descriptor.detach_from_poller();
     }
 
 private:
     static constexpr int _DEFAULT_SIGNALFD_FLAGS = SFD_NONBLOCK | SFD_CLOEXEC;
 
-    void _read_event_callback();
+    void _read_event_callback(util::TimePoint time_stamp);
 
     SignalDispatcherType _signal_dispatcher;
 

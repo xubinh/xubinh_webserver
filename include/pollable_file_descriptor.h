@@ -7,6 +7,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
+#include "util/time_point.h"
+
 namespace xubinh_server {
 
 class EventLoop;
@@ -19,18 +21,18 @@ private:
     using EpollEventsType = decltype(epoll_event{}.events);
 
 public:
-    using CallbackType = std::function<void()>;
+    using ReadEventCallbackType =
+        std::function<void(util::TimePoint time_stamp)>;
+
+    using WriteEventCallbackType = std::function<void()>;
+
+    using CloseEventCallbackType = std::function<void()>;
+
+    using ErrorEventCallbackType = std::function<void()>;
 
     static void set_fd_as_nonblocking(int fd);
 
-    PollableFileDescriptor(int fd, EventLoop *event_loop)
-        : _fd(fd), _event_loop(event_loop) {
-
-        _event.data.ptr = this;
-        _event.events = _INITIAL_EPOLL_EVENT;
-
-        set_fd_as_nonblocking(_fd);
-    }
+    PollableFileDescriptor(int fd, EventLoop *event_loop);
 
     // no copy
     PollableFileDescriptor(const PollableFileDescriptor &) = delete;
@@ -44,27 +46,33 @@ public:
     // PreconnectSocketfd) might want to transfer its ownership
     ~PollableFileDescriptor() = default;
 
-    int get_fd() {
+    int get_fd() const {
         return _fd;
     }
 
-    EventLoop *get_loop() {
+    void close_fd() const;
+
+    EventLoop *get_loop() const {
         return _event_loop;
     }
 
-    void register_read_event_callback(CallbackType read_event_callback) {
+    void register_read_event_callback(ReadEventCallbackType read_event_callback
+    ) {
         _read_event_callback = std::move(read_event_callback);
     }
 
-    void register_write_event_callback(CallbackType write_event_callback) {
+    void
+    register_write_event_callback(WriteEventCallbackType write_event_callback) {
         _write_event_callback = std::move(write_event_callback);
     }
 
-    void register_close_event_callback(CallbackType close_event_callback) {
+    void
+    register_close_event_callback(CloseEventCallbackType close_event_callback) {
         _close_event_callback = std::move(close_event_callback);
     }
 
-    void register_error_event_callback(CallbackType error_event_callback) {
+    void
+    register_error_event_callback(ErrorEventCallbackType error_event_callback) {
         _error_event_callback = std::move(error_event_callback);
     }
 
@@ -96,7 +104,7 @@ public:
     }
 
     // used by poller
-    void dispatch_active_events();
+    void dispatch_active_events(util::TimePoint time_stamp);
 
     void register_weak_lifetime_guard(
         const std::shared_ptr<void> &strong_lifetime_guard
@@ -105,10 +113,12 @@ public:
         _is_weak_lifetime_guard_registered = true;
     }
 
+    void reset_to(int new_fd);
+
 private:
     void _register_event();
 
-    void _dispatch_active_events();
+    void _dispatch_active_events(util::TimePoint time_stamp);
 
     static constexpr EpollEventsType _INITIAL_EPOLL_EVENT = EPOLLET;
 
@@ -120,10 +130,10 @@ private:
     EventLoop *_event_loop;
     epoll_event _event{};
     uint32_t _active_events{};
-    CallbackType _read_event_callback;
-    CallbackType _write_event_callback;
-    CallbackType _close_event_callback;
-    CallbackType _error_event_callback;
+    ReadEventCallbackType _read_event_callback;
+    WriteEventCallbackType _write_event_callback;
+    CloseEventCallbackType _close_event_callback;
+    ErrorEventCallbackType _error_event_callback;
     std::weak_ptr<void> _weak_lifetime_guard;
     bool _is_weak_lifetime_guard_registered = false;
 };

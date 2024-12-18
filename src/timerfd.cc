@@ -3,13 +3,30 @@
 
 namespace xubinh_server {
 
+void Timerfd::start() {
+    if (!_message_callback) {
+        LOG_FATAL << "missing message callback";
+    }
+
+    _pollable_file_descriptor.register_read_event_callback(
+        std::bind(&Timerfd::_read_event_callback, this, std::placeholders::_1)
+    );
+
+    _pollable_file_descriptor.enable_read_event();
+}
+
 void Timerfd::set_alarm_at_time_point(const TimePoint &time_point) {
+    LOG_DEBUG << "set alarm at time point: "
+                     + time_point.to_datetime_string(
+                         TimePoint::DatetimePurpose::PRINTING
+                     );
+
     itimerspec timer_specification{};
 
+    // only initial expiration, no repetition
     time_point.to_timespec(&timer_specification.it_value);
 
-    // thread-safe
-    if (timerfd_settime(
+    if (::timerfd_settime(
             _pollable_file_descriptor.get_fd(),
             TFD_TIMER_ABSTIME | TFD_TIMER_CANCEL_ON_SET,
             &timer_specification,
@@ -22,10 +39,10 @@ void Timerfd::set_alarm_at_time_point(const TimePoint &time_point) {
 }
 
 void Timerfd::cancel() {
-    // all zero for timer cancellation
+    // all zero for cancelling the timer
     itimerspec timer_specification{};
 
-    if (timerfd_settime(
+    if (::timerfd_settime(
             _pollable_file_descriptor.get_fd(), 0, &timer_specification, nullptr
         )
         == -1) {
@@ -45,12 +62,14 @@ uint64_t Timerfd::_retrieve_the_number_of_expirations() {
 
     if (bytes_read == -1) {
         if (errno == ECANCELED) {
-            LOG_SYS_ERROR << "timerfd has been canceled due to discontinuous "
-                             "changes to the clock";
+            LOG_INFO << "a timer has been canceled due to discontinuous "
+                        "changes to the real-time clock";
         }
+
         else if (errno == EAGAIN) {
             LOG_WARN << "timerfd is read before expiration occurs";
         }
+
         else {
             LOG_SYS_ERROR << "failed reading from timerfd";
         }

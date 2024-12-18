@@ -13,7 +13,7 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
     auto flags = ::fcntl(fd, F_GETFL, 0);
 
     if (flags == -1) {
-        LOG_SYS_FATAL << "fcntl F_GETFL";
+        LOG_SYS_FATAL << "failed to fcntl with F_GETFL flag";
     }
 
     flags |= O_NONBLOCK;
@@ -23,6 +23,25 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
     }
 
     return;
+}
+
+PollableFileDescriptor::PollableFileDescriptor(int fd, EventLoop *event_loop)
+    : _fd(fd), _event_loop(event_loop) {
+
+    if (_fd < 0) {
+        LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
+    }
+
+    _event.data.ptr = this;
+    _event.events = _INITIAL_EPOLL_EVENT;
+
+    set_fd_as_nonblocking(_fd);
+}
+
+void PollableFileDescriptor::close_fd() const {
+    if (::close(_fd) == -1) {
+        LOG_SYS_FATAL << "failed to close fd";
+    }
 }
 
 void PollableFileDescriptor::enable_read_event() {
@@ -90,14 +109,15 @@ void PollableFileDescriptor::detach_from_poller() {
     );
 }
 
-void PollableFileDescriptor::dispatch_active_events() {
+void PollableFileDescriptor::dispatch_active_events(util::TimePoint time_stamp
+) {
     // if lifetime guard is registered, dispatch events only after locking up
     // the guard to prevent self-destruction
     if (_is_weak_lifetime_guard_registered) {
         auto strong_lifetime_guard = _weak_lifetime_guard.lock();
 
         if (strong_lifetime_guard) {
-            _dispatch_active_events();
+            _dispatch_active_events(time_stamp);
         }
 
         else {
@@ -107,8 +127,20 @@ void PollableFileDescriptor::dispatch_active_events() {
 
     // otherwise the outer class ensures there will be no lifetime issue
     else {
-        _dispatch_active_events();
+        _dispatch_active_events(time_stamp);
     }
+}
+
+void PollableFileDescriptor::reset_to(int new_fd) {
+    if (new_fd < 0) {
+        LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
+    }
+
+    detach_from_poller();
+
+    close_fd();
+
+    _fd = new_fd;
 }
 
 void PollableFileDescriptor::_register_event() {
@@ -119,7 +151,8 @@ void PollableFileDescriptor::_register_event() {
     );
 }
 
-void PollableFileDescriptor::_dispatch_active_events() {
+void PollableFileDescriptor::_dispatch_active_events(util::TimePoint time_stamp
+) {
     // close event first for users set their flags
     if (_active_events & EventPoller::EVENT_TYPE_CLOSE) {
         if (_close_event_callback) {
@@ -138,7 +171,7 @@ void PollableFileDescriptor::_dispatch_active_events() {
     // it out in one go
     if (_active_events & EventPoller::EVENT_TYPE_READ) {
         if (_read_event_callback) {
-            _read_event_callback();
+            _read_event_callback(time_stamp);
         }
     }
 

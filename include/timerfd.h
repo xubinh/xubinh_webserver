@@ -3,7 +3,6 @@
 
 #include <sys/timerfd.h>
 
-#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "util/time_point.h"
 
@@ -28,20 +27,12 @@ public:
 
     Timerfd(int fd, EventLoop *event_loop)
         : _pollable_file_descriptor(fd, event_loop) {
-
-        if (fd < 0) {
-            LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
-        }
-
-        _pollable_file_descriptor.register_read_event_callback(
-            std::bind(&Timerfd::_read_event_callback, this)
-        );
     }
 
     ~Timerfd() {
         _pollable_file_descriptor.detach_from_poller();
 
-        ::close(_pollable_file_descriptor.get_fd());
+        _pollable_file_descriptor.close_fd();
     }
 
     void register_timerfd_message_callback(
@@ -50,13 +41,7 @@ public:
         _message_callback = std::move(timerfd_message_callback);
     }
 
-    void start() {
-        if (!_message_callback) {
-            LOG_FATAL << "missing message callback";
-        }
-
-        _pollable_file_descriptor.enable_read_event();
-    }
+    void start();
 
     // async write operation
     //
@@ -82,7 +67,7 @@ private:
     // must be zero before (and including) Linux v2.6.26
     static constexpr int _DEFAULT_TIMERFD_FLAGS = TFD_CLOEXEC | TFD_NONBLOCK;
 
-    void _read_event_callback() {
+    void _read_event_callback(util::TimePoint time_stamp) {
         _message_callback(_retrieve_the_number_of_expirations());
     }
 

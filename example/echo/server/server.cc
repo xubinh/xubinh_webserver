@@ -10,6 +10,9 @@
 
 using TcpConnectSocketfdPtr = xubinh_server::TcpServer::TcpConnectSocketfdPtr;
 
+std::unique_ptr<xubinh_server::Signalfd>
+    signalfd_ptr; // for lazy initialization
+
 // placeholder
 void reload_server_config(xubinh_server::TcpServer *server) {
 }
@@ -28,9 +31,14 @@ void signal_dispatcher(
     case SIGQUIT:
     case SIGTERM:
     case SIGTSTP:
-        loop->ask_to_stop();
-
         LOG_INFO << "user interrupt, terminating server...";
+
+        signalfd_ptr->stop();
+
+        server->stop();
+
+        // loop will only stop when all fd's are detached from it
+        loop->ask_to_stop();
 
         break;
 
@@ -90,7 +98,7 @@ void message_callback(
 int main() {
     // logging config
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::WARN);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
 
     // signal config
     xubinh_server::SignalSet signal_set;
@@ -111,13 +119,13 @@ int main() {
     xubinh_server::TcpServer server(&loop, server_address);
 
     // signalfd config
-    xubinh_server::Signalfd signalfd(
+    signalfd_ptr.reset(new xubinh_server::Signalfd(
         xubinh_server::Signalfd::create_signalfd(signal_set, 0), &loop
-    );
-    signalfd.register_signal_dispatcher(
+    ));
+    signalfd_ptr->register_signal_dispatcher(
         std::bind(signal_dispatcher, &server, &loop, std::placeholders::_1)
     );
-    signalfd.start();
+    signalfd_ptr->start();
 
     // server config
     server.register_message_callback(message_callback);
@@ -130,13 +138,11 @@ int main() {
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-    server.set_thread_pool_capacity(4);
+    server.set_thread_pool_capacity(1);
 
     server.start();
 
     loop.loop();
-
-    server.stop();
 
     return 0;
 }

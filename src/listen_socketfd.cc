@@ -39,16 +39,6 @@ void ListenSocketfd::listen(int socketfd) {
 
 ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
     : _pollable_file_descriptor(fd, event_loop) {
-
-    if (fd < 0) {
-        LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
-    }
-
-    _pollable_file_descriptor.register_read_event_callback(
-        std::bind(&ListenSocketfd::_read_event_callback, this)
-    );
-
-    _open_spare_fd();
 }
 
 int ListenSocketfd::_accept_new_connection(
@@ -102,7 +92,7 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
     _open_spare_fd();
 }
 
-void ListenSocketfd::_read_event_callback() {
+void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     while (true) {
         std::unique_ptr<InetAddress> peer_address_ptr;
 
