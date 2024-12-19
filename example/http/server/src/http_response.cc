@@ -1,4 +1,4 @@
-#include "http_response.h"
+#include "../include/http_response.h"
 
 namespace xubinh_server {
 
@@ -275,8 +275,10 @@ void HttpResponse::dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer) {
     buffer.write_crlf();
 
     if (!_body.empty()) {
-        buffer.write(_body.c_str(), _body.length());
+        buffer.write(&(*_body.begin()), _body.size());
     }
 }
+
+const std::string HttpResponse::_empty_string{};
 
 } // namespace xubinh_server

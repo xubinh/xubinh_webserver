@@ -91,6 +91,10 @@ public:
     // - must be called in the worker loop
     void shutdown_write();
 
+    bool is_write_end_shutdown() const {
+        return _is_write_end_shutdown;
+    }
+
     // abruptly reset the entire connection
     //
     // - can be called by user to reset the connection; after which

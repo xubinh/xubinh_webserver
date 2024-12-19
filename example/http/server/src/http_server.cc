@@ -8,7 +8,9 @@ void HttpServer::start() {
     }
 
     _tcp_server.register_connect_success_callback(std::bind(
-        &HttpServer::_connect_success_callback, this, std::placeholders::_1
+        &HttpServer::_connect_success_callback_wrapper,
+        this,
+        std::placeholders::_1
     ));
 
     _tcp_server.register_message_callback(std::bind(
@@ -40,6 +42,8 @@ void HttpServer::_message_callback(
 
     HttpParser &parser =
         util::any_cast<HttpParser &>(tcp_connect_socketfd_ptr->context);
+    // HttpParser &parser =
+    //     *util::any_cast<HttpParser *>(&tcp_connect_socketfd_ptr->context);
 
     bool is_success = parser.parse(*input_buffer, time_stamp);
 
@@ -54,7 +58,7 @@ void HttpServer::_message_callback(
     if (parser.is_success()) {
         const HttpRequest &request = parser.get_request();
 
-        _http_request_callback(request);
+        _http_request_callback(tcp_connect_socketfd_ptr, request);
 
         parser.reset();
     }
@@ -78,11 +82,14 @@ void HttpServer::_check_and_remove_inactive_connection(
 
     // first check if the connection is inactive in current loop
     if (_current_time_point - time_stamp > _connection_timeout_interval) {
+        auto current_time_point = _current_time_point;
+        auto connection_timeout_interval = _connection_timeout_interval;
+
         tcp_connect_socketfd_ptr->check_and_abort(
             // double check if the connection is still inactive in the
             // worker loop and actually abort it
-            [current_time_point = _current_time_point,
-             connection_timeout_interval = _connection_timeout_interval,
+            [current_time_point,
+             connection_timeout_interval,
              &tcp_connect_socketfd_ptr]() {
                 return (
                     current_time_point

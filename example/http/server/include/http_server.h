@@ -16,8 +16,10 @@ public:
 
     using ConnectSuccessCallbackType = TcpServer::ConnectSuccessCallbackType;
 
-    using HttpRequestCallbackType =
-        std::function<void(const HttpRequest &http_request)>;
+    using HttpRequestCallbackType = std::function<void(
+        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+        const HttpRequest &http_request
+    )>;
 
     using WriteCompleteCallbackType = TcpServer::WriteCompleteCallbackType;
 
@@ -32,6 +34,12 @@ public:
     }
 
     ~HttpServer() = default;
+
+    void register_connect_success_callback(
+        ConnectSuccessCallbackType connect_success_callback
+    ) {
+        _connect_success_callback = std::move(connect_success_callback);
+    }
 
     void
     register_http_request_callback(HttpRequestCallbackType http_request_callback
@@ -76,10 +84,14 @@ public:
     }
 
 private:
-    void _connect_success_callback(
+    void _connect_success_callback_wrapper(
         const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
     ) {
         tcp_connect_socketfd_ptr->context = HttpParser();
+
+        if (_connect_success_callback) {
+            _connect_success_callback(tcp_connect_socketfd_ptr);
+        }
     }
 
     void _message_callback(
@@ -96,9 +108,12 @@ private:
 
     EventLoop *_loop;
 
-    TimePoint _current_time_point;
+    TimePoint _current_time_point{};
 
-    TimeInterval _connection_timeout_interval;
+    TimeInterval _connection_timeout_interval{
+        static_cast<int64_t>(60 * 1000) * 1000 * 1000}; // 1 min
+
+    ConnectSuccessCallbackType _connect_success_callback;
 
     HttpRequestCallbackType _http_request_callback;
 

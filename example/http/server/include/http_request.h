@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "util/time_point.h"
 
@@ -66,6 +67,10 @@ public:
         return _empty_string;
     }
 
+    bool need_close() const {
+        return get_header("Connection") == "close";
+    }
+
     const std::unordered_map<std::string, std::string> &get_headers() const {
         return _headers;
     }
@@ -74,7 +79,7 @@ public:
         _body.assign(start, end);
     }
 
-    const std::string &get_body() const {
+    const std::vector<char> &get_body() const {
         return _body;
     }
 
@@ -108,7 +113,7 @@ private:
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
     util::TimePoint _receive_time_point;
     std::unordered_map<std::string, std::string> _headers;
-    std::string _body;
+    std::vector<char> _body;
 };
 
 } // namespace xubinh_server

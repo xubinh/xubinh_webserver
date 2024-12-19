@@ -11,7 +11,8 @@ namespace util {
 
 template <
     typename T,
-    typename = type_traits::enable_if_t<std::is_reference<T>::value>>
+    typename = type_traits::enable_if_t<
+        std::is_reference<T>::value>> // can't take a rvalue's address
 constexpr inline typename std::remove_reference<T>::type *address_of(T &&o
 ) noexcept {
     return __builtin_addressof(o);

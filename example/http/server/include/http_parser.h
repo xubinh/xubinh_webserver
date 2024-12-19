@@ -25,7 +25,9 @@ public:
     void reset() {
         _parsing_state = EXPECT_REQUEST_LINE;
 
-        _request_ptr.reset(new HttpRequest{});
+        _body_length = 0;
+
+        _request_ptr = std::make_shared<HttpRequest>();
     }
 
     ParsingState get_state() const {
@@ -49,7 +51,9 @@ private:
 
     size_t _body_length = 0;
 
-    std::unique_ptr<HttpRequest> _request_ptr{new HttpRequest{}};
+    // cannot be unique_ptr since the helper class Any requires the held object
+    // to be copyable
+    std::shared_ptr<HttpRequest> _request_ptr{std::make_shared<HttpRequest>()};
 };
 
 } // namespace xubinh_server

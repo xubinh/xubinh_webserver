@@ -70,6 +70,7 @@ public:
 
     void stop();
 
+    // runs in main loop
     void run_for_each_connection(RunForEachConnectionCallbackType callback) {
         _loop->run([&]() {
             for (const auto &pair : _tcp_connect_socketfds) {

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "log_builder.h"
 #include "tcp_buffer.h"
@@ -95,6 +96,10 @@ public:
 
     ~HttpResponse() = default;
 
+    void set_version_type(HttpVersionType version_type) {
+        _version = version_type;
+    }
+
     HttpVersionType get_version_type() const {
         return _version;
     }
@@ -124,16 +129,16 @@ public:
     // true = found, false = not found
     bool erase_header(const std::string &key);
 
-    void set_body(const std::string &body) {
+    void set_body(const std::vector<char> &body) {
         _body = body;
 
-        set_header("Content-Length", std::to_string(body.length()));
+        set_header("Content-Length", std::to_string(body.size()));
     }
 
-    void set_body(std::string &&body) {
+    void set_body(std::vector<char> &&body) {
         _body = std::move(body);
 
-        set_header("Content-Length", std::to_string(body.length()));
+        set_header("Content-Length", std::to_string(body.size()));
     }
 
     void set_body(const char *start, const char *end) {
@@ -153,7 +158,7 @@ private:
 
     std::unordered_map<std::string, std::string> _headers;
 
-    std::string _body;
+    std::vector<char> _body;
 };
 
 } // namespace xubinh_server

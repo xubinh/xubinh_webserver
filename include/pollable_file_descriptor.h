@@ -13,7 +13,7 @@ namespace xubinh_server {
 
 class EventLoop;
 
-// non-copyable, non-movable, and pollable file descriptors
+// pollable file descriptors
 //
 // - not thread-safe
 class PollableFileDescriptor {
