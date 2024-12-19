@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "../include/http_response.h"
 
 namespace xubinh_server {
@@ -277,6 +279,18 @@ void HttpResponse::dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer) {
     if (!_body.empty()) {
         buffer.write(&(*_body.begin()), _body.size());
     }
+}
+
+void HttpResponse::send_to_tcp_connection(
+    const std::shared_ptr<TcpConnectSocketfd> &tcp_connect_socketfd_ptr
+) {
+    MutableSizeTcpBuffer buffer;
+
+    dump_to_tcp_buffer(buffer);
+
+    tcp_connect_socketfd_ptr->send(
+        buffer.get_current_read_position(), buffer.get_readable_size()
+    );
 }
 
 const std::string HttpResponse::_empty_string{};

@@ -109,13 +109,7 @@ public:
     // it is the user's responsibility to ensure there will be no data sent to
     // the output buffer
     // - can be called either in main loop or in worker loop
-    void check_and_abort(PredicateType predicate) {
-        _loop->run([&]() {
-            if (predicate()) {
-                abort();
-            }
-        });
-    }
+    void check_and_abort(PredicateType predicate);
 
     // should be called only inside a worker loop
     void send(const char *data, size_t data_size);
@@ -134,12 +128,19 @@ public:
     util::Any context{};
 
 private:
+    // reads in all available data, let the outside process the data, and
+    // possibly sends response out
     void _read_event_callback(util::TimePoint time_stamp);
 
+    // sends out the response that could not be sent in one go inside the read
+    // event callback
     void _write_event_callback();
 
+    // detaches from the poller and let the outside release the resources
     void _close_event_callback();
 
+    // only reads and prints the error happened on the socketfd, after which the
+    // socketfd will still be at the error state
     void _error_event_callback();
 
     bool _is_reading() const {
@@ -152,6 +153,12 @@ private:
 
     bool _is_closed() const {
         return _pollable_file_descriptor.is_detached();
+    }
+
+    void _check_and_abort_impl(PredicateType predicate) {
+        if (predicate()) {
+            abort();
+        }
     }
 
     // only start reading when a read event is encountered

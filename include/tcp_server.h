@@ -79,6 +79,10 @@ public:
         });
     }
 
+    size_t get_number_of_tcp_connections() const {
+        return _tcp_connect_socketfds.size();
+    }
+
 private:
     // for listen socketfd
     void _new_connection_callback(

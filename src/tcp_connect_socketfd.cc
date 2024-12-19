@@ -85,6 +85,8 @@ void TcpConnectSocketfd::abort() {
         return;
     }
 
+    _close_event_callback();
+
     auto fd = _pollable_file_descriptor.get_fd();
 
     struct linger linger_opt;
@@ -104,9 +106,14 @@ void TcpConnectSocketfd::abort() {
     }
 
     _is_abotrted = true;
+}
 
-    // releasing resources
-    _close_event_callback();
+void TcpConnectSocketfd::check_and_abort(PredicateType predicate) {
+    _loop->run(std::bind(
+        &TcpConnectSocketfd::_check_and_abort_impl,
+        shared_from_this(),
+        std::move(predicate)
+    ));
 }
 
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {

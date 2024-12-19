@@ -38,7 +38,9 @@ public:
                              TimePoint::DatetimePurpose::PRINTING
                          )
                          + ", number of repetitions left: "
-                         + std::to_string(_number_of_repetitions_left);
+                         + (_number_of_repetitions_left == -1
+                                ? "∞"
+                                : std::to_string(_number_of_repetitions_left));
     }
 
     // no copying

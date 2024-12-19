@@ -142,6 +142,8 @@ int main() {
 
     server.start();
 
+    LOG_INFO << "server started listening on " + server_address.to_string();
+
     loop.loop();
 
     return 0;

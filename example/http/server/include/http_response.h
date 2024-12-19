@@ -7,6 +7,7 @@
 
 #include "log_builder.h"
 #include "tcp_buffer.h"
+#include "tcp_connect_socketfd.h"
 
 namespace xubinh_server {
 
@@ -148,6 +149,10 @@ public:
     }
 
     void dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer);
+
+    void send_to_tcp_connection(
+        const std::shared_ptr<TcpConnectSocketfd> &tcp_connect_socketfd_ptr
+    );
 
 private:
     static const std::string _empty_string;

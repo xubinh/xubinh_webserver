@@ -107,7 +107,7 @@ void TcpServer::_close_callback(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
 ) {
     // must be executed inside the main loop
-    _loop->run([=]() {
+    _loop->run([this, &tcp_connect_socketfd_ptr]() {
         _tcp_connect_socketfds.erase(tcp_connect_socketfd_ptr->get_id());
     });
 }

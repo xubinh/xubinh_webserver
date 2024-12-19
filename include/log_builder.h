@@ -76,7 +76,7 @@ public:
     LogBuilder &operator<<(double floating_point);
 
     LogBuilder &operator<<(bool boolean_value) {
-        _entry_buffer.append(boolean_value ? "true" : "false", 5);
+        _entry_buffer.append(boolean_value ? "true " : "false", 5);
 
         return *this;
     }

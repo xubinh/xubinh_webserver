@@ -65,6 +65,9 @@ void HttpServer::_message_callback(
 }
 
 void HttpServer::_remove_inactive_connections() {
+    LOG_DEBUG << "current number of TCP connections: "
+              << _tcp_server.get_number_of_tcp_connections();
+
     // draw a line to determine which connections are inactive
     _current_time_point = TimePoint();
 
@@ -78,10 +81,16 @@ void HttpServer::_remove_inactive_connections() {
 void HttpServer::_check_and_remove_inactive_connection(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
 ) {
+    LOG_TRACE << "checking inactive tcp connection, id: "
+              << tcp_connect_socketfd_ptr->get_id();
+
     const TimePoint &time_stamp = tcp_connect_socketfd_ptr->get_time_stamp();
 
     // first check if the connection is inactive in current loop
     if (_current_time_point - time_stamp > _connection_timeout_interval) {
+        LOG_TRACE << "tcp connection might be inactive, id: "
+                  << tcp_connect_socketfd_ptr->get_id();
+
         auto current_time_point = _current_time_point;
         auto connection_timeout_interval = _connection_timeout_interval;
 

@@ -146,6 +146,8 @@ bool read_file_and_send(
 
     response.set_header("Content-Length", std::to_string(file_size));
 
+    response.send_to_tcp_connection(tcp_connect_socketfd_ptr);
+
     char *mapped_data = static_cast<char *>(
         ::mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, fd, 0)
     );
@@ -286,7 +288,7 @@ void http_request_callback(
 
 int main() {
     // logging config
-    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
 
     // signal config
@@ -333,6 +335,8 @@ int main() {
     ); // 15 sec for debugging
 
     server.start();
+
+    LOG_INFO << "server started listening on " + server_address.to_string();
 
     loop.loop();
 

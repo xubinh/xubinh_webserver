@@ -69,8 +69,12 @@ void EventPoller::detach_fd(int fd) {
 
 std::vector<PollableFileDescriptor *>
 EventPoller::poll_for_active_events_of_all_fds() {
+    LOG_DEBUG << "epoll_wait blocked";
+
     int current_event_array_size =
         ::epoll_wait(_epoll_fd, _event_array, _MAX_SIZE_OF_EVENT_ARRAY, -1);
+
+    LOG_TRACE << "epoll_wait resume";
 
     if (current_event_array_size == -1) {
         LOG_SYS_FATAL << "epoll_wait failed";

@@ -11,7 +11,9 @@ bool Timer::expire_once() {
                          TimePoint::DatetimePurpose::PRINTING
                      )
                      + ", number of repetitions left: "
-                     + std::to_string(_number_of_repetitions_left);
+                     + (_number_of_repetitions_left == -1
+                            ? "∞"
+                            : std::to_string(_number_of_repetitions_left));
 
     LOG_DEBUG << "entering callback";
 
@@ -46,7 +48,7 @@ bool Timer::expire_until(const TimePoint &time_point) {
         }
     }
 
-    LOG_DEBUG << "Timer::expire_until: "
+    LOG_DEBUG << "is still valid after Timer::expire_until: "
               << is_still_valid_after_last_time_of_expiration;
 
     return is_still_valid_after_last_time_of_expiration;

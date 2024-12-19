@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Image Gallery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .image-item {
+            border: 2px solid #ddd;
+            padding: 10px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .image-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        img {
+            width: auto;
+            height: auto;
+            max-width: 128px;
+            max-height: 128px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Image Gallery</h1>
+
+    <div class="image-gallery">
+        <!-- Link each image to open in a new tab -->
+        <div class="image-item">
+            <a href="/static/images/favicon-16x16.png" target="_blank">
+                <img src="/static/images/favicon-16x16.png" alt="favicon-16x16">
+            </a>
+            <p>favicon-16x16.png</p>
+        </div>
+
+        <div class="image-item">
+            <a href="/static/images/favicon-32x32.png" target="_blank">
+                <img src="/static/images/favicon-32x32.png" alt="favicon-32x32">
+            </a>
+            <p>favicon-32x32.png</p>
+        </div>
+
+        <div class="image-item">
+            <a href="/static/images/favicon-64x64.png" target="_blank">
+                <img src="/static/images/favicon-64x64.png" alt="favicon-64x64">
+            </a>
+            <p>favicon-64x64.png</p>
+        </div>
+
+        <div class="image-item">
+            <a href="/static/images/favicon.ico" target="_blank">
+                <img src="/static/images/favicon.ico" alt="favicon.ico">
+            </a>
+            <p>favicon.ico</p>
+        </div>
+
+        <div class="image-item">
+            <a href="/static/images/favicon.webp" target="_blank">
+                <img src="/static/images/favicon.webp" alt="favicon.webp">
+            </a>
+            <p>favicon.webp</p>
+        </div>
+    </div>
+
+</body>
+
+</html>

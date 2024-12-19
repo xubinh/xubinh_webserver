@@ -33,8 +33,6 @@ void EventLoop::loop() {
             break;
         }
 
-        LOG_DEBUG << "event loop sleep for polling";
-
         auto event_dispatchers =
             _event_poller.poll_for_active_events_of_all_fds();
 

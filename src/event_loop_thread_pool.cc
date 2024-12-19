@@ -23,6 +23,10 @@ EventLoopThreadPool::~EventLoopThreadPool() {
     if (!_is_stopped) {
         LOG_FATAL << "tried to destruct a thread pool before stopping it";
     }
+
+    for (auto &thread : _thread_pool) {
+        thread->join();
+    }
 }
 
 void EventLoopThreadPool::start() {
@@ -48,10 +52,6 @@ void EventLoopThreadPool::stop() {
 
     for (auto &thread : _thread_pool) {
         thread->get_loop()->ask_to_stop();
-    }
-
-    for (auto &thread : _thread_pool) {
-        thread->join();
     }
 
     _is_stopped = true;
