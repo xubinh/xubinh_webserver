@@ -264,7 +264,11 @@ sudo apt-get install exuberant-ctags # 依赖
 测试:
 
 ```bash
+# 短连接 (默认)
 ./webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/ # 测试持续 60 秒, 1000 个并发客户端进程, 使用 HTTP/1.1 协议, 使用 GET 请求, 目标 URL 为 http://127.0.0.1:8080/
+
+# 长连接
+./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 参见 [linyacool/WebBench](https://github.com/linyacool/WebBench)
 ```
 
 ## muduo 项目中所采用的抽象
