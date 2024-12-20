@@ -30,9 +30,13 @@ public:
 
     using ErrorEventCallbackType = std::function<void()>;
 
+    static void set_fd_as_blocking(int fd);
+
     static void set_fd_as_nonblocking(int fd);
 
-    PollableFileDescriptor(int fd, EventLoop *event_loop);
+    PollableFileDescriptor(
+        int fd, EventLoop *event_loop, bool prefer_et = true
+    );
 
     // no copy
     PollableFileDescriptor(const PollableFileDescriptor &) = delete;
@@ -116,14 +120,13 @@ private:
 
     void _dispatch_active_events(util::TimePoint time_stamp);
 
-    static constexpr EpollEventsType _INITIAL_EPOLL_EVENT = EPOLLET;
-
     bool _is_reading = false;
     bool _is_writing = false;
     bool _is_detached = true;
 
     int _fd;
     EventLoop *_event_loop;
+    EpollEventsType _initial_epoll_event;
     epoll_event _event{};
     uint32_t _active_events{};
     ReadEventCallbackType _read_event_callback;

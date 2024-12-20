@@ -9,6 +9,22 @@
 
 namespace xubinh_server {
 
+void PollableFileDescriptor::set_fd_as_blocking(int fd) {
+    auto flags = ::fcntl(fd, F_GETFL, 0);
+
+    if (flags == -1) {
+        LOG_SYS_FATAL << "failed to fcntl with F_GETFL flag";
+    }
+
+    flags &= ~O_NONBLOCK;
+
+    if (::fcntl(fd, F_SETFL, flags) == -1) {
+        LOG_SYS_FATAL << "fcntl F_SETFL";
+    }
+
+    return;
+}
+
 void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
     auto flags = ::fcntl(fd, F_GETFL, 0);
 
@@ -25,15 +41,18 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
     return;
 }
 
-PollableFileDescriptor::PollableFileDescriptor(int fd, EventLoop *event_loop)
-    : _fd(fd), _event_loop(event_loop) {
+PollableFileDescriptor::PollableFileDescriptor(
+    int fd, EventLoop *event_loop, bool prefer_et
+)
+    : _fd(fd), _event_loop(event_loop),
+      _initial_epoll_event(prefer_et ? EPOLLET : 0) {
 
     if (_fd < 0) {
         LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";
     }
 
     _event.data.ptr = this;
-    _event.events = _INITIAL_EPOLL_EVENT;
+    _event.events = _initial_epoll_event;
 
     set_fd_as_nonblocking(_fd);
 }
@@ -102,7 +121,9 @@ void PollableFileDescriptor::detach_from_poller() {
     _is_reading = false;
     _is_writing = false;
 
-    _event.events = _INITIAL_EPOLL_EVENT;
+    _event.events = _initial_epoll_event;
+
+    LOG_TRACE << "register event -> worker: detach_fd_from_poller";
 
     _event_loop->run(
         std::bind(&EventLoop::detach_fd_from_poller, _event_loop, _fd)
@@ -145,6 +166,8 @@ void PollableFileDescriptor::reset_to(int new_fd) {
 
 void PollableFileDescriptor::_register_event() {
     _is_detached = false;
+
+    LOG_TRACE << "register event -> worker: register_event_for_fd";
 
     _event_loop->run(
         std::bind(&EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
