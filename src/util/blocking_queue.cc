@@ -45,7 +45,7 @@ T BlockingQueue<T>::pop() {
 
     _cond_queue_not_full.notify_one();
 
-    return popped_element; // RVO, no need to move
+    return popped_element;
 }
 
 template <typename T>
@@ -57,6 +57,8 @@ typename BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
 
         queue.swap(_queue);
     }
+
+    _cond_queue_not_full.notify_all();
 
     return queue;
 }
