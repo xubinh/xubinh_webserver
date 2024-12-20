@@ -11,10 +11,9 @@ namespace xubinh_server {
 namespace util {
 
 struct TimeInterval {
-    constexpr TimeInterval() = default;
+    TimeInterval() = default;
 
-    constexpr TimeInterval(int64_t nanoseconds_input)
-        : nanoseconds(nanoseconds_input) {
+    TimeInterval(int64_t nanoseconds_input) : nanoseconds(nanoseconds_input) {
     }
 
     operator bool() const {
@@ -70,6 +69,8 @@ struct TimeInterval {
     bool operator==(const TimeInterval &other) const {
         return nanoseconds == other.nanoseconds;
     }
+
+    static constexpr int64_t FOREVER = 0x7fffffffffffffff;
 
     int64_t nanoseconds = 0;
 };
