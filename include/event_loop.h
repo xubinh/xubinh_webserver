@@ -44,10 +44,14 @@ public:
     // - this method is tied up with `EventDispatcher` which in turn is tied up
     // with this exact loop, therefore will always be executed sequentially
     void register_event_for_fd(int fd, const epoll_event *event) {
+        LOG_TRACE << "enter event: register_event_for_fd";
+
         _event_poller.register_event_for_fd(fd, event);
     }
 
     void detach_fd_from_poller(int fd) {
+        LOG_TRACE << "enter event: detach_fd_from_poller";
+
         _event_poller.detach_fd(fd);
     }
 

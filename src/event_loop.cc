@@ -30,13 +30,16 @@ void EventLoop::loop() {
         // i.e. a timerfd and an eventfd)
         if (_need_stop.load(std::memory_order_relaxed)
             && _event_poller.size() == 2) {
+
+            LOG_INFO << "event loop exits, target TID: " << _owner_thread_tid;
+
             break;
         }
 
         auto event_dispatchers =
             _event_poller.poll_for_active_events_of_all_fds();
 
-        LOG_DEBUG << "event loop resume, number of active fd's: "
+        LOG_DEBUG << "number of dispatchers: "
                          + std::to_string(event_dispatchers.size());
 
         util::TimePoint time_stamp;
@@ -50,8 +53,13 @@ void EventLoop::loop() {
             event_dispatcher_ptr->dispatch_active_events(time_stamp);
         }
 
+        LOG_TRACE
+            << "dispatching completed, next for checking eventfd and timerfd";
+
+        LOG_TRACE << "checking eventfd...";
+
         if (_eventfd_triggered) {
-            LOG_DEBUG << "eventfd triggered";
+            LOG_TRACE << "eventfd triggered";
 
             const auto &queued_functors = _functor_blocking_queue.pop_all();
 
@@ -62,8 +70,14 @@ void EventLoop::loop() {
             _eventfd_triggered = false;
         }
 
+        else {
+            LOG_TRACE << "nothing happened on eventfd";
+        }
+
+        LOG_TRACE << "checking timerfd...";
+
         if (_timerfd_triggered) {
-            LOG_DEBUG << "timerfd triggered";
+            LOG_TRACE << "timerfd triggered";
 
             TimePoint current_time_point;
 
@@ -71,6 +85,12 @@ void EventLoop::loop() {
 
             _timerfd_triggered = false;
         }
+
+        else {
+            LOG_TRACE << "nothing happened on timerfd";
+        }
+
+        LOG_DEBUG << "current size of poller: " << _event_poller.size();
     }
 
     // clean up is done inside destructor
@@ -130,6 +150,8 @@ void EventLoop::cancel_a_timer(const TimerIdentifier &timer_identifier) {
 }
 
 void EventLoop::ask_to_stop() {
+    LOG_INFO << "asking loop to stop, target TID: " << _owner_thread_tid;
+
     // a release fence that comes after a store essentially makes the store
     // become a part of the memory ordering, i.e. store first and then do the
     // dummy wake-ups
@@ -142,6 +164,8 @@ void EventLoop::ask_to_stop() {
     for (int i = 0; i < NUMBER_OF_DUMMY_WAKE_UPS; i++) {
         _wake_up_this_loop();
     }
+
+    LOG_INFO << "dummy wake-ups are sent";
 }
 
 void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {
