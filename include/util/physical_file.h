@@ -10,6 +10,13 @@ namespace util {
 // not thread-safe
 class AppendOnlyPhysicalFile {
 public:
+    static void set_file_descriptor_poll_time_interval(
+        int file_descriptor_poll_time_interval
+    ) {
+        _file_descriptor_poll_time_interval =
+            file_descriptor_poll_time_interval;
+    }
+
     explicit AppendOnlyPhysicalFile(const std::string &base_name);
 
     // no copy
@@ -32,10 +39,12 @@ public:
     }
 
 private:
-    FILE *_file_ptr;
+    static int _file_descriptor_poll_time_interval;
+
+    FILE *_file_ptr = nullptr;
     char _buffer[64 * 1000]; // for replacing the internal default buffer that
                              // `_file_ptr` uses
-    size_t _total_number_of_bytes_written;
+    size_t _total_number_of_bytes_written{0};
 };
 
 } // namespace util
