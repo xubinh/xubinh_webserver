@@ -22,12 +22,16 @@ void HttpServer::start() {
     ));
 
     // start the timer for removing inactive connections
-    _loop->run_after_time_interval(
-        _connection_timeout_interval,
-        _connection_timeout_interval,
-        -1,
-        std::bind(&HttpServer::_remove_inactive_connections, this)
-    );
+    if (_connection_timeout_interval < TimeInterval{TimeInterval::FOREVER}) {
+        LOG_TRACE << "register event -> main: remove_inactive_connections";
+
+        _loop->run_after_time_interval(
+            _connection_timeout_interval,
+            _connection_timeout_interval,
+            -1,
+            std::bind(&HttpServer::_remove_inactive_connections, this)
+        );
+    }
 
     _tcp_server.start();
 }
@@ -65,6 +69,8 @@ void HttpServer::_message_callback(
 }
 
 void HttpServer::_remove_inactive_connections() {
+    LOG_TRACE << "enter event: remove_inactive_connections";
+
     LOG_DEBUG << "current number of TCP connections: "
               << _tcp_server.get_number_of_tcp_connections();
 
