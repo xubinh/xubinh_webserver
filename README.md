@@ -229,14 +229,14 @@
 - [x] 实现一个 echo 服务器.
 - [x] 实现一个简单的 HTTP 服务器, 使用定时器关闭超时请求.
 - [x] 使用 WebBench 对框架进行一次短连接测试.
+- [ ] 在长连接场景下使用 WebBench 对框架进行测试.
 - [ ] 优化服务器, 提高 QPS:
-  - 手动实现各种同步原语.
-  - 尽可能将指针形式的形参更换为引用形式.
+  - 手动实现各种同步原语, 尽可能降低线程间的竞争代价.
   - 尽可能使用右值引用避免不必要的拷贝和移动.
-  - 尽可能降低线程间的竞争代价.
+- [ ] 其他优化:
+  - 尽可能将指针形式的形参更换为引用形式.
   - 尽可能精简 API 的命名, 并将信息转移至注释中.
   - 尽可能添加 `const` 和 `noexcept` 修饰词.
-- [ ] 修改 WebBench, 添加长连接功能, 对框架进行一次长连接测试.
 - [ ] 添加英文版 `README.md`.
 
 ## WebBench 测试
@@ -256,6 +256,8 @@ sudo apt-get install exuberant-ctags # 依赖
 ```
 
 - 参考资料:
+  - [linyacool/WebServer](https://github.com/linyacool/WebServer)
+  - [linyacool/WebBench](https://github.com/linyacool/WebBench)
   - [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
   - [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
 
