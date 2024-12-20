@@ -30,7 +30,7 @@ public:
           )),
           _number_of_repetitions_left(std::max(-1, number_of_repetitions_left)),
           _callback(std::move(callback)) {
-        LOG_DEBUG << "Timer::Timer";
+        LOG_TRACE << "Timer::Timer";
 
         LOG_DEBUG << "address: " << this
                   << ", expiration time: "
