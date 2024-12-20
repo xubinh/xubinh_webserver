@@ -16,18 +16,19 @@ std::string Datetime::get_datetime_string(
 ) {
     tm tm{};
 
-    localtime_r(&time_from_epoch_in_seconds, &tm);
+    ::localtime_r(&time_from_epoch_in_seconds, &tm);
 
     char buffer[32];
 
     // for renaming physical files (e.g. `2024_01_01_13_00_23`):
     if (datetime_purpose == DatetimePurpose::RENAMING) {
-        strftime(buffer, sizeof(buffer), "%Y_%m_%d_%H_%M_%S", &tm);
+        ::strftime(buffer, sizeof(buffer), "%Y_%m_%d_%H_%M_%S", &tm);
     }
 
     // for printing out into terminal or as log (e.g. `2024-01-01 13:00:23`):
-    else if (datetime_purpose == DatetimePurpose::PRINTING) {
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
+    // else if (datetime_purpose == DatetimePurpose::PRINTING) {
+    else {
+        ::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
     }
 
     return buffer;

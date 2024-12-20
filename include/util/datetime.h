@@ -15,7 +15,7 @@ enum class DatetimePurpose { RENAMING, PRINTING, NUMBER_OF_ALL_PURPOSES };
 class Datetime {
 public:
     static time_t get_current_time_from_epoch_in_seconds() {
-        return time(nullptr);
+        return ::time(nullptr);
     }
 
     static std::string

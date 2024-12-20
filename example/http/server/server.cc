@@ -20,6 +20,7 @@
 #include "./include/http_server.h"
 
 #define __XUBINH_BENCHMARKING
+#define __XUBINH_KEEP_ALIVE
 
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
@@ -273,12 +274,14 @@ void http_request_callback(
     }
 
 #ifdef __XUBINH_BENCHMARKING
+#ifndef __XUBINH_KEEP_ALIVE
     // WebBench requests close by default
     tcp_connect_socketfd_ptr->register_write_complete_callback(
         [](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
             tcp_connect_socketfd_ptr->shutdown_write();
         }
     );
+#endif
 
     // directly sends the string in memory, bypassing mmap
     tcp_connect_socketfd_ptr->send(
