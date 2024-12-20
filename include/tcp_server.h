@@ -33,11 +33,7 @@ public:
         : _loop(loop), _local_address(local_address) {
     }
 
-    ~TcpServer() {
-        if (!_is_stopped) {
-            LOG_SYS_FATAL << "tried to destruct tcp server before stopping it";
-        }
-    }
+    ~TcpServer();
 
     void register_connect_success_callback(
         ConnectSuccessCallbackType connect_success_callback
@@ -72,7 +68,11 @@ public:
 
     // runs in main loop
     void run_for_each_connection(RunForEachConnectionCallbackType callback) {
+        LOG_TRACE << "register event -> main: run_for_each_connection";
+
         _loop->run([&]() {
+            LOG_TRACE << "enter event: run_for_each_connection";
+
             for (const auto &pair : _tcp_connect_socketfds) {
                 callback(pair.second);
             }
@@ -107,7 +107,9 @@ private:
 
     std::unique_ptr<ListenSocketfd> _listen_socketfd;
 
-    std::map<std::string, TcpConnectSocketfdPtr> _tcp_connect_socketfds;
+    std::map<uint64_t, TcpConnectSocketfdPtr> _tcp_connect_socketfds;
+
+    std::atomic<uint64_t> _tcp_connection_id_counter{0};
 
     size_t _thread_pool_capacity = 0;
     ThreadInitializationCallbackType _thread_initialization_callback;

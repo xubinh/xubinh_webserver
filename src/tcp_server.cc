@@ -1,6 +1,19 @@
 #include "tcp_server.h"
+#include "log_collector.h"
 
 namespace xubinh_server {
+
+TcpServer::~TcpServer() {
+    if (!_is_stopped) {
+        LOG_SYS_FATAL << "tried to destruct tcp server before stopping it";
+    }
+
+    LOG_INFO << "exit destructor: TcpServer";
+
+    // for the case where worker threads got blocked and thread pool
+    // couldn't get destroyed
+    LogCollector::flush();
+}
 
 void TcpServer::start() {
     if (_is_started) {
@@ -25,6 +38,9 @@ void TcpServer::start() {
         std::placeholders::_1,
         std::placeholders::_2
     ));
+    // _listen_socketfd->set_max_number_of_new_connections_at_a_time(
+    //     std::max(_thread_pool_capacity, static_cast<size_t>(1))
+    // );
 
     _listen_socketfd->start();
 
@@ -75,7 +91,8 @@ void TcpServer::stop() {
 void TcpServer::_new_connection_callback(
     int connect_socketfd, const InetAddress &peer_address
 ) {
-    std::string id = std::to_string(_tcp_connect_socketfds.size());
+    uint64_t id =
+        _tcp_connection_id_counter.fetch_add(1, std::memory_order_relaxed);
     EventLoop *loop =
         _thread_pool_capacity > 0 ? _thread_pool->get_next_loop() : _loop;
     InetAddress local_address{connect_socketfd, InetAddress::LOCAL};
@@ -106,9 +123,19 @@ void TcpServer::_new_connection_callback(
 void TcpServer::_close_callback(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
 ) {
+    LOG_TRACE << "register event -> main: _close_callback";
+
     // must be executed inside the main loop
-    _loop->run([this, &tcp_connect_socketfd_ptr]() {
+    _loop->run([this, tcp_connect_socketfd_ptr]() {
+        LOG_TRACE << "enter event: _close_callback";
+
         _tcp_connect_socketfds.erase(tcp_connect_socketfd_ptr->get_id());
+
+        LOG_TRACE << "erase TCP connection, id: "
+                  << tcp_connect_socketfd_ptr->get_id();
+
+        LOG_DEBUG << "number of reference: "
+                  << tcp_connect_socketfd_ptr.use_count();
     });
 }
 
