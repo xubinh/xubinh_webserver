@@ -26,6 +26,8 @@ public:
 
     static LogCollector &get_instance();
 
+    static void flush();
+
     // no copy
     LogCollector(const LogCollector &) = delete;
     LogCollector &operator=(const LogCollector &) = delete;
@@ -44,6 +46,15 @@ private:
     using ChunkBufferPtr = std::unique_ptr<LogChunkBuffer>;
     using BufferVector = std::vector<ChunkBufferPtr>;
 
+    LogCollector();
+
+    ~LogCollector();
+
+    // collect chunk buffers and write into physical files in the background
+    void _background_io_thread_worker_functor();
+
+    void _stop(bool also_need_abort);
+
     static bool _need_output_directly_to_terminal;
 
     static std::string _base_name;
@@ -54,14 +65,7 @@ private:
     static constexpr decltype(BufferVector().size()
     ) _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
 
-    LogCollector();
-
-    ~LogCollector();
-
-    // collect chunk buffers and write into physical files in the background
-    void _background_io_thread_worker_functor();
-
-    void _stop(bool also_need_abort);
+    static std::atomic<bool> _is_instantiated;
 
     ChunkBufferPtr _current_chunk_buffer_ptr{new LogChunkBuffer};
     ChunkBufferPtr _spare_chunk_buffer_ptr{new LogChunkBuffer};
@@ -73,6 +77,7 @@ private:
     std::condition_variable _cond;
 
     util::Thread _background_thread;
+    std::atomic<bool> _need_flush{false};
     std::atomic<bool> _need_stop{false};
 };
 

@@ -20,11 +20,12 @@ public:
     void flush();
 
 private:
-    static constexpr size_t _PHYSICAL_FILE_SIZE_THRESHOLD = 500 * 1000 * 1000;
+    static constexpr size_t _PHYSICAL_FILE_SIZE_THRESHOLD =
+        500 * 1000 * 1000; // ~ 500 MB
 
-    static constexpr time_t _FLUSH_INTERVAL_IN_SECONDS = 3;
+    static constexpr time_t _FLUSH_INTERVAL_IN_SECONDS = 3; // 3 sec
 
-    static constexpr time_t _SWITCH_INTERVAL_IN_SECONDS = 24 * 60 * 60;
+    static constexpr time_t _SWITCH_INTERVAL_IN_SECONDS = 24 * 60 * 60; // 1 day
 
     static constexpr int _MAJOR_CHECK_FREQUENCY = 1000;
 

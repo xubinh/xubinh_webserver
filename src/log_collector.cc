@@ -13,7 +13,16 @@ void LogCollector::set_base_name(const std::string &path) {
 LogCollector &LogCollector::get_instance() {
     static LogCollector instance;
 
+    _is_instantiated.store(true, std::memory_order_relaxed);
+
     return instance;
+}
+
+void LogCollector::flush() {
+    if (_is_instantiated.load(std::memory_order_relaxed)) {
+        // no need to CAS; multiple flush requests could be merged into one
+        get_instance()._need_flush.store(true, std::memory_order_relaxed);
+    }
 }
 
 void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
@@ -105,7 +114,7 @@ void LogCollector::_background_io_thread_worker_functor() {
         {
             std::unique_lock<decltype(_mutex)> lock(_mutex);
 
-            // wait for a few seconds if no fulled buffers come in
+            // waits for a few seconds if no fulled buffers come in
             if (_fulled_chunk_buffers.empty()) {
                 // spurious wakeup doesn't matter here
                 _cond.wait_for(
@@ -115,17 +124,32 @@ void LogCollector::_background_io_thread_worker_functor() {
 
             // if still no fulled buffers
             if (_fulled_chunk_buffers.empty()) {
-                // exist if asked for stop
+                // exits if it's because the outside is telling us to stop
                 if (_need_stop.load(std::memory_order_relaxed)) {
                     lock_hook = std::move(lock);
 
                     break;
                 }
 
-                // continue waiting if otherwise
-                else {
+                bool expected = true;
+
+                // continue waiting if no flags are set
+                if (!_need_flush.compare_exchange_strong(
+                        expected, false, std::memory_order_relaxed
+                    )) {
+
                     continue;
                 }
+
+                // otherwise creates a dummy fulled-buffer in order to flush the
+                // non-fulled one, if the outside asked explicitly (which may
+                // happen when the process is about to finish yet blocked due to
+                // some bug which in turn requires the log stucking in here to
+                // get debugged)
+                _spare_chunk_buffer_ptr->append("\nflush\n", 7);
+                _fulled_chunk_buffers.push_back(
+                    std::move(_spare_chunk_buffer_ptr)
+                );
             }
 
             _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr)
@@ -216,5 +240,7 @@ void LogCollector::_stop(bool also_need_abort) {
         ::abort();
     }
 }
+
+std::atomic<bool> LogCollector::_is_instantiated{};
 
 } // namespace xubinh_server

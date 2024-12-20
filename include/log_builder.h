@@ -148,6 +148,9 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 
 } // namespace xubinh_server
 
+#define __BASE_NAME                                                            \
+    (xubinh_server::util::Format::get_base_name_of_path(__FILE__))
+
 #define __ENABLE_TRACE                                                         \
     (xubinh_server::LogLevel::TRACE                                            \
      >= xubinh_server::LogBuilder::get_log_level())
@@ -157,9 +160,12 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 #define __ENABLE_INFO                                                          \
     (xubinh_server::LogLevel::INFO                                             \
      >= xubinh_server::LogBuilder::get_log_level())
-
-#define __BASE_NAME                                                            \
-    (xubinh_server::util::Format::get_base_name_of_path(__FILE__))
+#define __ENABLE_WARN                                                          \
+    (xubinh_server::LogLevel::WARN                                             \
+     >= xubinh_server::LogBuilder::get_log_level())
+#define __ENABLE_ERROR                                                         \
+    (xubinh_server::LogLevel::ERROR                                            \
+     >= xubinh_server::LogBuilder::get_log_level())
 
 #define LOG_TRACE                                                              \
     if (__ENABLE_TRACE)                                                        \
@@ -176,13 +182,13 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
     xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::INFO, __BASE_NAME, __LINE__                   \
     )
-
 #define LOG_WARN                                                               \
+    if (__ENABLE_WARN)                                                         \
     xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::WARN, __BASE_NAME, __LINE__                   \
     )
-
 #define LOG_ERROR                                                              \
+    if (__ENABLE_ERROR)                                                        \
     xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::ERROR, __BASE_NAME, __LINE__                  \
     )
@@ -190,8 +196,8 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
     xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::FATAL, __BASE_NAME, __LINE__                  \
     )
-
 #define LOG_SYS_ERROR                                                          \
+    if (__ENABLE_ERROR)                                                        \
     xubinh_server::LogBuilder(                                                 \
         xubinh_server::LogLevel::ERROR, __BASE_NAME, __LINE__, errno           \
     )
