@@ -1,6 +1,7 @@
 #ifndef __XUBINH_SERVER_HTTP_RESPONSE
 #define __XUBINH_SERVER_HTTP_RESPONSE
 
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -161,7 +162,10 @@ private:
 
     HttpStatusCode _status_code = S_NONE;
 
-    std::unordered_map<std::string, std::string> _headers;
+    // std::unordered_map<std::string, std::string> _headers;
+    std::map<std::string, std::string>
+        _headers; // for testing; more efficient than std::map when the number
+                  // of headers is small
 
     std::vector<char> _body;
 };
