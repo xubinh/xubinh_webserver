@@ -19,6 +19,8 @@
 #include "./include/http_response.h"
 #include "./include/http_server.h"
 
+#define __XUBINH_BENCHMARKING
+
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
 std::unique_ptr<xubinh_server::Signalfd>
@@ -119,6 +121,41 @@ bool check_if_path_exists_and_expand_it(std::string &path) {
     return _check_if_path_exists(path);
 }
 
+std::unordered_map<std::string, std::string> mime_map = {
+    {".html", "text/html"},
+    {".htm", "text/html"},
+    {".css", "text/css"},
+    {".js", "application/javascript"},
+    {".json", "application/json"},
+    {".png", "image/png"},
+    {".jpg", "image/jpeg"},
+    {".jpeg", "image/jpeg"},
+    {".gif", "image/gif"},
+    {".txt", "text/plain"},
+    {".xml", "application/xml"},
+    {".pdf", "application/pdf"},
+    {".zip", "application/zip"},
+    {".mp3", "audio/mpeg"},
+    {".mp4", "video/mp4"}};
+
+std::string get_mime_type(const std::string &file_path) {
+    size_t pos = file_path.rfind('.');
+
+    if (pos == std::string::npos) {
+        return "application/octet-stream";
+    }
+
+    std::string suffix = file_path.substr(pos);
+
+    auto it = mime_map.find(suffix);
+
+    if (it != mime_map.end()) {
+        return it->second;
+    }
+
+    return "application/octet-stream";
+}
+
 bool read_file_and_send(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
     xubinh_server::HttpResponse &response,
@@ -175,41 +212,6 @@ bool read_file_and_send(
     return true;
 }
 
-std::unordered_map<std::string, std::string> mime_map = {
-    {".html", "text/html"},
-    {".htm", "text/html"},
-    {".css", "text/css"},
-    {".js", "application/javascript"},
-    {".json", "application/json"},
-    {".png", "image/png"},
-    {".jpg", "image/jpeg"},
-    {".jpeg", "image/jpeg"},
-    {".gif", "image/gif"},
-    {".txt", "text/plain"},
-    {".xml", "application/xml"},
-    {".pdf", "application/pdf"},
-    {".zip", "application/zip"},
-    {".mp3", "audio/mpeg"},
-    {".mp4", "video/mp4"}};
-
-std::string get_mime_type(const std::string &file_path) {
-    size_t pos = file_path.rfind('.');
-
-    if (pos == std::string::npos) {
-        return "application/octet-stream";
-    }
-
-    std::string suffix = file_path.substr(pos);
-
-    auto it = mime_map.find(suffix);
-
-    if (it != mime_map.end()) {
-        return it->second;
-    }
-
-    return "application/octet-stream";
-}
-
 void send_404(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr, bool need_close
 ) {
@@ -250,6 +252,18 @@ void send_file(
     }
 }
 
+// const char hello_world_response_content[] =
+//     "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+//     "close\r\nContent-Length: 115\r\n\r\n<!DOCTYPE html><html "
+//     "lang=\"en\"><head><title>Hello, "
+//     "world!</title></head><body><h1>Hello, world!</h1></body></html>";
+const char hello_world_response_content[] =
+    "HTTP/1.1 200 OK\r\nContent-type: text/plain\r\n\r\nHello World";
+// [NOTE]: for comparing with <https://github.com/linyacool/WebServer>
+
+constexpr size_t hello_world_response_content_size =
+    sizeof(hello_world_response_content);
+
 void http_request_callback(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
     const xubinh_server::HttpRequest &http_request
@@ -258,6 +272,19 @@ void http_request_callback(
         return;
     }
 
+#ifdef __XUBINH_BENCHMARKING
+    // WebBench requests close by default
+    tcp_connect_socketfd_ptr->register_write_complete_callback(
+        [](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+            tcp_connect_socketfd_ptr->shutdown_write();
+        }
+    );
+
+    // directly sends the string in memory, bypassing mmap
+    tcp_connect_socketfd_ptr->send(
+        hello_world_response_content, hello_world_response_content_size
+    );
+#else
     bool need_close = http_request.need_close();
 
     if (need_close) {
@@ -284,12 +311,13 @@ void http_request_callback(
     }
 
     send_file(tcp_connect_socketfd_ptr, need_close, path);
+#endif
 }
 
 int main() {
     // logging config
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
 
     // signal config
     xubinh_server::SignalSet signal_set;
@@ -322,23 +350,32 @@ int main() {
     server.register_http_request_callback(http_request_callback);
     server.register_connect_success_callback([](const TcpConnectSocketfdPtr
                                                     &tcp_connect_socketfd_ptr) {
-        LOG_DEBUG
+        LOG_TRACE
             << "established TCP connection (id: "
-                   + tcp_connect_socketfd_ptr->get_id() + "): "
-                   + tcp_connect_socketfd_ptr->get_local_address().to_string()
+            << tcp_connect_socketfd_ptr->get_id()
+            << "): " + tcp_connect_socketfd_ptr->get_local_address().to_string()
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-    server.set_thread_pool_capacity(1);
+    server.set_thread_pool_capacity(4);
+
+#ifdef __XUBINH_BENCHMARKING
+    server.set_connection_timeout_interval(
+        xubinh_server::util::TimeInterval::FOREVER
+    ); // FOREVER = don't start timer for checking inactive connections
+#else
     server.set_connection_timeout_interval(
         static_cast<int64_t>(15 * 1000) * 1000 * 1000
-    ); // 15 sec for debugging
+    ); // 15 sec
+#endif
 
     server.start();
 
     LOG_INFO << "server started listening on " + server_address.to_string();
 
     loop.loop();
+
+    LOG_INFO << "test finished";
 
     return 0;
 }

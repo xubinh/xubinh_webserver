@@ -3,6 +3,7 @@
 ## 目录
 
 - [待办](#待办)
+- [WebBench 测试](#webbench-测试)
 - [muduo 项目中所采用的抽象](#muduo-项目中所采用的抽象)
 - [参考资料](#参考资料)
 
@@ -227,15 +228,42 @@
 - [x] `Signalfd`: 对 signalfd 的抽象.
 - [x] 实现一个 echo 服务器.
 - [x] 实现一个简单的 HTTP 服务器, 使用定时器关闭超时请求.
-- [ ] 使用 WebBench 对框架进行测试, 尽可能提高 QPS.
-- [ ] 优化:
+- [x] 使用 WebBench 对框架进行一次短连接测试.
+- [ ] 优化服务器, 提高 QPS:
   - 手动实现各种同步原语.
   - 尽可能将指针形式的形参更换为引用形式.
   - 尽可能使用右值引用避免不必要的拷贝和移动.
   - 尽可能降低线程间的竞争代价.
   - 尽可能精简 API 的命名, 并将信息转移至注释中.
   - 尽可能添加 `const` 和 `noexcept` 修饰词.
+- [ ] 修改 WebBench, 添加长连接功能, 对框架进行一次长连接测试.
 - [ ] 添加英文版 `README.md`.
+
+## WebBench 测试
+
+安装:
+
+```bash
+git clone https://github.com/EZLippi/WebBench.git
+cd WebBench
+make
+sudo make install PREFIX=your_path_to_webbench # 注: 可选
+
+sudo apt-get install rpcbind libtirpc-dev # 依赖
+# 注: 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 后添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 后添加链接选项 `-ltirpc`.
+
+sudo apt-get install exuberant-ctags # 依赖
+```
+
+- 参考资料:
+  - [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
+  - [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
+
+测试:
+
+```bash
+./webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/ # 测试持续 60 秒, 1000 个并发客户端进程, 使用 HTTP/1.1 协议, 使用 GET 请求, 目标 URL 为 http://127.0.0.1:8080/
+```
 
 ## muduo 项目中所采用的抽象
 

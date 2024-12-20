@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# ./bin/webbench -t 3 -c 10 -2 --get http://127.0.0.1:8080/
+# ./bin/webbench -t 3 -c 100 -2 --get http://127.0.0.1:8080/
+./bin/webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/
+
+PROCESS_KEYWORD="run_server"
+
+PID=$(ps aux | grep "$PROCESS_KEYWORD" | grep -v grep | awk '{print $2}')
+
+# sends SIGINT to the entire foreground process group, simulating the behaviour of Ctrl+C on the terminal
+kill -INT -"$PID"
