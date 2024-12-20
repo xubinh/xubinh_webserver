@@ -61,6 +61,10 @@ public:
     convert_integer_to_decimal_string(char *output_buffer, T input_value) {
         bool is_negative = std::is_signed<T>::value && (input_value < 0);
 
+        // ignoring the negative-most case, e.g. for (signed) char, the two's
+        // complement of -128 turns out to be exactly itself
+        input_value = is_negative ? -input_value : input_value;
+
         char *buffer_ptr = output_buffer;
 
         do {
