@@ -4,6 +4,7 @@
 
 - [待办](#待办)
 - [WebBench 测试](#webbench-测试)
+  - [测试历史](#测试历史)
 - [muduo 项目中所采用的抽象](#muduo-项目中所采用的抽象)
 - [参考资料](#参考资料)
 
@@ -270,6 +271,48 @@ sudo apt-get install exuberant-ctags # 依赖
 
 # 长连接
 ./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 参见 [linyacool/WebBench](https://github.com/linyacool/WebBench)
+```
+
+### 测试历史
+
+#### commit - `2794336a6d619f14d15ef84f438e6b60ec934310`
+
+短连接:
+
+```text
+Webbench - Simple Web Benchmark 1.5
+Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.
+
+Request:
+GET / HTTP/1.1
+User-Agent: WebBench 1.5
+Host: 127.0.0.1
+Connection: close
+
+
+Runing info: 1000 clients, running 60 sec.
+
+Speed=2319680 pages/min, 2203697 bytes/sec.
+Requests: 2319680 susceed, 0 failed.
+```
+
+长连接:
+
+```text
+Webbench - Simple Web Benchmark 1.5
+Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.
+
+Request:
+GET / HTTP/1.1
+User-Agent: WebBench 1.5
+Host: 127.0.0.1
+Connection: Keep-Alive
+
+
+Runing info: 1000 clients, running 60 sec.
+
+Speed=5063552 pages/min, 4810373 bytes/sec.
+Requests: 5063552 susceed, 0 failed.
 ```
 
 ## muduo 项目中所采用的抽象
