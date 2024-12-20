@@ -15,7 +15,9 @@ void ListenSocketfd::set_socketfd_as_address_reusable(int socketfd) {
             SO_REUSEADDR,
             &set,
             static_cast<socklen_t>(sizeof set)
-        )) {
+        )
+        == -1) {
+
         LOG_SYS_FATAL << "failed when setting SO_REUSEADDR to a socketfd";
     }
 }
@@ -26,18 +28,22 @@ void ListenSocketfd::bind(int socketfd, const InetAddress &local_address) {
             local_address.get_address(),
             local_address.get_address_length()
         )
-        < 0) {
+        == -1) {
+
         LOG_SYS_FATAL << "failed when binding a socketfd";
     }
 }
 
 void ListenSocketfd::listen(int socketfd) {
-    if (::listen(socketfd, SOMAXCONN) < 0) {
+    if (::listen(socketfd, SOMAXCONN) == -1) {
         LOG_SYS_FATAL << "failed when start listening a socketfd";
     }
 }
 
 ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
+    // : _pollable_file_descriptor(
+    //     fd, event_loop, false // LT mode to prevent starving
+    // ) {
     : _pollable_file_descriptor(fd, event_loop) {
 }
 
@@ -87,12 +93,18 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
         _pollable_file_descriptor.get_fd(), peer_address_ptr
     );
 
+    if (connect_socketfd < 0) {
+        LOG_FATAL
+            << "still failed to accept new connections after dropping spare fd";
+    }
+
     ::close(connect_socketfd);
 
     _open_spare_fd();
 }
 
 void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
+    // for (int i = 0; i < _max_number_of_new_connections_at_a_time; i++) {
     while (true) {
         std::unique_ptr<InetAddress> peer_address_ptr;
 
@@ -117,15 +129,15 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
                 continue;
             }
 
-            else if (errno == EMFILE) {
-                LOG_SYS_ERROR << "too many open files (EMFILE)";
+            else if (errno == EMFILE || errno == ENFILE) {
+                // LOG_SYS_ERROR << "too many open files (EMFILE)";
 
-                _drop_connection_using_spare_fd();
-            }
+                // _drop_connection_using_spare_fd();
 
-            else if (errno == ENFILE) {
-                LOG_SYS_FATAL
-                    << "system file descriptor limit reached (ENFILE)";
+                // continue;
+
+                // just heads for eventfd and closes all the pending connections
+                break;
             }
 
             // [NOTE]: signals will be managed by the user using Signalfd, so

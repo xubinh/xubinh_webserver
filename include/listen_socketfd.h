@@ -30,6 +30,8 @@ public:
         _pollable_file_descriptor.detach_from_poller();
 
         _pollable_file_descriptor.close_fd();
+
+        LOG_INFO << "exit destructor: ListenSocketfd";
     }
 
     // used by internal framework
@@ -38,6 +40,13 @@ public:
     ) {
         _new_connection_callback = std::move(new_connection_callback);
     }
+
+    // void set_max_number_of_new_connections_at_a_time(
+    //     size_t max_number_of_new_connections_at_a_time
+    // ) {
+    //     _max_number_of_new_connections_at_a_time =
+    //         max_number_of_new_connections_at_a_time;
+    // }
 
     void start() {
         if (!_new_connection_callback) {
@@ -70,6 +79,8 @@ private:
     void _read_event_callback(util::TimePoint time_stamp);
 
     int _spare_fd = -1;
+
+    // size_t _max_number_of_new_connections_at_a_time = 64;
 
     NewConnectionCallbackType _new_connection_callback;
 
