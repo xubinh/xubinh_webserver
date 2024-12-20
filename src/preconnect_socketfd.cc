@@ -22,12 +22,15 @@ void PreconnectSocketfd::start() {
     }
 
     _pollable_file_descriptor.register_write_event_callback(std::bind(
-        &PreconnectSocketfd::_write_event_callback, shared_from_this()
+        &PreconnectSocketfd::_write_event_callback,
+        this // don't bind to it; circular reference alert!
     ));
 
     // must ensure lifetime safety as this exact object could be
     // destroyed by the callbacks registered inside themselves
     _pollable_file_descriptor.register_weak_lifetime_guard(shared_from_this());
+
+    LOG_TRACE << "register event -> main: _try_once";
 
     _event_loop->run(
         std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
@@ -108,7 +111,7 @@ void PreconnectSocketfd::_write_event_callback() {
 
     // success
     if (saved_errno == 0) {
-        LOG_DEBUG << "connected";
+        LOG_TRACE << "connected";
 
         // must be called before invoking the following new connection callback
         // to avoid potential overrides
@@ -125,14 +128,16 @@ void PreconnectSocketfd::_write_event_callback() {
                          + " (errno=" + std::to_string(saved_errno)
                   << ")";
 
-        LOG_DEBUG << "something went wrong; schedule retry";
+        LOG_TRACE << "something went wrong; schedule retry";
 
         _schedule_retry();
     }
 }
 
 void PreconnectSocketfd::_try_once() {
-    LOG_DEBUG << "trying to connect to " + _server_address.to_string() + "...";
+    LOG_TRACE << "enter event: _try_once";
+
+    LOG_TRACE << "trying to connect to " + _server_address.to_string() + "...";
 
     int socketfd = _pollable_file_descriptor.get_fd();
 
@@ -141,7 +146,7 @@ void PreconnectSocketfd::_try_once() {
 
     // success
     if (connect_status == 0) {
-        LOG_DEBUG << "connected";
+        LOG_TRACE << "connected";
 
         _pollable_file_descriptor.detach_from_poller();
 
@@ -158,7 +163,7 @@ void PreconnectSocketfd::_try_once() {
         switch (errno) {
         // for non-blocking socketfd: success later, not now
         case EINPROGRESS:
-            LOG_DEBUG << "did not connect immediately; handover to poller";
+            LOG_TRACE << "did not connect immediately; handover to poller";
 
             _pollable_file_descriptor.enable_write_event();
 
@@ -170,7 +175,7 @@ void PreconnectSocketfd::_try_once() {
         case EAGAIN:
         case ECONNREFUSED:
         case ENETUNREACH:
-            LOG_DEBUG << "something went wrong; schedule retry";
+            LOG_TRACE << "something went wrong; schedule retry";
 
             _schedule_retry();
 

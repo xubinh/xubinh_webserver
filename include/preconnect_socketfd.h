@@ -29,7 +29,7 @@ public:
     // should not modify the listening state of the underlying fd since the
     // ownership will be transfered later to the newly established connection
     ~PreconnectSocketfd() {
-        LOG_DEBUG << "preconnect socketfd destructed";
+        LOG_INFO << "exit destructor: PreconnectSocketfd";
     };
 
     void register_new_connection_callback(
