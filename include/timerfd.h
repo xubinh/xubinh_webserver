@@ -29,11 +29,7 @@ public:
         : _pollable_file_descriptor(fd, event_loop) {
     }
 
-    ~Timerfd() {
-        _pollable_file_descriptor.detach_from_poller();
-
-        _pollable_file_descriptor.close_fd();
-    }
+    ~Timerfd();
 
     void register_timerfd_message_callback(
         MessageCallbackType timerfd_message_callback

@@ -3,6 +3,14 @@
 
 namespace xubinh_server {
 
+Timerfd::~Timerfd() {
+    _pollable_file_descriptor.detach_from_poller();
+
+    _pollable_file_descriptor.close_fd();
+
+    LOG_INFO << "exit destructor: Timerfd";
+}
+
 void Timerfd::start() {
     if (!_message_callback) {
         LOG_FATAL << "missing message callback";

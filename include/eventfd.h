@@ -27,11 +27,7 @@ public:
         : _pollable_file_descriptor(fd, event_loop) {
     }
 
-    ~Eventfd() {
-        _pollable_file_descriptor.detach_from_poller();
-
-        _pollable_file_descriptor.close_fd();
-    }
+    ~Eventfd();
 
     void register_eventfd_message_callback(
         MessageCallbackType eventfd_message_callback
