@@ -1,4 +1,5 @@
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 
 #include "log_builder.h"
@@ -31,6 +32,18 @@ int Socketfd::get_socketfd_errno(int socketfd) {
     }
     else {
         return saved_errno;
+    }
+}
+
+void Socketfd::disable_socketfd_nagle_algorithm(int socketfd) {
+    int flag = 1;
+
+    if (::setsockopt(
+            socketfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(flag)
+        )
+        == -1) {
+
+        LOG_SYS_ERROR << "failed to disable nagle algorithm";
     }
 }
 

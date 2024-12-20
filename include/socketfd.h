@@ -8,6 +8,8 @@ struct Socketfd {
     static int create_socketfd();
 
     static int get_socketfd_errno(int socketfd);
+
+    static void disable_socketfd_nagle_algorithm(int socketfd);
 };
 
 } // namespace xubinh_server
