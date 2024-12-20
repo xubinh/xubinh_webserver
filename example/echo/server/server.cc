@@ -131,10 +131,10 @@ int main() {
     server.register_message_callback(message_callback);
     server.register_connect_success_callback([](const TcpConnectSocketfdPtr
                                                     &tcp_connect_socketfd_ptr) {
-        LOG_DEBUG
+        LOG_TRACE
             << "established TCP connection (id: "
-                   + tcp_connect_socketfd_ptr->get_id() + "): "
-                   + tcp_connect_socketfd_ptr->get_local_address().to_string()
+            << tcp_connect_socketfd_ptr->get_id()
+            << "): " + tcp_connect_socketfd_ptr->get_local_address().to_string()
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
