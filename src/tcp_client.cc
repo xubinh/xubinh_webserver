@@ -64,13 +64,21 @@ void TcpClient::stop() {
 }
 
 void TcpClient::close_preconnect_socketfd() {
+    LOG_TRACE << "register event -> main: close_preconnect_socketfd";
+
     _loop->run([this]() {
+        LOG_TRACE << "enter event: close_preconnect_socketfd";
+
         _preconnect_socketfd_ptr.reset();
     });
 }
 
 void TcpClient::close_tcp_connect_socketfd_ptr() {
+    LOG_TRACE << "register event -> main: close_tcp_connect_socketfd_ptr";
+
     _loop->run([this]() {
+        LOG_TRACE << "enter event: close_tcp_connect_socketfd_ptr";
+
         _tcp_connect_socketfd_ptr.reset();
     });
 }
@@ -81,7 +89,7 @@ void TcpClient::_new_connection_callback(int connect_socketfd) {
     InetAddress peer_address{connect_socketfd, InetAddress::PEER};
 
     _tcp_connect_socketfd_ptr = std::make_shared<TcpConnectSocketfd>(
-        connect_socketfd, _loop, "0", local_address, peer_address
+        connect_socketfd, _loop, 0, local_address, peer_address
     );
 
     if (_connect_success_callback) {

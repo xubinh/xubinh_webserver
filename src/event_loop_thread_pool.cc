@@ -24,9 +24,15 @@ EventLoopThreadPool::~EventLoopThreadPool() {
         LOG_FATAL << "tried to destruct a thread pool before stopping it";
     }
 
+    LOG_TRACE << "joining threads...";
+
     for (auto &thread : _thread_pool) {
         thread->join();
     }
+
+    LOG_TRACE << "all threads are joined";
+
+    LOG_INFO << "exit destructor: EventLoopThreadPool";
 }
 
 void EventLoopThreadPool::start() {

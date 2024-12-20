@@ -12,12 +12,15 @@ namespace xubinh_server {
 TcpConnectSocketfd::TcpConnectSocketfd(
     int fd,
     EventLoop *loop,
-    const std::string &id,
+    const uint64_t &id,
     const InetAddress &local_address,
     const InetAddress &remote_address
 )
     : _id(id), _local_address(local_address), _remote_address(remote_address),
       _loop(loop), _pollable_file_descriptor(fd, loop) {
+
+    // [NOTE]: this line is for testing
+    // disable_socketfd_nagle_algorithm(fd);
 }
 
 void TcpConnectSocketfd::start() {
@@ -33,20 +36,23 @@ void TcpConnectSocketfd::start() {
 
     _pollable_file_descriptor.register_read_event_callback(std::bind(
         &TcpConnectSocketfd::_read_event_callback,
-        shared_from_this(),
+        this, // don't bind to it; circular reference alert!
         std::placeholders::_1
     ));
 
     _pollable_file_descriptor.register_write_event_callback(std::bind(
-        &TcpConnectSocketfd::_write_event_callback, shared_from_this()
+        &TcpConnectSocketfd::_write_event_callback,
+        this // don't bind to it; circular reference alert!
     ));
 
     _pollable_file_descriptor.register_close_event_callback(std::bind(
-        &TcpConnectSocketfd::_close_event_callback, shared_from_this()
+        &TcpConnectSocketfd::_close_event_callback,
+        this // don't bind to it; circular reference alert!
     ));
 
     _pollable_file_descriptor.register_error_event_callback(std::bind(
-        &TcpConnectSocketfd::_error_event_callback, shared_from_this()
+        &TcpConnectSocketfd::_error_event_callback,
+        this // don't bind to it; circular reference alert!
     ));
 
     // must ensure lifetime safety as this exact object could be
@@ -57,16 +63,37 @@ void TcpConnectSocketfd::start() {
 }
 
 void TcpConnectSocketfd::shutdown_write() {
+    // could be called multiple times, e.g. when the client decided to close the
+    // connection immediately after he sent out a HTTP request with a
+    // "Connection: close" header in it, which will also issue a
+    // shutdown_write operation
     if (_is_write_end_shutdown) {
-        LOG_FATAL << "write end could only be shutdown once";
+        return;
     }
 
     _is_write_end_shutdown = true;
 
     if (::shutdown(_pollable_file_descriptor.get_fd(), SHUT_WR) == -1) {
-        LOG_SYS_FATAL << "unknown error when shutting down write end of a TCP "
-                         "connection, id: "
-                             + _id;
+        switch (errno) {
+        case ENOTCONN:
+            LOG_TRACE << "ENOTCONN encountered, connection abort, id: " << _id;
+
+            // the peer does not care what we send to him, so we won't care
+            // what he sends to us either
+            abort();
+
+            return;
+
+        default:
+            LOG_SYS_ERROR
+                << "unknown error when shutting down write end of a TCP "
+                   "connection, id: "
+                << _id;
+
+            _close_event_callback();
+
+            break;
+        }
     }
 
     _pollable_file_descriptor.disable_write_event();
@@ -105,10 +132,13 @@ void TcpConnectSocketfd::abort() {
         LOG_FATAL << "close failed";
     }
 
+    _is_write_end_shutdown = true;
     _is_abotrted = true;
 }
 
 void TcpConnectSocketfd::check_and_abort(PredicateType predicate) {
+    LOG_TRACE << "register event -> worker: _check_and_abort_impl";
+
     _loop->run(std::bind(
         &TcpConnectSocketfd::_check_and_abort_impl,
         shared_from_this(),
@@ -150,7 +180,7 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
 }
 
 void TcpConnectSocketfd::_read_event_callback(util::TimePoint time_stamp) {
-    LOG_DEBUG << "tcp connect socketfd read event encountered";
+    LOG_TRACE << "tcp connect socketfd read event encountered, id: " << _id;
 
     // fd -- W --> input buffer
     _receive_all_data();
@@ -169,7 +199,7 @@ void TcpConnectSocketfd::_read_event_callback(util::TimePoint time_stamp) {
 }
 
 void TcpConnectSocketfd::_write_event_callback() {
-    LOG_DEBUG << "tcp connect socketfd write event encountered";
+    LOG_TRACE << "tcp connect socketfd write event encountered, id: " << _id;
 
     // if write event is triggered at this poll, it means the local did not
     // close its write end when starting this poll, and the close event will be
@@ -219,7 +249,7 @@ void TcpConnectSocketfd::_write_event_callback() {
 }
 
 void TcpConnectSocketfd::_close_event_callback() {
-    LOG_DEBUG << "tcp connect socketfd close event encountered";
+    LOG_TRACE << "tcp connect socketfd close event encountered, id: " << _id;
 
     // if (_is_closed()) {
     //     LOG_FATAL << "close event encountered after being closed";
@@ -239,13 +269,11 @@ void TcpConnectSocketfd::_close_event_callback() {
 }
 
 void TcpConnectSocketfd::_error_event_callback() {
-    LOG_DEBUG << "tcp connect socketfd error event encountered";
+    LOG_TRACE << "tcp connect socketfd error event encountered, id: " << _id;
 
     auto saved_errno = get_socketfd_errno(_pollable_file_descriptor.get_fd());
 
-    LOG_ERROR << "TCP connection socket error, id: " << _id
-              << ", errno: " << saved_errno
-              << ", description: " << util::strerror_tl(saved_errno);
+    LOG_SYS_ERROR << "TCP connection socket error, id: " << _id;
 }
 
 void TcpConnectSocketfd::_receive_all_data() {
@@ -259,6 +287,8 @@ void TcpConnectSocketfd::_receive_all_data() {
             0
         );
 
+        LOG_TRACE << "bytes_read: " << bytes_read;
+
         // have read in some data but maybe not all
         if (bytes_read > 0) {
             _input_buffer.forward_write_position(bytes_read);
@@ -268,6 +298,8 @@ void TcpConnectSocketfd::_receive_all_data() {
 
         // the peer have closed its write end
         else if (bytes_read == 0) {
+            LOG_TRACE << "disable read event";
+
             _pollable_file_descriptor.disable_read_event();
 
             break;
@@ -319,11 +351,15 @@ TcpConnectSocketfd::_send_as_many_data(const char *data, size_t data_size) {
                 break;
             }
 
-            // the peer abruptly closed its read end
+            // the peer abruptly closed its read end (or the whole connection)
             else if (errno == EPIPE) {
-                LOG_WARN << "EPIPE encountered, id: " + _id;
+                LOG_TRACE << "EPIPE encountered, connection abort, id: " << _id;
 
-                break;
+                // the peer does not care what we send to him, so we won't care
+                // what he sends to us either
+                abort();
+
+                return data_size; // fake
             }
 
             // actual error occured

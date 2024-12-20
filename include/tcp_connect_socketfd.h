@@ -37,23 +37,25 @@ public:
     TcpConnectSocketfd(
         int fd,
         EventLoop *loop,
-        const std::string &id,
+        const uint64_t &id,
         const InetAddress &local_address,
         const InetAddress &remote_address
     );
 
     ~TcpConnectSocketfd() {
         if (!_is_closed()) {
-            LOG_FATAL << "tcp connect socketfd object (id: " + get_id()
-                             + ") destroyed before the connection is closed";
+            LOG_FATAL << "tcp connect socketfd object (id: " << get_id()
+                      << ") destroyed before the connection is closed";
         }
 
         if (!_is_abotrted) {
             _pollable_file_descriptor.close_fd();
         }
+
+        LOG_TRACE << "TCP connection closed, id: " << _id;
     }
 
-    const std::string &get_id() const {
+    const uint64_t &get_id() const {
         return _id;
     }
 
@@ -156,6 +158,8 @@ private:
     }
 
     void _check_and_abort_impl(PredicateType predicate) {
+        LOG_TRACE << "enter event: _check_and_abort_impl";
+
         if (predicate()) {
             abort();
         }
@@ -172,7 +176,7 @@ private:
     // size of space the input buffer should expand each time
     static constexpr const int _RECEIVE_DATA_SIZE = 4096;
 
-    const std::string _id;
+    const uint64_t _id;
     const InetAddress _local_address;
     const InetAddress _remote_address;
 
