@@ -243,6 +243,7 @@
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
   - 尽可能添加 `const` 和 `noexcept` 修饰词.
+- [ ] 实现一个 RPC 框架.
 - [ ] 添加英文版 `README.md`.
 
 ## WebBench 测试
@@ -329,4 +330,6 @@ sudo apt-get install exuberant-ctags # 依赖
 
 ## 参考资料
 
-[TODO]
+- [chenshuo/muduo](https://github.com/chenshuo/muduo)
+- [qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer)
+- [linyacool/WebServer](https://github.com/linyacool/WebServer)
