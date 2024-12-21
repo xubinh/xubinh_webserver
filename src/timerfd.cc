@@ -26,7 +26,7 @@ void Timerfd::start() {
 void Timerfd::set_alarm_at_time_point(const TimePoint &time_point) {
     LOG_DEBUG << "set alarm at time point: "
                      + time_point.to_datetime_string(
-                         TimePoint::DatetimePurpose::PRINTING
+                         TimePoint::Purpose::PRINTING
                      );
 
     itimerspec timer_specification{};

@@ -76,7 +76,7 @@ void message_callback(
             std::string(client_message_start, client_message_end);
 
         std::string time_stamp = time_point.to_datetime_string(
-            xubinh_server::util::TimePoint::DatetimePurpose::PRINTING
+            xubinh_server::util::TimePoint::Purpose::PRINTING
         );
 
         // auto msg = "[" + time_stamp + "]: " + client_message;

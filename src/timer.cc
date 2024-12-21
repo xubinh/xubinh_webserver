@@ -6,7 +6,7 @@ bool Timer::expire_once() {
     LOG_DEBUG << "added a timer, address: " << this
               << ", expiration time: "
                      + _expiration_time_point.to_datetime_string(
-                         TimePoint::DatetimePurpose::PRINTING
+                         TimePoint::Purpose::PRINTING
                      )
                      + ", number of repetitions left: "
                      + (_number_of_repetitions_left == -1

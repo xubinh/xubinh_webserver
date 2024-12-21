@@ -1,9 +1,9 @@
 #include "log_builder.h"
 #include "log_collector.h"
 #include "util/current_thread.h"
-#include "util/datetime.h"
 #include "util/errno.h"
 #include "util/format.h"
+#include "util/time_point.h"
 
 namespace {
 
@@ -135,10 +135,10 @@ LogBuilder::LogBuilder(
     }
 
     _entry_buffer.append(
-        util::Datetime::get_datetime_string(util::DatetimePurpose::PRINTING)
+        util::TimePoint::get_datetime_string(util::TimePoint::Purpose::PRINTING)
             .c_str(),
-        util::Datetime::DATETIME_STRING_LENGTHES
-            [static_cast<size_t>(util::DatetimePurpose::PRINTING)]
+        util::TimePoint::TIME_POINT_STRING_LENGTHES
+            [static_cast<size_t>(util::TimePoint::Purpose::PRINTING)]
     );
 
     _entry_buffer.append(" | ", 3);

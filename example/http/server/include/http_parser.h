@@ -2,6 +2,7 @@
 #define __XUBINH_SERVER_HTTP_PARSER
 
 #include <memory>
+#include <stdexcept>
 
 #include "../include/http_request.h"
 #include "tcp_buffer.h"

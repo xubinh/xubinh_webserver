@@ -9,8 +9,8 @@ namespace xubinh_server {
 
 namespace util {
 
-int64_t TimePoint::get_nanoseconds_from_epoch() {
-    struct timespec ts;
+int64_t TimePoint::get_nanoseconds_from_epoch() noexcept {
+    timespec ts;
 
     if (::clock_gettime(CLOCK_REALTIME, &ts) == -1) {
         LOG_SYS_FATAL << "unknown error when calling clock_gettime";
@@ -20,7 +20,9 @@ int64_t TimePoint::get_nanoseconds_from_epoch() {
            + static_cast<int64_t>(ts.tv_nsec);
 }
 
-void TimePoint::to_timespec(timespec *time_specification) const {
+void TimePoint::get_timespec(
+    int64_t nanoseconds_from_epoch, timespec *time_specification
+) noexcept {
     time_specification->tv_sec =
         static_cast<decltype(time_specification->tv_sec)>(
             nanoseconds_from_epoch / static_cast<int64_t>(1000 * 1000 * 1000)
@@ -32,15 +34,41 @@ void TimePoint::to_timespec(timespec *time_specification) const {
         );
 }
 
-std::string
-TimePoint::to_datetime_string(const DatetimePurpose &datetime_purpose) const {
-    auto time_from_epoch_in_seconds = static_cast<time_t>(
-        nanoseconds_from_epoch / static_cast<int64_t>(1000 * 1000 * 1000)
+std::string TimePoint::get_datetime_string(
+    int64_t nanoseconds_from_epoch, Purpose purpose
+) noexcept {
+    timespec time_specification;
+
+    get_timespec(nanoseconds_from_epoch, &time_specification);
+
+    tm tm_info;
+
+    ::localtime_r(&time_specification.tv_sec, &tm_info);
+
+    char buffer[32];
+
+    size_t actual_bytes_written;
+
+    // for renaming physical files (e.g. `2024_01_01_13_00_23`):
+    if (purpose == Purpose::RENAMING) {
+        actual_bytes_written =
+            ::strftime(buffer, sizeof(buffer), "%Y_%m_%d_%H_%M_%S", &tm_info);
+    }
+
+    // for printing out into terminal or as log (e.g. `2024-01-01 13:00:23`):
+    else {
+        actual_bytes_written =
+            ::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
+    }
+
+    actual_bytes_written += ::snprintf(
+        buffer + actual_bytes_written,
+        sizeof(buffer),
+        ".%09ld",
+        time_specification.tv_nsec
     );
 
-    return util::Datetime::get_datetime_string(
-        time_from_epoch_in_seconds, datetime_purpose
-    );
+    return {buffer, actual_bytes_written};
 }
 
 } // namespace util

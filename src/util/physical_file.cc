@@ -10,38 +10,32 @@ namespace xubinh_server {
 
 namespace util {
 
-AppendOnlyPhysicalFile::AppendOnlyPhysicalFile(const std::string &base_name) {
+AppendOnlyPhysicalFile::AppendOnlyPhysicalFile(const std::string &base_name
+) noexcept {
     // polling for available fd
     while (true) {
         _file_ptr =
             ::fopen(base_name.c_str(), "ae"); // `e` flag here means `O_CLOEXEC`
 
-        // break if got one
+        // exit if got one
         if (_file_ptr) {
             break;
         }
 
-        // auto saved_errno = errno;
-        // auto error_msg = "Failed to create the file `" + base_name
-        //                  + "`: " + strerror_tl(saved_errno);
-
-        // throw std::runtime_error(error_msg);
-
         // otherwise go to sleep for some time
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(_file_descriptor_poll_time_interval)
-        );
+        // [TODO]: optimization required
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            _file_descriptor_availability_polling_time_interval
+        ));
     }
 
     // replace the default internal buffer with a bigger one
     ::setbuffer(_file_ptr, _buffer, sizeof _buffer);
 }
 
-AppendOnlyPhysicalFile::~AppendOnlyPhysicalFile() {
-    ::fclose(_file_ptr);
-}
-
-void AppendOnlyPhysicalFile::append(const char *data, size_t data_size) {
+void AppendOnlyPhysicalFile::write_to_user_space_memory(
+    const char *data, size_t data_size
+) noexcept {
     auto current_number_of_bytes_written =
         ::fwrite_unlocked(data, sizeof(char), data_size, _file_ptr);
 
@@ -58,11 +52,8 @@ void AppendOnlyPhysicalFile::append(const char *data, size_t data_size) {
     }
 }
 
-void AppendOnlyPhysicalFile::flush() {
-    ::fflush(_file_ptr);
-}
-
-int AppendOnlyPhysicalFile::_file_descriptor_poll_time_interval = 1500;
+int AppendOnlyPhysicalFile::
+    _file_descriptor_availability_polling_time_interval = 1500;
 
 } // namespace util
 

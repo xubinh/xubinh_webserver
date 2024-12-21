@@ -177,11 +177,11 @@ void LogCollector::_background_io_thread_worker_functor() {
                               + std::to_string(number_of_dropped_buffers)
                               + " chunk buffers at "
                               + util::Datetime::get_datetime_string(
-                                  util::DatetimePurpose::PRINTING
+                                  util::Datetime::Purpose::PRINTING
                               )
                               + "\n";
 
-            log_file.write(msg.c_str(), msg.length());
+            log_file.write_to_user_space_memory(msg.c_str(), msg.length());
 
             chunk_buffers_to_be_written.resize(
                 _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
@@ -189,7 +189,7 @@ void LogCollector::_background_io_thread_worker_functor() {
         }
 
         for (const auto &chunk_buffer_ptr : chunk_buffers_to_be_written) {
-            log_file.write(
+            log_file.write_to_user_space_memory(
                 chunk_buffer_ptr->get_start_address_of_buffer(),
                 chunk_buffer_ptr->length()
             );
@@ -211,11 +211,11 @@ void LogCollector::_background_io_thread_worker_functor() {
 
         chunk_buffers_to_be_written.clear();
 
-        log_file.flush();
+        log_file.flush_to_disk();
     }
 
     if (_current_chunk_buffer_ptr->length()) {
-        log_file.write(
+        log_file.write_to_user_space_memory(
             _current_chunk_buffer_ptr->get_start_address_of_buffer(),
             _current_chunk_buffer_ptr->length()
         );
