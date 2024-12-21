@@ -20,7 +20,7 @@
 #include "./include/http_server.h"
 
 #define __XUBINH_BENCHMARKING
-// #define __XUBINH_KEEP_ALIVE
+#define __XUBINH_KEEP_ALIVE
 
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
@@ -319,8 +319,13 @@ void http_request_callback(
 
 int main() {
     // logging config
+#ifdef __XUBINH_BENCHMARKING
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
+#else
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+#endif
 
     // signal config
     xubinh_server::SignalSet signal_set;
@@ -331,8 +336,10 @@ int main() {
     signal_set.add_signal(SIGTSTP);
     xubinh_server::Signalfd::block_signals(signal_set);
 
+    size_t thread_pool_capacity = 4;
+
     // create loop
-    xubinh_server::EventLoop loop;
+    xubinh_server::EventLoop loop(0, thread_pool_capacity);
 
     // create server
     xubinh_server::InetAddress server_address(
@@ -360,7 +367,7 @@ int main() {
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-    server.set_thread_pool_capacity(4);
+    server.set_thread_pool_capacity(thread_pool_capacity);
 
 #ifdef __XUBINH_BENCHMARKING
     server.set_connection_timeout_interval(

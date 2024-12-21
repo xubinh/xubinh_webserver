@@ -16,12 +16,16 @@ public:
     using ThreadInitializationCallbackType =
         EventLoopThread::ThreadInitializationCallbackType;
 
-    EventLoopThreadPool(
-        size_t capacity,
-        ThreadInitializationCallbackType thread_initialization_callback
-    );
+    EventLoopThreadPool(size_t thread_pool_capasity);
 
     ~EventLoopThreadPool();
+
+    void register_thread_initialization_callback(
+        ThreadInitializationCallbackType thread_initialization_callback
+    ) {
+        _thread_initialization_callback =
+            std::move(thread_initialization_callback);
+    }
 
     void start();
 
@@ -30,7 +34,9 @@ public:
     EventLoop *get_next_loop();
 
 private:
-    const size_t _THREAD_POOL_CAPASITY = 0;
+    const size_t _thread_pool_capasity;
+
+    ThreadInitializationCallbackType _thread_initialization_callback;
 
     bool _is_started = false;
     bool _is_stopped = false;

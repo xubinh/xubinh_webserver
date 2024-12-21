@@ -179,6 +179,10 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     _pollable_file_descriptor.enable_write_event();
 }
 
+uint64_t TcpConnectSocketfd::get_loop_index() const noexcept {
+    return _loop->get_loop_index();
+}
+
 void TcpConnectSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     LOG_TRACE << "tcp connect socketfd read event encountered, id: " << _id;
 

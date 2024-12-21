@@ -126,6 +126,8 @@ public:
         return _time_stamp.load(std::memory_order_relaxed);
     }
 
+    uint64_t get_loop_index() const noexcept;
+
     // used by user
     util::Any context{};
 

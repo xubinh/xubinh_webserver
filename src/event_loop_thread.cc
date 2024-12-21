@@ -14,8 +14,8 @@ void EventLoopThread::start() {
     }
 }
 
-void EventLoopThread::_worker_function() {
-    EventLoop loop;
+void EventLoopThread::_worker_function(uint64_t loop_index) {
+    EventLoop loop(loop_index);
 
     {
         std::lock_guard<std::mutex> lock(_mutex);

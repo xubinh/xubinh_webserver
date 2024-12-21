@@ -10,21 +10,20 @@ namespace xubinh_server {
 
 namespace util {
 
-// fixed size with no timeout (be careful)
+// fixed size with no timeout
 template <typename T>
 class BlockingQueue {
 public:
     using ContainerType = std::deque<T>;
 
-    // must specify a capacity explicitly
-    explicit BlockingQueue(const int capacity) : _capacity(capacity) {
+    explicit BlockingQueue(int capacity) : _capacity(capacity) {
     }
 
-    // no copying
+    // no copy
     BlockingQueue(const BlockingQueue &) = delete;
     BlockingQueue &operator=(const BlockingQueue &) = delete;
 
-    // no moving
+    // no move
     BlockingQueue(BlockingQueue &&) = delete;
     BlockingQueue &operator=(BlockingQueue &&) = delete;
 

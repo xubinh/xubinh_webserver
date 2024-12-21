@@ -19,10 +19,12 @@ public:
 
     explicit EventLoopThread(
         const std::string &thread_name,
-        ThreadInitializationCallbackType thread_initialization_callback
+        ThreadInitializationCallbackType thread_initialization_callback,
+        uint64_t loop_index = 0
     )
         : _thread(
-            std::bind(&EventLoopThread::_worker_function, this), thread_name
+            std::bind(&EventLoopThread::_worker_function, this, loop_index),
+            thread_name
         ),
           _thread_initialization_callback(
               std::move(thread_initialization_callback)
@@ -66,7 +68,7 @@ public:
     }
 
 private:
-    void _worker_function();
+    void _worker_function(uint64_t loop_index);
 
     ThreadInitializationCallbackType _thread_initialization_callback;
 

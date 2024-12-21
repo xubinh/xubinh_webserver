@@ -90,7 +90,10 @@ private:
     );
 
     // for tcp connect socketfd
-    void _close_callback(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr);
+    void _close_callback(
+        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+        uint64_t functor_blocking_queue_index
+    );
 
     bool _is_started = false;
     bool _is_stopped = false;
@@ -113,7 +116,7 @@ private:
 
     size_t _thread_pool_capacity = 0;
     ThreadInitializationCallbackType _thread_initialization_callback;
-    std::unique_ptr<EventLoopThreadPool> _thread_pool;
+    std::unique_ptr<EventLoopThreadPool> _thread_pool_ptr;
 };
 
 } // namespace xubinh_server

@@ -3,17 +3,30 @@
 
 namespace xubinh_server {
 
-EventLoop::EventLoop()
-    : _eventfd(Eventfd::create_eventfd(0), this),
-      _functor_blocking_queue(_FUNCTOR_QUEUE_CAPACITY),
+EventLoop::EventLoop(
+    uint64_t loop_index, size_t number_of_functor_blocking_queues
+)
+    : _loop_index(loop_index),
+      _number_of_functor_blocking_queues(
+          std::max(number_of_functor_blocking_queues, static_cast<uint64_t>(1))
+      ),
+      _functor_blocking_queues(_number_of_functor_blocking_queues),
+      _eventfds(_number_of_functor_blocking_queues),
       _timerfd(Timerfd::create_timerfd(0), this),
       _owner_thread_tid(util::current_thread::get_tid()) {
 
-    _eventfd.register_eventfd_message_callback(std::bind(
-        &EventLoop::_eventfd_message_callback, this, std::placeholders::_1
-    ));
+    for (int i = 0; i < _number_of_functor_blocking_queues; i++) {
+        _functor_blocking_queues[i].reset(
+            new FunctorQueue(_FUNCTOR_QUEUE_CAPACITY)
+        );
 
-    _eventfd.start();
+        _eventfds[i].reset(new Eventfd(Eventfd::create_eventfd(0), this));
+        _eventfds[i]->register_eventfd_message_callback(std::bind(
+            &EventLoop::_eventfd_message_callback, this, std::placeholders::_1
+        ));
+
+        _eventfds[i]->start();
+    }
 
     _timerfd.register_timerfd_message_callback(std::bind(
         &EventLoop::_timerfd_message_callback, this, std::placeholders::_1
@@ -29,7 +42,7 @@ void EventLoop::loop() {
         // since each event loop always got two fixed fd's being listened on,
         // i.e. a timerfd and an eventfd)
         if (_need_stop.load(std::memory_order_relaxed)
-            && _event_poller.size() == 2) {
+            && _event_poller.size() == 1 + _number_of_functor_blocking_queues) {
 
             LOG_INFO << "event loop exits, target TID: " << _owner_thread_tid;
 
@@ -61,10 +74,13 @@ void EventLoop::loop() {
         if (_eventfd_triggered) {
             LOG_TRACE << "eventfd triggered";
 
-            const auto &queued_functors = _functor_blocking_queue.pop_all();
+            for (auto &_functor_blocking_queue_ptr : _functor_blocking_queues) {
+                const auto &queued_functors =
+                    _functor_blocking_queue_ptr->pop_all();
 
-            for (auto &functor : queued_functors) {
-                functor();
+                for (auto &functor : queued_functors) {
+                    functor();
+                }
             }
 
             _eventfd_triggered = false;
@@ -96,13 +112,17 @@ void EventLoop::loop() {
     // clean up is done inside destructor
 }
 
-void EventLoop::run(FunctorType functor) {
+void EventLoop::run(
+    FunctorType functor, uint64_t functor_blocking_queue_index
+) {
     if (_is_in_owner_thread()) {
         functor();
     }
 
     else {
-        _leave_to_owner_thread(std::move(functor));
+        _leave_to_owner_thread(
+            std::move(functor), functor_blocking_queue_index
+        );
     }
 }
 
@@ -110,7 +130,8 @@ TimerIdentifier EventLoop::run_at_time_point(
     const TimePoint &time_point,
     const TimeInterval &repetition_time_interval,
     int number_of_repetitions,
-    FunctorType functor
+    FunctorType functor,
+    uint64_t functor_blocking_queue_index
 ) {
     Timer *timer_ptr = new Timer(
         time_point,
@@ -119,7 +140,8 @@ TimerIdentifier EventLoop::run_at_time_point(
         std::move(functor)
     );
 
-    run(std::bind(&EventLoop::_add_a_timer_and_update_alarm, this, timer_ptr));
+    run(std::bind(&EventLoop::_add_a_timer_and_update_alarm, this, timer_ptr),
+        functor_blocking_queue_index);
 
     return TimerIdentifier{timer_ptr};
 }
@@ -128,7 +150,8 @@ TimerIdentifier EventLoop::run_after_time_interval(
     const TimeInterval &time_interval,
     const TimeInterval &repetition_time_interval,
     int number_of_repetitions,
-    FunctorType functor
+    FunctorType functor,
+    uint64_t functor_blocking_queue_index
 ) {
     TimePoint time_point = (TimePoint() += time_interval);
 
@@ -136,7 +159,8 @@ TimerIdentifier EventLoop::run_after_time_interval(
         time_point,
         repetition_time_interval,
         number_of_repetitions,
-        std::move(functor)
+        std::move(functor),
+        functor_blocking_queue_index
     );
 
     return timer_identifier;
@@ -154,18 +178,27 @@ void EventLoop::ask_to_stop() {
 
     // a release fence that comes after a store essentially makes the store
     // become a part of the memory ordering, i.e. store first and then do the
-    // dummy wake-ups
+    // wake-up
     _need_stop.store(true, std::memory_order_relaxed);
     std::atomic_thread_fence(std::memory_order_release);
 
-    const int NUMBER_OF_DUMMY_WAKE_UPS = 3;
+    _wake_up_this_loop(0);
 
-    // do a bunch of dummy wake-ups
-    for (int i = 0; i < NUMBER_OF_DUMMY_WAKE_UPS; i++) {
-        _wake_up_this_loop();
-    }
+    LOG_INFO << "wake-up signal are sent to the loop";
+}
 
-    LOG_INFO << "dummy wake-ups are sent";
+void EventLoop::_leave_to_owner_thread(
+    FunctorType functor, uint64_t functor_blocking_queue_index
+) {
+    _functor_blocking_queues
+        [functor_blocking_queue_index % _number_of_functor_blocking_queues]
+            ->push(std::move(functor));
+
+    LOG_TRACE << "leave to owner thread, functor queue index: "
+              << (functor_blocking_queue_index
+                  % _number_of_functor_blocking_queues);
+
+    _wake_up_this_loop(functor_blocking_queue_index);
 }
 
 void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {

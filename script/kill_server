@@ -5,19 +5,13 @@ PROCESS_KEYWORD="run_server"
 PID=$(ps aux | grep "$PROCESS_KEYWORD" | grep -v grep | awk '{print $2}')
 
 if [ -n "$PID" ]; then
-    echo "Killing process '$PROCESS_KEYWORD' with PID: $PID"
+    kill -9 -"$PID"
+fi
 
+PROCESS_KEYWORD="_server"
+
+PID=$(ps aux | grep "$PROCESS_KEYWORD" | grep -v grep | grep -v kill | awk '{print $2}')
+
+if [ -n "$PID" ]; then
     kill -9 "$PID"
-
-    if [ $? -eq 0 ]; then
-        echo "Process $PID killed successfully."
-
-    else
-        echo "Failed to kill process $PID."
-
-    fi
-
-else
-    echo "No process found matching keyword: $PROCESS_KEYWORD"
-
 fi

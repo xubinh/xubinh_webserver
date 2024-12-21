@@ -45,11 +45,15 @@ void TcpServer::start() {
     _listen_socketfd->start();
 
     if (_thread_pool_capacity > 0) {
-        _thread_pool.reset(new EventLoopThreadPool(
-            _thread_pool_capacity, std::move(_thread_initialization_callback)
-        ));
+        _thread_pool_ptr.reset(new EventLoopThreadPool(_thread_pool_capacity));
 
-        _thread_pool->start();
+        if (_thread_initialization_callback) {
+            _thread_pool_ptr->register_thread_initialization_callback(
+                _thread_initialization_callback
+            );
+        }
+
+        _thread_pool_ptr->start();
     }
 
     _is_started = true;
@@ -78,7 +82,7 @@ void TcpServer::stop() {
     if (_thread_pool_capacity > 0) {
         LOG_INFO << "shutting down thread pool";
 
-        _thread_pool->stop();
+        _thread_pool_ptr->stop();
 
         LOG_INFO << "finished shutting down thread pool";
     }
@@ -94,7 +98,7 @@ void TcpServer::_new_connection_callback(
     uint64_t id =
         _tcp_connection_id_counter.fetch_add(1, std::memory_order_relaxed);
     EventLoop *loop =
-        _thread_pool_capacity > 0 ? _thread_pool->get_next_loop() : _loop;
+        _thread_pool_capacity > 0 ? _thread_pool_ptr->get_next_loop() : _loop;
     InetAddress local_address{connect_socketfd, InetAddress::LOCAL};
 
     auto new_tcp_connect_socketfd_ptr = std::make_shared<TcpConnectSocketfd>(
@@ -113,30 +117,37 @@ void TcpServer::_new_connection_callback(
     new_tcp_connect_socketfd_ptr->register_write_complete_callback(
         _write_complete_callback
     );
-    new_tcp_connect_socketfd_ptr->register_close_callback(
-        std::bind(&TcpServer::_close_callback, this, std::placeholders::_1)
-    );
+    new_tcp_connect_socketfd_ptr->register_close_callback(std::bind(
+        &TcpServer::_close_callback,
+        this,
+        std::placeholders::_1,
+        loop->get_loop_index()
+    ));
 
     new_tcp_connect_socketfd_ptr->start();
 }
 
 void TcpServer::_close_callback(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    uint64_t functor_blocking_queue_index
 ) {
     LOG_TRACE << "register event -> main: _close_callback";
 
     // must be executed inside the main loop
-    _loop->run([this, tcp_connect_socketfd_ptr]() {
-        LOG_TRACE << "enter event: _close_callback";
+    _loop->run(
+        [this, tcp_connect_socketfd_ptr]() {
+            LOG_TRACE << "enter event: _close_callback";
 
-        _tcp_connect_socketfds.erase(tcp_connect_socketfd_ptr->get_id());
+            _tcp_connect_socketfds.erase(tcp_connect_socketfd_ptr->get_id());
 
-        LOG_TRACE << "erase TCP connection, id: "
-                  << tcp_connect_socketfd_ptr->get_id();
+            LOG_TRACE << "erase TCP connection, id: "
+                      << tcp_connect_socketfd_ptr->get_id();
 
-        LOG_DEBUG << "number of reference: "
-                  << tcp_connect_socketfd_ptr.use_count();
-    });
+            LOG_DEBUG << "number of reference: "
+                      << tcp_connect_socketfd_ptr.use_count();
+        },
+        functor_blocking_queue_index
+    );
 }
 
 } // namespace xubinh_server
