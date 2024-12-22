@@ -10,7 +10,15 @@
 
 PROCESS_KEYWORD="run_server"
 
+# sends SIGINT to the entire foreground process group, simulating the behaviour of Ctrl+C on the terminal
+if [ -n "$PID" ]; then
+    kill -INT -"$PID"
+fi
+
+PROCESS_KEYWORD="perf_start"
+
 PID=$(ps aux | grep "$PROCESS_KEYWORD" | grep -v grep | awk '{print $2}')
 
-# sends SIGINT to the entire foreground process group, simulating the behaviour of Ctrl+C on the terminal
-kill -INT -"$PID"
+if [ -n "$PID" ]; then
+    kill -INT -"$PID"
+fi
