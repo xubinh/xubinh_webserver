@@ -133,18 +133,24 @@ void TcpServer::_close_callback(
 ) {
     LOG_TRACE << "register event -> main: _close_callback";
 
+    auto connection_id = tcp_connect_socketfd_ptr->get_id();
+
     // must be executed inside the main loop
     _loop->run(
-        [this, tcp_connect_socketfd_ptr]() {
+        [this, connection_id]() {
             LOG_TRACE << "enter event: _close_callback";
 
-            _tcp_connect_socketfds.erase(tcp_connect_socketfd_ptr->get_id());
+            LOG_TRACE << "erase TCP connection, id: " << connection_id;
 
-            LOG_TRACE << "erase TCP connection, id: "
-                      << tcp_connect_socketfd_ptr->get_id();
+            LOG_DEBUG
+                << "number of reference after releasing: "
+                << (_tcp_connect_socketfds.find(connection_id)
+                            == _tcp_connect_socketfds.end()
+                        ? 0
+                        : (_tcp_connect_socketfds[connection_id].use_count() - 1
+                        ));
 
-            LOG_DEBUG << "number of reference: "
-                      << tcp_connect_socketfd_ptr.use_count();
+            _tcp_connect_socketfds.erase(connection_id);
         },
         functor_blocking_queue_index
     );

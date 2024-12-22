@@ -6,3 +6,7 @@ _example/
 
 # WebBench compiled binary
 bin/
+
+# perf & flame graph
+/*perf*
+flamegraph.svg
