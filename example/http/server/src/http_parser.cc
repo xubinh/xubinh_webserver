@@ -22,7 +22,7 @@ bool HttpParser::parse(
 
         auto request_line_start = buffer.get_current_read_position();
 
-        if (!_request_ptr->parse_request_line(
+        if (!_request.parse_request_line(
                 request_line_start, request_line_end
             )) {
 
@@ -55,17 +55,16 @@ bool HttpParser::parse(
             if (header_line_start == header_line_end) {
                 buffer.forward_read_position(2);
 
-                const auto &headers = _request_ptr->get_headers();
+                const auto &headers = _request.get_headers();
 
                 auto it = headers.find("content-length");
 
                 // check if has body (i.e. POST + "content-length" field)
-                bool has_body =
-                    _request_ptr->get_method_type() == _request_ptr->POST
-                    && it != headers.end();
+                bool has_body = _request.get_method_type() == _request.POST
+                                && it != headers.end();
 
                 if (!has_body) {
-                    _request_ptr->set_receive_time_point(time_stamp);
+                    _request.set_receive_time_point(time_stamp);
 
                     _parsing_state = SUCCESS;
 
@@ -82,7 +81,7 @@ bool HttpParser::parse(
             }
 
             // (3) fails
-            if (!_request_ptr->parse_header_line(
+            if (!_request.parse_header_line(
                     header_line_start, header_line_end
                 )) {
 
@@ -110,11 +109,11 @@ goto_header_finished:
 
         auto body_end = body_start + _body_length;
 
-        _request_ptr->set_body(body_start, body_end);
+        _request.set_body(body_start, body_end);
 
         buffer.forward_read_position(_body_length);
 
-        _request_ptr->set_receive_time_point(time_stamp);
+        _request.set_receive_time_point(time_stamp);
 
         _parsing_state = SUCCESS;
 

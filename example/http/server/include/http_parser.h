@@ -28,7 +28,7 @@ public:
 
         _body_length = 0;
 
-        _request_ptr = std::make_shared<HttpRequest>();
+        _request.reset();
     }
 
     ParsingState get_state() const {
@@ -44,7 +44,7 @@ public:
             throw std::logic_error("HTTP request is not ready");
         }
 
-        return *_request_ptr;
+        return _request;
     }
 
 private:
@@ -52,9 +52,7 @@ private:
 
     size_t _body_length = 0;
 
-    // cannot be unique_ptr since the helper class Any requires the held object
-    // to be copyable
-    std::shared_ptr<HttpRequest> _request_ptr{std::make_shared<HttpRequest>()};
+    HttpRequest _request{};
 };
 
 } // namespace xubinh_server

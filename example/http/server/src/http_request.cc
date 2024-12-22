@@ -1,6 +1,18 @@
+#include "log_builder.h"
+
 #include "../include/http_request.h"
 
 namespace xubinh_server {
+
+HttpRequest::HttpRequest(const HttpRequest &) {
+    LOG_FATAL << "dummy copy constructor called";
+}
+
+HttpRequest &HttpRequest::operator=(const HttpRequest &) {
+    LOG_FATAL << "dummy copy assignment operator called";
+
+    return *this;
+}
 
 bool HttpRequest::parse_request_line(const char *start, const char *end) {
     auto method_start = start;

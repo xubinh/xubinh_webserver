@@ -19,15 +19,14 @@ public:
 
     HttpRequest() = default;
 
-    // no copy
-    HttpRequest(const HttpRequest &) = delete;
-    HttpRequest &operator=(const HttpRequest &) = delete;
+    // dummy; abort if get called
+    HttpRequest(const HttpRequest &);
 
-    // no move
-    HttpRequest(HttpRequest &&) = delete;
-    HttpRequest &operator=(HttpRequest &&) = delete;
+    // dummy; abort if get called
+    HttpRequest &operator=(const HttpRequest &);
 
-    ~HttpRequest() = default;
+    HttpRequest(HttpRequest &&) = default;
+    HttpRequest &operator=(HttpRequest &&) = default;
 
     bool parse_request_line(const char *start, const char *end);
 
@@ -83,6 +82,15 @@ public:
 
     const std::vector<char> &get_body() const {
         return _body;
+    }
+
+    void reset() noexcept {
+        _method = UNSUPPORTED_HTTP_METHOD;
+        _path.clear();
+        _version = UNSUPPORTED_HTTP_VERSION;
+        _receive_time_point = util::TimePoint();
+        _headers.clear();
+        _body.clear();
     }
 
 private:
