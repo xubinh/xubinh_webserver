@@ -239,6 +239,7 @@
 - [ ] 优化服务器, 提高 QPS:
   - 手动实现各种同步原语, 尽可能降低线程间的竞争代价.
   - 尽可能使用右值引用避免不必要的拷贝和移动.
+- [ ] 与其他项目进行横向比较.
 - [ ] 其他优化:
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
@@ -287,6 +288,7 @@ sudo apt-get install exuberant-ctags # 依赖
 | 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获           | 40,023     | 90,434     | `6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f` |
 | 将 TCP 连接对象的容器从 RBT 改为 Hash Table                            | 41,323     | 92,449     | `60554e960918c790de1fcd1c26864dffdc84f085` |
 | 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr` | 39,577     | 96,732     | `e823334b7b9a944dcc9a179d2c43e7bd2c46cfac` |
+| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中       | 42,302     | 92,049     | `0f5cf40b5ed1e6a0fde23f3017e657aa2419046f` |
 
 ## muduo 项目中所采用的抽象
 
