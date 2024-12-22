@@ -35,7 +35,10 @@ public:
     static void set_fd_as_nonblocking(int fd);
 
     PollableFileDescriptor(
-        int fd, EventLoop *event_loop, bool prefer_et = true
+        int fd,
+        EventLoop *event_loop,
+        bool prefer_et = true,
+        bool need_set_non_blocking = true
     );
 
     // no copy

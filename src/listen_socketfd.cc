@@ -40,25 +40,25 @@ void ListenSocketfd::listen(int socketfd) {
     }
 }
 
-ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
-    // : _pollable_file_descriptor(
-    //     fd, event_loop, false // LT mode to prevent starving
-    // ) {
-    : _pollable_file_descriptor(fd, event_loop) {
+ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop, bool prefer_et)
+    : _pollable_file_descriptor(fd, event_loop, prefer_et, prefer_et) {
 }
 
 int ListenSocketfd::_accept_new_connection(
-    int listen_socketfd, std::unique_ptr<InetAddress> &peer_address_ptr
+    int listen_socketfd,
+    std::unique_ptr<InetAddress> &peer_address_ptr,
+    int flags
 ) {
     using sockaddr_unknown_t = InetAddress::sockaddr_unknown_t;
 
     sockaddr_unknown_t peer_address_temp{};
     socklen_t peer_address_temp_len = sizeof(sockaddr_unknown_t);
 
-    int connect_socketfd = ::accept(
+    int connect_socketfd = ::accept4(
         listen_socketfd,
         reinterpret_cast<sockaddr *>(&peer_address_temp),
-        &peer_address_temp_len
+        &peer_address_temp_len,
+        flags
     );
 
     if (connect_socketfd >= 0) {
@@ -90,7 +90,7 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
     std::unique_ptr<InetAddress> peer_address_ptr;
 
     auto connect_socketfd = ListenSocketfd::_accept_new_connection(
-        _pollable_file_descriptor.get_fd(), peer_address_ptr
+        _pollable_file_descriptor.get_fd(), peer_address_ptr, 0
     );
 
     if (connect_socketfd < 0) {
@@ -104,12 +104,11 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
 }
 
 void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
-    // for (int i = 0; i < _max_number_of_new_connections_at_a_time; i++) {
     while (true) {
         std::unique_ptr<InetAddress> peer_address_ptr;
 
         auto connect_socketfd = ListenSocketfd::_accept_new_connection(
-            _pollable_file_descriptor.get_fd(), peer_address_ptr
+            _pollable_file_descriptor.get_fd(), peer_address_ptr, _accept_flags
         );
 
         // success

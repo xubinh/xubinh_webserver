@@ -42,7 +42,7 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
 }
 
 PollableFileDescriptor::PollableFileDescriptor(
-    int fd, EventLoop *event_loop, bool prefer_et
+    int fd, EventLoop *event_loop, bool prefer_et, bool need_set_non_blocking
 )
     : _fd(fd), _event_loop(event_loop),
       _initial_epoll_event(prefer_et ? EPOLLET : 0) {
@@ -54,7 +54,9 @@ PollableFileDescriptor::PollableFileDescriptor(
     _event.data.ptr = this;
     _event.events = _initial_epoll_event;
 
-    set_fd_as_nonblocking(_fd);
+    if (need_set_non_blocking) {
+        set_fd_as_nonblocking(_fd);
+    }
 }
 
 void PollableFileDescriptor::close_fd() const {

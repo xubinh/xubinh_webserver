@@ -17,7 +17,10 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     const InetAddress &remote_address
 )
     : _id(id), _local_address(local_address), _remote_address(remote_address),
-      _loop(loop), _pollable_file_descriptor(fd, loop) {
+      _loop(loop),
+      _pollable_file_descriptor(
+          fd, loop, true, false
+      ) /* non-blocking or not is always decided by the outside */ {
 
     // [NOTE]: this line is for testing
     // disable_socketfd_nagle_algorithm(fd);

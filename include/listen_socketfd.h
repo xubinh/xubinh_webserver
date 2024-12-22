@@ -22,7 +22,7 @@ public:
 
     static void listen(int socketfd);
 
-    ListenSocketfd(int fd, EventLoop *event_loop);
+    ListenSocketfd(int fd, EventLoop *event_loop, bool prefer_et = true);
 
     ~ListenSocketfd() {
         _close_spare_fd();
@@ -65,7 +65,9 @@ public:
 private:
     // simple wrapper for `::accept` with return values unchanged
     static int _accept_new_connection(
-        int listen_socketfd, std::unique_ptr<InetAddress> &peer_address
+        int listen_socketfd,
+        std::unique_ptr<InetAddress> &peer_address,
+        int flags
     );
 
     void _open_spare_fd();
@@ -81,6 +83,9 @@ private:
     int _spare_fd = -1;
 
     // size_t _max_number_of_new_connections_at_a_time = 64;
+
+    // TCP socketfds are always at ET mode
+    const int _accept_flags{SOCK_NONBLOCK | SOCK_CLOEXEC};
 
     NewConnectionCallbackType _new_connection_callback;
 
