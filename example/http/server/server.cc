@@ -20,7 +20,7 @@
 #include "./include/http_server.h"
 
 #define __XUBINH_BENCHMARKING
-#define __XUBINH_KEEP_ALIVE
+// #define __XUBINH_KEEP_ALIVE
 
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
@@ -37,6 +37,10 @@ void signal_dispatcher(
     int signal
 ) {
     switch (signal) {
+    case SIGTSTP:
+        // go to background like normal; don't do anything
+        return;
+
     case SIGHUP:
         reload_server_config(server);
 
@@ -45,7 +49,6 @@ void signal_dispatcher(
     case SIGINT:
     case SIGQUIT:
     case SIGTERM:
-    case SIGTSTP:
         LOG_INFO << "user interrupt, terminating server...";
 
         signalfd_ptr->stop();
