@@ -25,7 +25,7 @@
 | 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                     | 41,323     | 92,449     | [`60554e`](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
 | 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                          | 39,577     | 96,732     | [`e82333`](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
 | 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                | 42,302     | 92,049     | [`0f5cf4`](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
-| 统一 TCP 连接的缓冲区的初始大小与读事件处理函数中的扩展大小, 避免首次读取时的无意义的内存重分配 | 43,958     | 99,664     | [`904f5d`](https://github.com/xubinh/xubinh_webserver/commit/904f5dbf257e07c46a845dd34a2f50b184056c7c) |
+| 降低缓冲区的扩展大小, 避免 HTTP 请求体简短但离散的的情况下发生的无意义的内存重分配 | 43,958     | 90,321     | [`140107`](https://github.com/xubinh/xubinh_webserver/commit/14010785ea5ea7f38f8848ac0776d5d0ddb1caa5) |
 
 ### 与其他项目的横向比较
 
@@ -277,13 +277,14 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 对同一个函数体中出现的 `shared_from_this()` 进行去重.
-  - 将 `EventPoller` 的文件描述符登记容器从 `std::unordered_map` 更改为定长布尔数组.
+  - 避免在执行线程已知的情况下使用 `EventLoop->run`.
+  - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
   - 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率.
-  - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 手动实现各种同步原语, 尽可能降低线程间的竞争代价.
+  - 降低 TCP 连接的初始时间戳的系统调用的执行粒度.
   - 尽可能使用右值引用避免不必要的拷贝和移动.
-- [ ] 其他优化:
+  - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
+- [ ] 其他:
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
   - 尽可能添加 `const` 和 `noexcept` 修饰词.
