@@ -19,19 +19,19 @@
 
 | 描述                                                                                            | 短连接 QPS | 长连接 QPS | commit                                                                                               |
 | ----------------------------------------------------------------------------------------------- | ---------- | ---------- | ---------------------------------------------------------------------------------------------------- |
-| 初代稳定版本                                                                                    | 38,661     | 84,392     | [279433](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
-| 为每个工作线程在主线程中独立配备阻塞队列                                                        | 37,852     | 80,460     | [c48a40](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
-| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                                    | 40,023     | 90,434     | [6f1c4c](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
-| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                     | 41,323     | 92,449     | [60554e](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
-| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                          | 39,577     | 96,732     | [e82333](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
-| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                | 42,302     | 92,049     | [0f5cf4](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
-| 统一 TCP 连接的缓冲区的初始大小与读事件处理函数中的扩展大小, 避免首次读取时的无意义的内存重分配 | 43,958     | 99,664     | [904f5d](https://github.com/xubinh/xubinh_webserver/commit/904f5dbf257e07c46a845dd34a2f50b184056c7c) |
+| 初代稳定版本                                                                                    | 38,661     | 84,392     | [`279433`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
+| 为每个工作线程在主线程中独立配备阻塞队列                                                        | 37,852     | 80,460     | [`c48a40`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
+| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                                    | 40,023     | 90,434     | [`6f1c4c`](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
+| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                     | 41,323     | 92,449     | [`60554e`](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
+| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                          | 39,577     | 96,732     | [`e82333`](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
+| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                | 42,302     | 92,049     | [`0f5cf4`](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
+| 统一 TCP 连接的缓冲区的初始大小与读事件处理函数中的扩展大小, 避免首次读取时的无意义的内存重分配 | 43,958     | 99,664     | [`904f5d`](https://github.com/xubinh/xubinh_webserver/commit/904f5dbf257e07c46a845dd34a2f50b184056c7c) |
 
 ### 与其他项目的横向比较
 
 | 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                        |
 | ---------------------------------------------------------- | ---------- | ---------- | --------------------------------------------------------------------------------------------- |
-| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [a50d63](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
+| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [`a50d63`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
 
 ### 测试机硬件参数
 
