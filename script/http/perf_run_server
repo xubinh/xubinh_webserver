@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+clear
+
+sudo sysctl kernel.perf_event_paranoid=1
+sudo sysctl kernel.kptr_restrict=0
+
+APP_NAME="http"
+SERVER_EXECUTABLE_PATH="./build/example/$APP_NAME/server/$APP_NAME""_server"
+
+"$SERVER_EXECUTABLE_PATH" &
+
+echo "\`$SERVER_EXECUTABLE_PATH\` start running in the background..."
+
+echo "start perf"
+
+echo "perf is now recording..."
+
+perf record -F 99 -g --pid "$!" >/dev/null 2>&1
+
+# [NOTE]: execution block
+
+# [NOTE]: here run WebBench to test, and then tell the server to stop
+
+# [NOTE]: execution start
+
+perf script >out.perf
+
+../FlameGraph/stackcollapse-perf.pl out.perf >out.perf.folded
+
+../FlameGraph/flamegraph.pl out.perf.folded >flamegraph.svg
+
+# rm perf.data out.perf out.perf.folded

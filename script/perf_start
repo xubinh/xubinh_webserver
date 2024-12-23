@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-PERF_EXECUTABLE="/usr/lib/linux-tools-5.15.0-130/perf"
-
-sudo sysctl kernel.perf_event_paranoid=1
-sudo sysctl kernel.kptr_restrict=0
-
-"$PERF_EXECUTABLE" record -F 99 -g -- ./script/run_server

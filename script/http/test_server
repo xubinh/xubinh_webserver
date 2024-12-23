@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# ./bin/webbench -t 3 -c 10 -2 --get http://127.0.0.1:8080/
+# ./bin/webbench -t 3 -c 100 -2 --get http://127.0.0.1:8080/
+./bin/webbench -t 6 -c 1000 -2 --get http://127.0.0.1:8080/
+
+# ./bin/webbench -t 3 -c 10 -k -2 --get http://127.0.0.1:8080/
+# ./bin/webbench -t 3 -c 100 -k -2 --get http://127.0.0.1:8080/
+# ./bin/webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/
+
+APP_NAME="http"
+EXECUTABLE_NAME="$APP_NAME""_server"
+
+PID=$(ps aux | grep "$EXECUTABLE_NAME" | grep -v grep | awk '{print $2}')
+
+if [ -n "$PID" ]; then
+    kill -INT "$PID"
+else
+    echo "PID not found"
+fi
