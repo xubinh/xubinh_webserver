@@ -2,11 +2,50 @@
 
 ## 目录
 
-- [待办](#待办)
-- [WebBench 测试](#webbench-测试)
-  - [测试历史](#测试历史)
-- [muduo 项目中所采用的抽象](#muduo-项目中所采用的抽象)
-- [参考资料](#参考资料)
+- [基准测试](#%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
+  - [结果展示](#%E7%BB%93%E6%9E%9C%E5%B1%95%E7%A4%BA)
+  - [与其他项目的横向比较](#%E4%B8%8E%E5%85%B6%E4%BB%96%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
+  - [测试机硬件参数](#%E6%B5%8B%E8%AF%95%E6%9C%BA%E7%A1%AC%E4%BB%B6%E5%8F%82%E6%95%B0)
+- [待办](#%E5%BE%85%E5%8A%9E)
+- [其他](#%E5%85%B6%E4%BB%96)
+  - [WebBench](#webbench)
+  - [perf](#perf)
+  - [muduo 项目中所采用的抽象](#muduo-%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%80%E9%87%87%E7%94%A8%E7%9A%84%E6%8A%BD%E8%B1%A1)
+- [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
+
+## 基准测试
+
+### 结果展示
+
+| 描述                                                                                            | 短连接 QPS | 长连接 QPS | commit                                                                                               |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| 初代稳定版本                                                                                    | 38,661     | 84,392     | [279433](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
+| 为每个工作线程在主线程中独立配备阻塞队列                                                        | 37,852     | 80,460     | [c48a40](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
+| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                                    | 40,023     | 90,434     | [6f1c4c](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
+| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                     | 41,323     | 92,449     | [60554e](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
+| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                          | 39,577     | 96,732     | [e82333](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
+| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                | 42,302     | 92,049     | [0f5cf4](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
+| 统一 TCP 连接的缓冲区的初始大小与读事件处理函数中的扩展大小, 避免首次读取时的无意义的内存重分配 | 43,958     | 99,664     | [904f5d](https://github.com/xubinh/xubinh_webserver/commit/904f5dbf257e07c46a845dd34a2f50b184056c7c) |
+
+### 与其他项目的横向比较
+
+| 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                        |
+| ---------------------------------------------------------- | ---------- | ---------- | --------------------------------------------------------------------------------------------- |
+| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [a50d63](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
+
+### 测试机硬件参数
+
+```text
+$ sudo lshw -short
+H/W path    Device    Class      Description
+============================================
+                      system     Computer
+/0/0                  memory     16GiB System memory
+/0/1                  processor  Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
+/0/7/0.0.0  /dev/sda  volume     388MiB Virtual Disk
+/0/7/0.0.1  /dev/sdb  volume     4GiB Virtual Disk
+/0/7/0.0.2  /dev/sdc  volume     256GiB Virtual Disk
+```
 
 ## 待办
 
@@ -238,9 +277,9 @@
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率.
-  - 将 `EventPoller` 的文件描述符登记容器从 `std::unordered_map` 更改为定长布尔数组.
   - 对同一个函数体中出现的 `shared_from_this()` 进行去重.
+  - 将 `EventPoller` 的文件描述符登记容器从 `std::unordered_map` 更改为定长布尔数组.
+  - 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率.
   - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 手动实现各种同步原语, 尽可能降低线程间的竞争代价.
   - 尽可能使用右值引用避免不必要的拷贝和移动.
@@ -251,7 +290,9 @@
 - [ ] 实现一个 RPC 框架.
 - [ ] 添加英文版 `README.md`.
 
-## WebBench 测试
+## 其他
+
+### WebBench
 
 安装:
 
@@ -283,39 +324,11 @@ sudo apt-get install exuberant-ctags # 依赖
 ./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 参见 [linyacool/WebBench](https://github.com/linyacool/WebBench)
 ```
 
-### 测试历史
+### perf
 
-| 描述                                                                                            | 短连接 QPS | 长连接 QPS | commit                                                                                               |
-| ----------------------------------------------------------------------------------------------- | ---------- | ---------- | ---------------------------------------------------------------------------------------------------- |
-| 初代稳定版本                                                                                    | 38,661     | 84,392     | [279433](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
-| 为每个工作线程在主线程中独立配备阻塞队列                                                        | 37,852     | 80,460     | [c48a40](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
-| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                                    | 40,023     | 90,434     | [6f1c4c](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
-| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                     | 41,323     | 92,449     | [60554e](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
-| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                          | 39,577     | 96,732     | [e82333](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
-| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                | 42,302     | 92,049     | [0f5cf4](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
-| 统一 TCP 连接的缓冲区的初始大小与读事件处理函数中的扩展大小, 避免首次读取时的无意义的内存重分配 | 43,958     | 99,664     | [904f5d](https://github.com/xubinh/xubinh_webserver/commit/904f5dbf257e07c46a845dd34a2f50b184056c7c) |
+[TODO]
 
-### 横向比较
-
-| 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                        |
-| ---------------------------------------------------------- | ---------- | ---------- | --------------------------------------------------------------------------------------------- |
-| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [a50d63](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
-
-### 测试机硬件参数
-
-```text
-$ sudo lshw -short
-H/W path    Device    Class      Description
-============================================
-                      system     Computer
-/0/0                  memory     16GiB System memory
-/0/1                  processor  Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
-/0/7/0.0.0  /dev/sda  volume     388MiB Virtual Disk
-/0/7/0.0.1  /dev/sdb  volume     4GiB Virtual Disk
-/0/7/0.0.2  /dev/sdc  volume     256GiB Virtual Disk
-```
-
-## muduo 项目中所采用的抽象
+### muduo 项目中所采用的抽象
 
 > - **由于下列类型是通过与 ChatGPT 的问答生成的, 因此可能并不与实际在 muduo 中使用的类型的名称完全一致**.
 > - **以下内容仅为个人理解**.
