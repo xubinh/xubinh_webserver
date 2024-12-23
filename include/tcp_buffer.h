@@ -17,8 +17,7 @@ public:
         // prevent UB produced by doing a `begin()` on an empty vector
         : _buffer(std::max(initial_buffer_size, static_cast<size_t>(1))) {
 
-        // _buffer.resize(_buffer.capacity());
-        // [NOTE]: size equals to capacity after initialization
+        _buffer.resize(_buffer.capacity());
     }
 
     char *get_current_read_position() {
