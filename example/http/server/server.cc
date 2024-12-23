@@ -20,7 +20,7 @@
 #include "./include/http_server.h"
 
 #define __XUBINH_BENCHMARKING
-// #define __XUBINH_KEEP_ALIVE
+#define __XUBINH_KEEP_ALIVE
 
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
