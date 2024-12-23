@@ -12,7 +12,7 @@ namespace xubinh_server {
 class MutableSizeTcpBuffer {
 public:
     MutableSizeTcpBuffer(
-        size_t initial_buffer_size = _DEFAULT_INITIAL_BUFFER_SIZE
+        size_t initial_buffer_size = DEFAULT_INITIAL_BUFFER_SIZE
     )
         // prevent UB produced by doing a `begin()` on an empty vector
         : _buffer(std::max(initial_buffer_size, static_cast<size_t>(1))) {
@@ -105,9 +105,9 @@ public:
         write(":", 1);
     }
 
-private:
-    static constexpr size_t _DEFAULT_INITIAL_BUFFER_SIZE = 1024;
+    static constexpr size_t DEFAULT_INITIAL_BUFFER_SIZE = 4000; // ~ 4 KB
 
+private:
     static char CRLF[];
 
     char *_begin() {

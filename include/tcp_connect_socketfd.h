@@ -176,7 +176,11 @@ private:
     size_t _send_as_many_data(const char *data, size_t data_size);
 
     // size of space the input buffer should expand each time
-    static constexpr const int _RECEIVE_DATA_SIZE = 4096;
+    static constexpr const int _RECEIVE_DATA_SIZE = MutableSizeTcpBuffer::
+        DEFAULT_INITIAL_BUFFER_SIZE; // make it same as the initial size of the
+                                     // buffer to prevent the potential
+                                     // unnecessary reallocation happens at the
+                                     // first time
 
     const uint64_t _id;
     const InetAddress _local_address;
