@@ -15,7 +15,7 @@ struct _MainThreadInitializer {
         current_thread::reset_tid();
         current_thread::get_tid();
 
-        current_thread::set_thread_name("main");
+        current_thread::set_thread_name(MAIN_THREAD_NAME);
     }
 
     // put initialization code inside the constructor of a static life-time
@@ -24,7 +24,7 @@ struct _MainThreadInitializer {
     _MainThreadInitializer() {
         current_thread::get_tid();
 
-        current_thread::set_thread_name("main");
+        current_thread::set_thread_name(MAIN_THREAD_NAME);
 
         pthread_atfork(
             nullptr,
@@ -32,7 +32,11 @@ struct _MainThreadInitializer {
             _MainThreadInitializer::execute_in_child_after_fork
         );
     }
+
+    static const char *MAIN_THREAD_NAME;
 };
+
+const char *_MainThreadInitializer::MAIN_THREAD_NAME = "main-thread";
 
 // define a static life-time object
 _MainThreadInitializer _thread_name_initializer;
