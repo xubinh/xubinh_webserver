@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-clear
-
 APP_NAME="http"
 SERVER_EXECUTABLE_PATH="./build/example/$APP_NAME/server/$APP_NAME""_server"
 SLEEP_SECONDS=1
-REPEAT_TIMES=5
+
+BUILD_SCRIPT_PATH="./script/build"
+
 WEBBENCH_EXECUTABLE_PATH="./bin/webbench"
+
+REPEAT_TIMES=5
 
 if [ $# -gt 1 ]; then
     echo "Usage: $0 <seconds>"
@@ -21,7 +23,21 @@ if ! [[ "$number_of_seconds_to_test" =~ ^-?[0-9]+$ ]]; then
     exit 1
 fi
 
-echo "Number of seconds to test: $number_of_seconds_to_test"
+clear
+
+echo "WebBench test time (seconds): $number_of_seconds_to_test"
+
+echo "Building..."
+
+if "$BUILD_SCRIPT_PATH"; then
+    clear
+
+    echo "Build success ✔️"
+else
+    echo "Build failed ❌"
+
+    exit 1
+fi
 
 echo ""
 

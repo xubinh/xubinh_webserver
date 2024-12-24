@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-clear
-
 APP_NAME="http"
 SERVER_EXECUTABLE_PATH="./build/example/$APP_NAME/server/$APP_NAME""_server"
 SLEEP_SECONDS=1
+
+BUILD_SCRIPT_PATH="./script/build"
 
 WEBBENCH_EXECUTABLE_PATH="./bin/webbench"
 NUMBER_OF_SECONDS_TO_TEST=60 # 60 seconds by default
@@ -13,6 +13,20 @@ PERF_DATA_FILE_PATH="./perf.data"
 PERF_SCRIPT_OUTPUT_FILE_PATH='./perf.data.out'
 FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH='./perf.data.out.folded'
 FLAME_GRAPH_SVG_OUTPUT_FILE_PATH='./flamegraph.svg'
+
+clear
+
+echo "Building..."
+
+if "$BUILD_SCRIPT_PATH"; then
+    clear
+
+    echo "Build success ✔️"
+else
+    echo "Build failed ❌"
+
+    exit 1
+fi
 
 echo "Elevating permission for perf..."
 
