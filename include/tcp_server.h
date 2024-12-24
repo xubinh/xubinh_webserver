@@ -87,7 +87,9 @@ public:
 private:
     // for listen socketfd
     void _new_connection_callback(
-        int connect_socketfd, const InetAddress &peer_address
+        int connect_socketfd,
+        const InetAddress &peer_address,
+        util::TimePoint time_stamp
     );
 
     // for tcp connect socketfd

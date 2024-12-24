@@ -120,7 +120,7 @@ void PreconnectSocketfd::_write_event_callback() {
         // to avoid potential overrides
         _pollable_file_descriptor.detach_from_poller();
 
-        _new_connection_callback(socketfd);
+        _new_connection_callback(socketfd, util::TimePoint());
     }
 
     // must be retryable errors since otherwise would have already been blocked
@@ -153,7 +153,7 @@ void PreconnectSocketfd::_try_once() {
 
         _pollable_file_descriptor.detach_from_poller();
 
-        _new_connection_callback(socketfd);
+        _new_connection_callback(socketfd, util::TimePoint());
     }
 
     // error

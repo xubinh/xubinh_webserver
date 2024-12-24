@@ -16,7 +16,8 @@ class PreconnectSocketfd
 public:
     using PreconnectSocketfdPtr = std::shared_ptr<PreconnectSocketfd>;
 
-    using NewConnectionCallbackType = std::function<void(int connect_socketfd)>;
+    using NewConnectionCallbackType =
+        std::function<void(int connect_socketfd, util::TimePoint time_stamp)>;
 
     using ConnectFailCallbackType = std::function<void()>;
 

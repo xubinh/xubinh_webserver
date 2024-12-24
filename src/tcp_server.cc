@@ -33,8 +33,14 @@ void TcpServer::start() {
     ListenSocketfd::listen(listen_socketfd);
     _listen_socketfd.reset(new ListenSocketfd(listen_socketfd, _loop));
     _listen_socketfd->register_new_connection_callback(
-        [this](int connect_socketfd, const InetAddress &peer_address) {
-            _new_connection_callback(connect_socketfd, peer_address);
+        [this](
+            int connect_socketfd,
+            const InetAddress &peer_address,
+            util::TimePoint time_stamp
+        ) {
+            _new_connection_callback(
+                connect_socketfd, peer_address, time_stamp
+            );
         }
     );
     // _listen_socketfd->set_max_number_of_new_connections_at_a_time(
@@ -92,7 +98,9 @@ void TcpServer::stop() {
 }
 
 void TcpServer::_new_connection_callback(
-    int connect_socketfd, const InetAddress &peer_address
+    int connect_socketfd,
+    const InetAddress &peer_address,
+    util::TimePoint time_stamp
 ) {
     uint64_t id =
         _tcp_connection_id_counter.fetch_add(1, std::memory_order_relaxed);
@@ -101,7 +109,7 @@ void TcpServer::_new_connection_callback(
     InetAddress local_address{connect_socketfd, InetAddress::LOCAL};
 
     auto new_tcp_connect_socketfd_ptr = std::make_shared<TcpConnectSocketfd>(
-        connect_socketfd, loop, id, local_address, peer_address
+        connect_socketfd, loop, id, local_address, peer_address, time_stamp
     );
 
     if (_connect_success_callback) {

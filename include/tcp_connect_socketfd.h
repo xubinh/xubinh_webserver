@@ -39,7 +39,8 @@ public:
         EventLoop *loop,
         const uint64_t &id,
         const InetAddress &local_address,
-        const InetAddress &remote_address
+        const InetAddress &remote_address,
+        util::TimePoint time_stamp
     );
 
     ~TcpConnectSocketfd() {

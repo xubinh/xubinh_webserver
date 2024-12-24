@@ -74,7 +74,8 @@ public:
 
 private:
     // for preconnect socketfd
-    void _new_connection_callback(int connect_socketfd);
+    void
+    _new_connection_callback(int connect_socketfd, util::TimePoint time_stamp);
 
     static constexpr int _MAX_NUMBER_OF_RETRIES = 5;
 

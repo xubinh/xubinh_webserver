@@ -113,7 +113,9 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
 
         // success
         if (connect_socketfd >= 0) {
-            _new_connection_callback(connect_socketfd, *peer_address_ptr);
+            _new_connection_callback(
+                connect_socketfd, *peer_address_ptr, time_stamp
+            );
         }
 
         // error

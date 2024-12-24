@@ -13,8 +13,11 @@ namespace xubinh_server {
 
 class ListenSocketfd : public Socketfd {
 public:
-    using NewConnectionCallbackType = std::function<
-        void(int connect_socketfd, const InetAddress &peer_address)>;
+    using NewConnectionCallbackType = std::function<void(
+        int connect_socketfd,
+        const InetAddress &peer_address,
+        util::TimePoint time_stamp
+    )>;
 
     static void set_socketfd_as_address_reusable(int socketfd);
 
