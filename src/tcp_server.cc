@@ -32,12 +32,11 @@ void TcpServer::start() {
     ListenSocketfd::bind(listen_socketfd, _local_address);
     ListenSocketfd::listen(listen_socketfd);
     _listen_socketfd.reset(new ListenSocketfd(listen_socketfd, _loop));
-    _listen_socketfd->register_new_connection_callback(std::bind(
-        &TcpServer::_new_connection_callback,
-        this,
-        std::placeholders::_1,
-        std::placeholders::_2
-    ));
+    _listen_socketfd->register_new_connection_callback(
+        [this](int connect_socketfd, const InetAddress &peer_address) {
+            _new_connection_callback(connect_socketfd, peer_address);
+        }
+    );
     // _listen_socketfd->set_max_number_of_new_connections_at_a_time(
     //     std::max(_thread_pool_capacity, static_cast<size_t>(1))
     // );
@@ -117,12 +116,13 @@ void TcpServer::_new_connection_callback(
     new_tcp_connect_socketfd_ptr->register_write_complete_callback(
         _write_complete_callback
     );
-    new_tcp_connect_socketfd_ptr->register_close_callback(std::bind(
-        &TcpServer::_close_callback,
-        this,
-        std::placeholders::_1,
-        loop->get_loop_index()
-    ));
+    auto loop_index = loop->get_loop_index();
+    new_tcp_connect_socketfd_ptr->register_close_callback(
+        [this,
+         loop_index](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+            _close_callback(tcp_connect_socketfd_ptr, loop_index);
+        }
+    );
 
     new_tcp_connect_socketfd_ptr->start();
 }

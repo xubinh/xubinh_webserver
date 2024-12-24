@@ -21,10 +21,9 @@ void PreconnectSocketfd::start() {
         LOG_FATAL << "missing new connection callback";
     }
 
-    _pollable_file_descriptor.register_write_event_callback(std::bind(
-        &PreconnectSocketfd::_write_event_callback,
-        this // don't bind to it; circular reference alert!
-    ));
+    _pollable_file_descriptor.register_write_event_callback([this]() {
+        _write_event_callback();
+    });
 
     // must ensure lifetime safety as this exact object could be
     // destroyed by the callbacks registered inside themselves
@@ -32,9 +31,10 @@ void PreconnectSocketfd::start() {
 
     LOG_TRACE << "register event -> main: _try_once";
 
-    _event_loop->run(
-        std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
-    );
+    const auto &this_ptr = shared_from_this();
+    _event_loop->run([this_ptr]() {
+        this_ptr->_try_once();
+    });
 }
 
 void PreconnectSocketfd::cancel() {
@@ -88,6 +88,7 @@ void PreconnectSocketfd::_schedule_retry() {
     _pollable_file_descriptor.reset_to(Socketfd::create_socketfd());
 
     {
+        const auto &this_ptr = shared_from_this();
         auto timer_identifier = _event_loop->run_after_time_interval(
             std::min(
                 PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL,
@@ -95,7 +96,9 @@ void PreconnectSocketfd::_schedule_retry() {
             ),
             0,
             0,
-            std::bind(&PreconnectSocketfd::_try_once, shared_from_this())
+            [this_ptr]() {
+                this_ptr->_try_once();
+            }
         );
 
         _timer_identifier_ptr.reset(new TimerIdentifier(timer_identifier));

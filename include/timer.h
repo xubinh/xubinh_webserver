@@ -58,7 +58,7 @@ public:
 
     // expire this timer until the next expiration time point comes strictly
     // after the given one, or until the timer is no longer valid
-    bool expire_until(const TimePoint &time_point);
+    bool expire_until(TimePoint time_point);
 
     TimePoint get_expiration_time_point() const {
         return _expiration_time_point;

@@ -7,19 +7,23 @@ void HttpServer::start() {
         LOG_FATAL << "missing http request callback";
     }
 
-    _tcp_server.register_connect_success_callback(std::bind(
-        &HttpServer::_connect_success_callback_wrapper,
-        this,
-        std::placeholders::_1
-    ));
+    _tcp_server.register_connect_success_callback(
+        [this](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+            _connect_success_callback_wrapper(tcp_connect_socketfd_ptr);
+        }
+    );
 
-    _tcp_server.register_message_callback(std::bind(
-        &HttpServer::_message_callback,
-        this,
-        std::placeholders::_1,
-        std::placeholders::_2,
-        std::placeholders::_3
-    ));
+    _tcp_server.register_message_callback(
+        [this](
+            const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+            MutableSizeTcpBuffer *input_buffer,
+            TimePoint time_stamp
+        ) {
+            _message_callback(
+                tcp_connect_socketfd_ptr, input_buffer, time_stamp
+            );
+        }
+    );
 
     // start the timer for removing inactive connections
     if (_connection_timeout_interval < TimeInterval{TimeInterval::FOREVER}) {
@@ -29,7 +33,9 @@ void HttpServer::start() {
             _connection_timeout_interval,
             _connection_timeout_interval,
             -1,
-            std::bind(&HttpServer::_remove_inactive_connections, this)
+            [this]() {
+                _remove_inactive_connections();
+            }
         );
     }
 
@@ -39,7 +45,7 @@ void HttpServer::start() {
 void HttpServer::_message_callback(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
     MutableSizeTcpBuffer *input_buffer,
-    const TimePoint &time_stamp
+    TimePoint time_stamp
 ) {
     // marking active connections
     tcp_connect_socketfd_ptr->set_time_stamp(time_stamp);
@@ -77,11 +83,11 @@ void HttpServer::_remove_inactive_connections() {
     // draw a line to determine which connections are inactive
     _current_time_point = TimePoint();
 
-    _tcp_server.run_for_each_connection(std::bind(
-        &HttpServer::_check_and_remove_inactive_connection,
-        this,
-        std::placeholders::_1
-    ));
+    _tcp_server.run_for_each_connection(
+        [this](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+            _check_and_remove_inactive_connection(tcp_connect_socketfd_ptr);
+        }
+    );
 }
 
 void HttpServer::_check_and_remove_inactive_connection(
@@ -90,7 +96,7 @@ void HttpServer::_check_and_remove_inactive_connection(
     LOG_TRACE << "checking inactive tcp connection, id: "
               << tcp_connect_socketfd_ptr->get_id();
 
-    const TimePoint &time_stamp = tcp_connect_socketfd_ptr->get_time_stamp();
+    TimePoint time_stamp = tcp_connect_socketfd_ptr->get_time_stamp();
 
     // first check if the connection is inactive in current loop
     if (_current_time_point - time_stamp > _connection_timeout_interval) {

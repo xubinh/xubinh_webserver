@@ -64,7 +64,7 @@ public:
     void run(FunctorType functor, uint64_t functor_blocking_queue_index = 0);
 
     TimerIdentifier run_at_time_point(
-        const TimePoint &time_point,
+        TimePoint time_point,
         const TimeInterval &repetition_time_interval,
         int number_of_repetitions,
         FunctorType functor,
@@ -72,14 +72,14 @@ public:
     );
 
     TimerIdentifier run_after_time_interval(
-        const TimeInterval &time_interval,
+        TimeInterval time_interval,
         const TimeInterval &repetition_time_interval,
         int number_of_repetitions,
         FunctorType functor,
         uint64_t functor_blocking_queue_index = 0
     );
 
-    void cancel_a_timer(const TimerIdentifier &timer_identifier);
+    void cancel_a_timer(TimerIdentifier timer_identifier);
 
     // not thread-safe
     void ask_to_stop();
@@ -107,7 +107,7 @@ private:
                 ->increment_by_value(1);
     }
 
-    void _set_alarm_at_time_point(const TimePoint &time_point) {
+    void _set_alarm_at_time_point(TimePoint time_point) {
         _timerfd.set_alarm_at_time_point(time_point);
     }
 
@@ -124,7 +124,7 @@ private:
     // expire all timers before or at given time point and update alarm
     //
     // - only be called by the loop itself
-    void _expire_and_update_alarm(const TimePoint &time_point);
+    void _expire_and_update_alarm(TimePoint time_point);
 
     // for releasing resources
     void _release_all_timers();

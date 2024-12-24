@@ -21,16 +21,16 @@ EventLoop::EventLoop(
         );
 
         _eventfds[i].reset(new Eventfd(Eventfd::create_eventfd(0), this));
-        _eventfds[i]->register_eventfd_message_callback(std::bind(
-            &EventLoop::_eventfd_message_callback, this, std::placeholders::_1
-        ));
+        _eventfds[i]->register_eventfd_message_callback([this](uint64_t value) {
+            _eventfd_message_callback(value);
+        });
 
         _eventfds[i]->start();
     }
 
-    _timerfd.register_timerfd_message_callback(std::bind(
-        &EventLoop::_timerfd_message_callback, this, std::placeholders::_1
-    ));
+    _timerfd.register_timerfd_message_callback([this](uint64_t value) {
+        _timerfd_message_callback(value);
+    });
 
     _timerfd.start();
 }
@@ -127,7 +127,7 @@ void EventLoop::run(
 }
 
 TimerIdentifier EventLoop::run_at_time_point(
-    const TimePoint &time_point,
+    TimePoint time_point,
     const TimeInterval &repetition_time_interval,
     int number_of_repetitions,
     FunctorType functor,
@@ -140,14 +140,18 @@ TimerIdentifier EventLoop::run_at_time_point(
         std::move(functor)
     );
 
-    run(std::bind(&EventLoop::_add_a_timer_and_update_alarm, this, timer_ptr),
-        functor_blocking_queue_index);
+    run(
+        [this, timer_ptr]() {
+            _add_a_timer_and_update_alarm(timer_ptr);
+        },
+        functor_blocking_queue_index
+    );
 
     return TimerIdentifier{timer_ptr};
 }
 
 TimerIdentifier EventLoop::run_after_time_interval(
-    const TimeInterval &time_interval,
+    TimeInterval time_interval,
     const TimeInterval &repetition_time_interval,
     int number_of_repetitions,
     FunctorType functor,
@@ -155,7 +159,7 @@ TimerIdentifier EventLoop::run_after_time_interval(
 ) {
     TimePoint time_point = (TimePoint() += time_interval);
 
-    const TimerIdentifier &timer_identifier = run_at_time_point(
+    TimerIdentifier timer_identifier = run_at_time_point(
         time_point,
         repetition_time_interval,
         number_of_repetitions,
@@ -166,11 +170,12 @@ TimerIdentifier EventLoop::run_after_time_interval(
     return timer_identifier;
 }
 
-void EventLoop::cancel_a_timer(const TimerIdentifier &timer_identifier) {
+void EventLoop::cancel_a_timer(TimerIdentifier timer_identifier) {
     const Timer *timer_ptr = timer_identifier._timer_ptr;
 
-    run(std::bind(&EventLoop::_cancel_a_timer_and_update_alarm, this, timer_ptr)
-    );
+    run([this, timer_ptr]() {
+        _cancel_a_timer_and_update_alarm(timer_ptr);
+    });
 }
 
 void EventLoop::ask_to_stop() {
@@ -202,7 +207,7 @@ void EventLoop::_leave_to_owner_thread(
 }
 
 void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {
-    const TimePoint &time_point = timer_ptr->get_expiration_time_point();
+    TimePoint time_point = timer_ptr->get_expiration_time_point();
 
     const TimePoint &earliest_expiration_time_point_before_insertion =
         _timer_container.get_earliest_expiration_time_point();
@@ -244,7 +249,7 @@ void EventLoop::_cancel_a_timer_and_update_alarm(const Timer *timer_ptr) {
     delete timer_ptr;
 }
 
-void EventLoop::_expire_and_update_alarm(const TimePoint &time_point) {
+void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
     // [NOTE] entering this function means the timer, which is always one-shot,
     // has expired and the event loop is awakened by timerfd to execute this
     // function, so one can assume the timer is clean right now

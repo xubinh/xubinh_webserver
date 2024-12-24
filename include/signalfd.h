@@ -55,9 +55,11 @@ public:
             LOG_FATAL << "missing signal dispatcher";
         }
 
-        _pollable_file_descriptor.register_read_event_callback(std::bind(
-            &Signalfd::_read_event_callback, this, std::placeholders::_1
-        ));
+        _pollable_file_descriptor.register_read_event_callback(
+            [this](util::TimePoint time_stamp) {
+                _read_event_callback(time_stamp);
+            }
+        );
 
         _pollable_file_descriptor.enable_read_event();
     }

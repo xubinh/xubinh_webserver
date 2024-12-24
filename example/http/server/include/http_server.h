@@ -97,7 +97,7 @@ private:
     void _message_callback(
         const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
         MutableSizeTcpBuffer *input_buffer,
-        const TimePoint &time_stamp
+        TimePoint time_stamp
     );
 
     void _remove_inactive_connections();

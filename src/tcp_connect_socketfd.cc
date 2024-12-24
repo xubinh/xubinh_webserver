@@ -37,26 +37,23 @@ void TcpConnectSocketfd::start() {
         LOG_FATAL << "missing message callback";
     }
 
-    _pollable_file_descriptor.register_read_event_callback(std::bind(
-        &TcpConnectSocketfd::_read_event_callback,
-        this, // don't bind to it; circular reference alert!
-        std::placeholders::_1
-    ));
+    _pollable_file_descriptor.register_read_event_callback(
+        [this](util::TimePoint time_stamp) {
+            _read_event_callback(time_stamp);
+        }
+    );
 
-    _pollable_file_descriptor.register_write_event_callback(std::bind(
-        &TcpConnectSocketfd::_write_event_callback,
-        this // don't bind to it; circular reference alert!
-    ));
+    _pollable_file_descriptor.register_write_event_callback([this]() {
+        _write_event_callback();
+    });
 
-    _pollable_file_descriptor.register_close_event_callback(std::bind(
-        &TcpConnectSocketfd::_close_event_callback,
-        this // don't bind to it; circular reference alert!
-    ));
+    _pollable_file_descriptor.register_close_event_callback([this]() {
+        _close_event_callback();
+    });
 
-    _pollable_file_descriptor.register_error_event_callback(std::bind(
-        &TcpConnectSocketfd::_error_event_callback,
-        this // don't bind to it; circular reference alert!
-    ));
+    _pollable_file_descriptor.register_error_event_callback([this]() {
+        _error_event_callback();
+    });
 
     // must ensure lifetime safety as this exact object could be
     // destroyed by the callbacks registered inside themselves
@@ -142,6 +139,7 @@ void TcpConnectSocketfd::abort() {
 void TcpConnectSocketfd::check_and_abort(PredicateType predicate) {
     LOG_TRACE << "register event -> worker: _check_and_abort_impl";
 
+    // must use std::bind since move capture lambda is not supported in C++11
     _loop->run(std::bind(
         &TcpConnectSocketfd::_check_and_abort_impl,
         shared_from_this(),

@@ -17,13 +17,15 @@ void Timerfd::start() {
     }
 
     _pollable_file_descriptor.register_read_event_callback(
-        std::bind(&Timerfd::_read_event_callback, this, std::placeholders::_1)
+        [this](util::TimePoint time_stamp) {
+            _read_event_callback(time_stamp);
+        }
     );
 
     _pollable_file_descriptor.enable_read_event();
 }
 
-void Timerfd::set_alarm_at_time_point(const TimePoint &time_point) {
+void Timerfd::set_alarm_at_time_point(TimePoint time_point) {
     LOG_DEBUG << "set alarm at time point: "
                      + time_point.to_datetime_string(
                          TimePoint::Purpose::PRINTING

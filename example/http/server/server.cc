@@ -354,9 +354,9 @@ int main() {
     signalfd_ptr.reset(new xubinh_server::Signalfd(
         xubinh_server::Signalfd::create_signalfd(signal_set, 0), &loop
     ));
-    signalfd_ptr->register_signal_dispatcher(
-        std::bind(signal_dispatcher, &server, &loop, std::placeholders::_1)
-    );
+    signalfd_ptr->register_signal_dispatcher([&](int signal) {
+        signal_dispatcher(&server, &loop, signal);
+    });
     signalfd_ptr->start();
 
     // server config

@@ -17,9 +17,11 @@ void TcpClient::start() {
         new PreconnectSocketfd(_loop, _server_address, _MAX_NUMBER_OF_RETRIES)
     );
 
-    _preconnect_socketfd_ptr->register_new_connection_callback(std::bind(
-        &TcpClient::_new_connection_callback, this, std::placeholders::_1
-    ));
+    _preconnect_socketfd_ptr->register_new_connection_callback(
+        [this](int connect_socketfd) {
+            _new_connection_callback(connect_socketfd);
+        }
+    );
     _preconnect_socketfd_ptr->register_connect_fail_callback(
         std::move(_connect_fail_callback)
     );

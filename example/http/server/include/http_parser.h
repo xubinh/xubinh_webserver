@@ -21,7 +21,7 @@ public:
     };
 
     // true = success, false = fail
-    bool parse(MutableSizeTcpBuffer &buffer, const util::TimePoint &time_stamp);
+    bool parse(MutableSizeTcpBuffer &buffer, util::TimePoint time_stamp);
 
     void reset() {
         _parsing_state = EXPECT_REQUEST_LINE;

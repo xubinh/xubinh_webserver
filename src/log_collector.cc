@@ -82,7 +82,9 @@ constexpr std::chrono::seconds::rep
 
 LogCollector::LogCollector()
     : _background_thread(
-        std::bind(&LogCollector::_background_io_thread_worker_functor, this),
+        [this]() {
+            _background_io_thread_worker_functor();
+        },
         "logging"
     ) {
 

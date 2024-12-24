@@ -7,7 +7,7 @@
 namespace xubinh_server {
 
 bool HttpParser::parse(
-    MutableSizeTcpBuffer &buffer, const util::TimePoint &time_stamp
+    MutableSizeTcpBuffer &buffer, util::TimePoint time_stamp
 ) {
     if (_parsing_state == FAIL) {
         return false;

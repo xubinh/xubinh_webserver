@@ -53,9 +53,11 @@ public:
             LOG_FATAL << "missing new connection callback";
         }
 
-        _pollable_file_descriptor.register_read_event_callback(std::bind(
-            &ListenSocketfd::_read_event_callback, this, std::placeholders::_1
-        ));
+        _pollable_file_descriptor.register_read_event_callback(
+            [this](util::TimePoint time_stamp) {
+                _read_event_callback(time_stamp);
+            }
+        );
 
         _open_spare_fd();
 

@@ -23,7 +23,9 @@ public:
         uint64_t loop_index = 0
     )
         : _thread(
-            std::bind(&EventLoopThread::_worker_function, this, loop_index),
+            [this, loop_index]() {
+                _worker_function(loop_index);
+            },
             thread_name
         ),
           _thread_initialization_callback(

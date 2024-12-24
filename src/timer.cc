@@ -34,7 +34,7 @@ bool Timer::expire_once() {
     return true;
 }
 
-bool Timer::expire_until(const TimePoint &time_point) {
+bool Timer::expire_until(TimePoint time_point) {
     bool is_still_valid_after_last_time_of_expiration;
 
     while (true) {

@@ -114,27 +114,27 @@ struct TimePoint {
         return get_datetime_string(nanoseconds_from_epoch, purpose);
     }
 
-    TimePoint &operator+=(const TimeInterval &time_interval) noexcept {
+    TimePoint &operator+=(TimeInterval time_interval) noexcept {
         nanoseconds_from_epoch += time_interval.nanoseconds;
 
         return *this;
     }
 
-    TimePoint &operator-=(const TimeInterval &time_interval) noexcept {
+    TimePoint &operator-=(TimeInterval time_interval) noexcept {
         nanoseconds_from_epoch -= time_interval.nanoseconds;
 
         return *this;
     }
 
-    TimePoint operator+(const TimeInterval &time_interval) const noexcept {
+    TimePoint operator+(TimeInterval time_interval) const noexcept {
         return TimePoint(*this) += time_interval;
     }
 
-    TimePoint operator-(const TimeInterval &time_interval) const noexcept {
+    TimePoint operator-(TimeInterval time_interval) const noexcept {
         return TimePoint(*this) -= time_interval;
     }
 
-    TimeInterval operator-(const TimePoint &time_point) const noexcept {
+    TimeInterval operator-(TimePoint time_point) const noexcept {
         return nanoseconds_from_epoch - time_point.nanoseconds_from_epoch;
     }
 
@@ -189,8 +189,7 @@ namespace std {
 
 template <>
 struct hash<xubinh_server::util::TimePoint> {
-    std::size_t operator()(const xubinh_server::util::TimePoint &time_point
-    ) const {
+    std::size_t operator()(xubinh_server::util::TimePoint time_point) const {
         return std::hash<int64_t>()(time_point.nanoseconds_from_epoch);
     }
 };

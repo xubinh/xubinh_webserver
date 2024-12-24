@@ -52,7 +52,7 @@ void signal_dispatcher(
 void message_callback(
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
     xubinh_server::MutableSizeTcpBuffer *input_buffer,
-    const xubinh_server::util::TimePoint &time_point
+    xubinh_server::util::TimePoint time_point
 ) {
     while (true) {
         auto newline_position = input_buffer->get_next_newline_position();
@@ -122,9 +122,9 @@ int main() {
     signalfd_ptr.reset(new xubinh_server::Signalfd(
         xubinh_server::Signalfd::create_signalfd(signal_set, 0), &loop
     ));
-    signalfd_ptr->register_signal_dispatcher(
-        std::bind(signal_dispatcher, &server, &loop, std::placeholders::_1)
-    );
+    signalfd_ptr->register_signal_dispatcher([&](int signal) {
+        signal_dispatcher(&server, &loop, signal);
+    });
     signalfd_ptr->start();
 
     // server config

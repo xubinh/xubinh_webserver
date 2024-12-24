@@ -127,9 +127,9 @@ void PollableFileDescriptor::detach_from_poller() {
 
     LOG_TRACE << "register event -> worker: detach_fd_from_poller";
 
-    _event_loop->run(
-        std::bind(&EventLoop::detach_fd_from_poller, _event_loop, _fd)
-    );
+    _event_loop->run([this]() {
+        _event_loop->detach_fd_from_poller(_fd);
+    });
 }
 
 void PollableFileDescriptor::dispatch_active_events(util::TimePoint time_stamp
@@ -171,9 +171,9 @@ void PollableFileDescriptor::_register_event() {
 
     LOG_TRACE << "register event -> worker: register_event_for_fd";
 
-    _event_loop->run(
-        std::bind(&EventLoop::register_event_for_fd, _event_loop, _fd, &_event)
-    );
+    _event_loop->run([this]() {
+        _event_loop->register_event_for_fd(_fd, &_event);
+    });
 }
 
 void PollableFileDescriptor::_dispatch_active_events(util::TimePoint time_stamp

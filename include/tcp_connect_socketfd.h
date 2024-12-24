@@ -21,7 +21,7 @@ public:
     using MessageCallbackType = std::function<void(
         const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
         MutableSizeTcpBuffer *input_buffer,
-        const util::TimePoint &time_stamp
+        util::TimePoint time_stamp
     )>;
 
     using WriteCompleteCallbackType =
@@ -117,7 +117,7 @@ public:
     void send(const char *data, size_t data_size);
 
     // thread-safe
-    void set_time_stamp(const util::TimePoint &time_stamp) {
+    void set_time_stamp(util::TimePoint time_stamp) {
         _time_stamp.store(time_stamp, std::memory_order_relaxed);
     }
 

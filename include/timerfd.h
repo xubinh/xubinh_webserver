@@ -43,7 +43,7 @@ public:
     //
     // - thread-safe
     // - always one-off, repetition is controlled from outside
-    void set_alarm_at_time_point(const TimePoint &time_point);
+    void set_alarm_at_time_point(TimePoint time_point);
 
     // write operation
     //
