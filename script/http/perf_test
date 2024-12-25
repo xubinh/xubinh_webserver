@@ -19,8 +19,6 @@ clear
 echo "Building..."
 
 if "$BUILD_SCRIPT_PATH"; then
-    clear
-
     echo "Build success ✔️"
 else
     echo "Build failed ❌"
