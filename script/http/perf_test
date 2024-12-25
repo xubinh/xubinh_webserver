@@ -47,7 +47,7 @@ perf_pid="$!"
 
 echo "Perf started, PID: $perf_pid"
 
-echo "Running WebBench (number of seconds: $NUMBER_OF_SECONDS_TO_TEST)..."
+echo "Running WebBench, duration: $NUMBER_OF_SECONDS_TO_TEST second(s)..."
 
 "$WEBBENCH_EXECUTABLE_PATH" -t "$NUMBER_OF_SECONDS_TO_TEST" -c 1000 -2 --get http://127.0.0.1:8080/ >/dev/null 2>&1
 

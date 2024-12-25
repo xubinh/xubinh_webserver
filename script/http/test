@@ -14,18 +14,16 @@ if [ $# -gt 2 ]; then
     exit 1
 fi
 
-number_of_seconds_to_test=${1:-2} # test for 2 seconds each time by default
-repeat_times=${2:-1}              # repeat once by default
+test_duration=${1:-2} # test for 2 seconds each time by default
+repeat_times=${2:-1}  # repeat once by default
 
-if ! [[ "$number_of_seconds_to_test" =~ ^-?[0-9]+$ ]] || ! [[ "$repeat_times" =~ ^-?[0-9]+$ ]]; then
-    echo "Usage: $0 <seconds> <repeat>"
+if ! [[ "$test_duration" =~ ^-?[0-9]+$ ]] || ! [[ "$repeat_times" =~ ^-?[0-9]+$ ]]; then
+    echo "Usage: $0 <duration_in_seconds> <number_of_repetition>"
 
     exit 1
 fi
 
 clear
-
-echo "WebBench test time (seconds): $number_of_seconds_to_test"
 
 echo "Building..."
 
@@ -56,9 +54,9 @@ for ((i = 0; i < repeat_times; i++)); do
 
     echo "Resumed"
 
-    echo "Running WebBench..."
+    echo "Running WebBench, duration: $test_duration second(s)..."
 
-    webbench_result="$("$WEBBENCH_EXECUTABLE_PATH" -t "$number_of_seconds_to_test" -c 1000 -2 --get http://127.0.0.1:8080/ 2>&1)"
+    webbench_result="$("$WEBBENCH_EXECUTABLE_PATH" -t "$test_duration" -c 1000 -2 --get http://127.0.0.1:8080/ 2>&1)"
     webbench_succeed_number="$(echo "$webbench_result" | grep -oP '\d+(?= succeed)')"
     # webbench_min_succeed_number_per_process="$(echo "$webbench_result" | grep -oP '(?<=Min succeed: )\d+')"
     # webbench_max_succeed_number_per_process="$(echo "$webbench_result" | grep -oP '(?<=Max succeed: )\d+')"
@@ -84,7 +82,7 @@ for ((i = 0; i < repeat_times; i++)); do
     fi
 done
 
-average=$((webbench_max_succeed_number / number_of_seconds_to_test))
+average=$((webbench_max_succeed_number / test_duration))
 
 echo ""
 
