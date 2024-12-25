@@ -15,32 +15,11 @@ public:
     Stdinfd(
         xubinh_server::EventLoop *loop,
         const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
-    )
-        : _tcp_connect_socketfd_weak_ptr(tcp_connect_socketfd_ptr),
-          _pollable_file_descriptor(STDIN_FILENO, loop) {
-    }
+    );
 
-    ~Stdinfd() {
-        _pollable_file_descriptor.detach_from_poller();
+    ~Stdinfd();
 
-        std::cout << "----------------- Session End -----------------"
-                  << std::endl;
-
-        _pollable_file_descriptor.close_fd();
-    }
-
-    void start() {
-        _pollable_file_descriptor.register_read_event_callback(
-            [this](xubinh_server::util::TimePoint time_stamp) {
-                _read_event_callback(time_stamp);
-            }
-        );
-
-        _pollable_file_descriptor.enable_read_event();
-
-        std::cout << "---------------- Session Begin ----------------"
-                  << std::endl;
-    }
+    void start();
 
 private:
     void _read_event_callback(xubinh_server::util::TimePoint time_stamp);

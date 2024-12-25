@@ -3,6 +3,7 @@
 #include <sys/types.h>
 
 #include "listen_socketfd.h"
+#include "log_builder.h"
 
 namespace xubinh_server {
 

@@ -18,11 +18,7 @@ public:
     InetAddress(const std::string &ip, int port, InetAddressType type);
 
     // for framework
-    InetAddress(const sockaddr *address, socklen_t address_length) {
-        ::memcpy(&_in_unknown, address, address_length);
-
-        _check_validity();
-    }
+    InetAddress(const sockaddr *address, socklen_t address_length);
 
     InetAddress(int connect_socketfd, InetAddressDirection direction);
 

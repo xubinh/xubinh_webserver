@@ -9,6 +9,7 @@
 
 #include "event_loop.h"
 #include "inet_address.h"
+#include "log_builder.h"
 #include "log_collector.h"
 #include "signalfd.h"
 #include "tcp_buffer.h"

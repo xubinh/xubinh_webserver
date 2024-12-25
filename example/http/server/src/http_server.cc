@@ -1,3 +1,5 @@
+#include "log_builder.h"
+
 #include "../include/http_server.h"
 
 namespace xubinh_server {

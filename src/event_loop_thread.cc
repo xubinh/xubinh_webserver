@@ -1,11 +1,12 @@
 #include "event_loop_thread.h"
+#include "log_builder.h"
 
 namespace xubinh_server {
 
-explicit EventLoopThread::EventLoopThread(
+EventLoopThread::EventLoopThread(
     const std::string &thread_name,
     ThreadInitializationCallbackType thread_initialization_callback,
-    uint64_t loop_index = 0
+    uint64_t loop_index
 )
     : _thread(
         [this, loop_index]() {

@@ -1,4 +1,5 @@
 #include "event_loop_thread_pool.h"
+#include "log_builder.h"
 
 namespace xubinh_server {
 

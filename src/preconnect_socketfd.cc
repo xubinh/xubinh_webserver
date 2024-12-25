@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 
 #include "event_loop.h"
+#include "log_builder.h"
 #include "preconnect_socketfd.h"
 #include "util/errno.h"
 

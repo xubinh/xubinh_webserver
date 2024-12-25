@@ -1,5 +1,7 @@
 #include <memory>
 
+#include "log_builder.h"
+
 #include "../include/http_response.h"
 
 namespace xubinh_server {

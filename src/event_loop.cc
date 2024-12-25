@@ -1,4 +1,5 @@
 #include "event_loop.h"
+#include "log_builder.h"
 #include "util/current_thread.h"
 
 namespace xubinh_server {
@@ -60,6 +61,8 @@ EventLoop::~EventLoop() noexcept {
 };
 
 void EventLoop::loop() {
+    std::vector<PollableFileDescriptor *> event_dispatchers;
+
     while (true) {
         // checks for stop signal (either external or from within) and stops
         // only when the polling list is logically empty (which really is not
@@ -73,8 +76,7 @@ void EventLoop::loop() {
             break;
         }
 
-        auto event_dispatchers =
-            _event_poller.poll_for_active_events_of_all_fds();
+        _event_poller.poll_for_active_events_of_all_fds(event_dispatchers);
 
         LOG_TRACE << "number of dispatchers: "
                          + std::to_string(event_dispatchers.size());

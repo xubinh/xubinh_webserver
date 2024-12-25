@@ -1,6 +1,38 @@
+#include <iostream>
+
+#include "log_builder.h"
+
 #include "../include/stdinfd.h"
 
 namespace xubinh_server {
+
+void Stdinfd::start() {
+    _pollable_file_descriptor.register_read_event_callback(
+        [this](xubinh_server::util::TimePoint time_stamp) {
+            _read_event_callback(time_stamp);
+        }
+    );
+
+    _pollable_file_descriptor.enable_read_event();
+
+    std::cout << "---------------- Session Begin ----------------" << std::endl;
+}
+
+Stdinfd::Stdinfd(
+    xubinh_server::EventLoop *loop,
+    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+)
+    : _tcp_connect_socketfd_weak_ptr(tcp_connect_socketfd_ptr),
+      _pollable_file_descriptor(STDIN_FILENO, loop) {
+}
+
+Stdinfd::~Stdinfd() {
+    _pollable_file_descriptor.detach_from_poller();
+
+    std::cout << "----------------- Session End -----------------" << std::endl;
+
+    _pollable_file_descriptor.close_fd();
+}
 
 void Stdinfd::_read_event_callback(xubinh_server::util::TimePoint time_stamp) {
     LOG_TRACE << "stdin read event encountered";

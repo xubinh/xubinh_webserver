@@ -67,8 +67,9 @@ void EventPoller::detach_fd(int fd) {
     _fds_that_are_listening_on.erase(fd);
 }
 
-std::vector<PollableFileDescriptor *>
-EventPoller::poll_for_active_events_of_all_fds() {
+void EventPoller::poll_for_active_events_of_all_fds(
+    std::vector<PollableFileDescriptor *> &event_dispatchers
+) {
     LOG_TRACE << "epoll_wait blocked";
 
     int current_event_array_size =
@@ -80,7 +81,7 @@ EventPoller::poll_for_active_events_of_all_fds() {
         LOG_SYS_FATAL << "epoll_wait failed";
     }
 
-    std::vector<PollableFileDescriptor *> event_dispatchers;
+    event_dispatchers.clear();
 
     for (int i = 0; i < current_event_array_size; i++) {
         auto event_dispatcher_ptr =
@@ -91,7 +92,7 @@ EventPoller::poll_for_active_events_of_all_fds() {
         event_dispatchers.push_back(event_dispatcher_ptr);
     }
 
-    return event_dispatchers;
+    return;
 }
 
 } // namespace xubinh_server

@@ -1,10 +1,6 @@
 #ifndef __XUBINH_SERVER_LOG_BUILDER
 #define __XUBINH_SERVER_LOG_BUILDER
 
-// #include <cerrno>
-// #include <cstring>
-#include <string>
-
 #include "log_buffer.h"
 #include "util/format.h"
 

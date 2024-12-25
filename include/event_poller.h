@@ -46,7 +46,10 @@ public:
         return size() == 0;
     }
 
-    std::vector<PollableFileDescriptor *> poll_for_active_events_of_all_fds();
+    // pass by reference to prevent unnecessary memory allocations
+    void poll_for_active_events_of_all_fds(
+        std::vector<PollableFileDescriptor *> &event_dispatchers
+    );
 
 private:
     static constexpr int _MAX_SIZE_OF_EVENT_ARRAY = 65536;
