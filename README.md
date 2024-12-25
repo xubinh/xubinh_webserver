@@ -17,26 +17,26 @@
 
 ### 结果展示
 
-| 项目改进描述                                                                                                      | 短连接 QPS | 长连接 QPS | commit                                                                                                 |
-| ----------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------ |
-| 初代稳定版本                                                                                                      | 38,661     | 84,392     | [`279433`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
-| 为每个工作线程在主线程中独立配备阻塞队列                                                                          | 37,852     | 80,460     | [`c48a40`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
-| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                                                      | 40,023     | 90,434     | [`6f1c4c`](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
-| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                                       | 41,323     | 92,449     | [`60554e`](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
-| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                                            | 39,577     | 96,732     | [`e82333`](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
-| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                                  | 42,302     | 92,049     | [`0f5cf4`](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
-| 降低缓冲区的扩展大小, 避免 HTTP 请求体简短但离散的的情况下发生的无意义的内存重分配                                | 43,958     | 90,321     | [`140107`](https://github.com/xubinh/xubinh_webserver/commit/14010785ea5ea7f38f8848ac0776d5d0ddb1caa5) |
-| 使用 lambda 表达式替换绝大多数的 `std::bind`                                                                      | 45,970     | -          | [`6b8a85`](https://github.com/xubinh/xubinh_webserver/commit/6b8a85437a6461cf759066222af6d4bd30989b9e) |
-| 降低 TCP 连接的时间戳初始化的 `clock_gettime` 系统调用的执行粒度                                                  | 49,534     | -          | [`2efc90`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
-| 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率                                                           | 51,750     | -          | [`85855f`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
-| 将 `EventPoller` 的某成员函数从传值改为传引用, 并消除了 `TcpServer` 的某成员函数中对 `std::shared_ptr` 的重复拷贝 | 54,485     | -          | [`0b33da`](https://github.com/xubinh/xubinh_webserver/commit/0b33da78ac47c6301b4e256ee432fdfcf1808d2f) |
-| 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用 | 54,888 | - | [`afc6e3`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
+| 项目改进描述                                                                         | 短连接 QPS | 长连接 QPS | commit                                                                                                  |
+| ------------------------------------------------------------------------------------ | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
+| 初代稳定版本                                                                         | 38,661     | 84,392     | [`2794336`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
+| 为每个工作线程在主线程中独立配备阻塞队列                                             | 37,852     | 80,460     | [`c48a407`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
+| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                         | 40,023     | 90,434     | [`6f1c4c8`](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
+| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                          | 41,323     | 92,449     | [`60554e9`](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
+| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`               | 39,577     | 96,732     | [`e823334`](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
+| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                     | 42,302     | 92,049     | [`0f5cf40`](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
+| 降低缓冲区的扩展大小, 避免 HTTP 请求体简短但离散的的情况下发生的无意义的内存重分配   | 43,958     | 90,321     | [`1401078`](https://github.com/xubinh/xubinh_webserver/commit/14010785ea5ea7f38f8848ac0776d5d0ddb1caa5) |
+| 使用 lambda 表达式替换绝大多数的 `std::bind`                                         | 45,970     | -          | [`6b8a854`](https://github.com/xubinh/xubinh_webserver/commit/6b8a85437a6461cf759066222af6d4bd30989b9e) |
+| 降低 TCP 连接的时间戳初始化的 `clock_gettime` 系统调用的执行粒度                     | 49,534     | -          | [`2efc904`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
+| 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率                              | 51,750     | -          | [`85855f8`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
+| 将 "按值返回 `std::vector`" 改为 "按引用传入", 并消除对 `std::shared_ptr` 的重复拷贝 | 54,485     | -          | [`0b33da7`](https://github.com/xubinh/xubinh_webserver/commit/0b33da78ac47c6301b4e256ee432fdfcf1808d2f) |
+| 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用                                  | 54,888     | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b)  |
 
 ### 与其他项目的横向比较
 
 | 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                          |
 | ---------------------------------------------------------- | ---------- | ---------- | ----------------------------------------------------------------------------------------------- |
-| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [`a50d63`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
+| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
 
 ### 测试机硬件参数
 
