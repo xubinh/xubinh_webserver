@@ -3,8 +3,6 @@
 BUILD_DIR=build
 NEED_TEST=off
 
-clear
-
 # Exit immediately if any command fails
 set -e
 
