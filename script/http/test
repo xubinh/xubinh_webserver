@@ -8,17 +8,17 @@ BUILD_SCRIPT_PATH="./script/build"
 
 WEBBENCH_EXECUTABLE_PATH="./bin/webbench"
 
-REPEAT_TIMES=5
+if [ $# -gt 2 ]; then
+    echo "Usage: $0 [seconds] [repeats]"
 
-if [ $# -gt 1 ]; then
-    echo "Usage: $0 <seconds>"
     exit 1
 fi
 
-number_of_seconds_to_test=${1:-2} # 2 seconds by default
+number_of_seconds_to_test=${1:-2} # test for 2 seconds each time by default
+repeat_times=${2:-5}              # repeat for 5 times total by default
 
-if ! [[ "$number_of_seconds_to_test" =~ ^-?[0-9]+$ ]]; then
-    echo "Invalid input. Please provide a valid integer."
+if ! [[ "$number_of_seconds_to_test" =~ ^-?[0-9]+$ ]] || ! [[ "$repeat_times" =~ ^-?[0-9]+$ ]]; then
+    echo "Usage: $0 <seconds> <repeat>"
 
     exit 1
 fi
@@ -41,12 +41,12 @@ echo ""
 
 sum=0
 
-for ((i = 1; i <= REPEAT_TIMES; i++)); do
+for ((i = 0; i < repeat_times; i++)); do
     echo "--------------------------------"
 
-    echo "Iteration: $i"
+    echo "Iteration: $((i + 1))"
 
-    "$SERVER_EXECUTABLE_PATH" &
+    "$SERVER_EXECUTABLE_PATH" server-test-"$((i + 1))" &
 
     pid=$!
 
@@ -60,9 +60,9 @@ for ((i = 1; i <= REPEAT_TIMES; i++)); do
 
     echo "Running WebBench..."
 
-    succeed_number="$(
-        "$WEBBENCH_EXECUTABLE_PATH" -t "$number_of_seconds_to_test" -c 1000 -2 --get http://127.0.0.1:8080/ 2>&1 | tail -n 1 | grep -oP '(?<=Requests: )\d+(?= succeed)'
-    )"
+    webbench_result="$("$WEBBENCH_EXECUTABLE_PATH" -t "$number_of_seconds_to_test" -c 1000 -2 --get http://127.0.0.1:8080/ 2>&1 | tail -n 1)"
+    webbench_succeed_number="$(echo "$webbench_result" | grep -oP '\d+(?= succeed)')"
+    webbench_failed_number="$(echo "$webbench_result" | grep -oP '\d+(?= failed)')"
 
     echo "WebBench finished, killing server..."
 
@@ -74,12 +74,13 @@ for ((i = 1; i <= REPEAT_TIMES; i++)); do
 
     echo "Resumed"
 
-    echo "Succeed number: $succeed_number"
+    echo "Succeed number: $webbench_succeed_number"
+    echo "Failed number: $webbench_failed_number"
 
-    sum=$((sum + succeed_number))
+    sum=$((sum + webbench_succeed_number))
 done
 
-average=$((sum / REPEAT_TIMES))
+average=$((sum / repeat_times))
 average=$((average / number_of_seconds_to_test))
 
 echo ""

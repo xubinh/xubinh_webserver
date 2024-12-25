@@ -6,6 +6,10 @@
 namespace xubinh_server {
 
 void LogCollector::set_base_name(const std::string &path) {
+    if (path.empty()) {
+        return;
+    }
+
     LogCollector::_base_name =
         util::Format::get_base_name_of_path(path.c_str(), path.length());
 }

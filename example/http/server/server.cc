@@ -320,11 +320,19 @@ void http_request_callback(
 #endif
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc > 2) {
+        LOG_FATAL << "Usage: " << argv[0] << " [log_file_base_name]";
+    }
+
+    std::string log_file_base_name = argc == 2 ? std::string(argv[1]) : "";
+
+    xubinh_server::LogCollector::set_base_name(log_file_base_name);
+
     // logging config
 #ifdef __XUBINH_BENCHMARKING
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::INFO);
 #else
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
