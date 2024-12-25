@@ -123,10 +123,18 @@ void TcpServer::_new_connection_callback(
         _thread_pool_capacity > 0 ? _thread_pool_ptr->get_next_loop() : _loop;
     InetAddress local_address{connect_socketfd, InetAddress::LOCAL};
 
-    auto &new_tcp_connect_socketfd_ptr =
-        (_tcp_connect_socketfds[id] = std::make_shared<TcpConnectSocketfd>(
-             connect_socketfd, loop, id, local_address, peer_address, time_stamp
-         ));
+    auto insert_result = _tcp_connect_socketfds.emplace(
+        id,
+        std::make_shared<TcpConnectSocketfd>(
+            connect_socketfd, loop, id, local_address, peer_address, time_stamp
+        )
+    );
+
+    if (!insert_result.second) {
+        LOG_FATAL << "execution flow never reaches here (in real world case)";
+    }
+
+    auto &new_tcp_connect_socketfd_ptr = insert_result.first->second;
 
     if (_connect_success_callback) {
         _connect_success_callback(new_tcp_connect_socketfd_ptr);
