@@ -9,10 +9,10 @@ BUILD_SCRIPT_PATH="./script/build"
 WEBBENCH_EXECUTABLE_PATH="./bin/webbench"
 NUMBER_OF_SECONDS_TO_TEST=60 # 60 seconds by default
 
-PERF_DATA_FILE_PATH="./perf.data"
-PERF_SCRIPT_OUTPUT_FILE_PATH='./perf.data.out'
-FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH='./perf.data.out.folded'
-FLAME_GRAPH_SVG_OUTPUT_FILE_PATH='./flamegraph.svg'
+PERF_DATA_FILE_PATH="perf.data"
+PERF_SCRIPT_OUTPUT_FILE_PATH="$PERF_DATA_FILE_PATH".out
+FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH="$PERF_SCRIPT_OUTPUT_FILE_PATH".folded
+FLAME_GRAPH_SVG_OUTPUT_FILE_PATH='flamegraph.svg'
 
 clear
 
@@ -51,8 +51,7 @@ echo "Perf started, PID: $perf_pid"
 
 echo "Running WebBench (number of seconds: $NUMBER_OF_SECONDS_TO_TEST)..."
 
-# "$WEBBENCH_EXECUTABLE_PATH" -t "$NUMBER_OF_SECONDS_TO_TEST" -c 1000 -2 --get http://127.0.0.1:8080/ >/dev/null 2>&1
-"$WEBBENCH_EXECUTABLE_PATH" -t "$NUMBER_OF_SECONDS_TO_TEST" -c 1000 -2 --get http://127.0.0.1:8080/
+"$WEBBENCH_EXECUTABLE_PATH" -t "$NUMBER_OF_SECONDS_TO_TEST" -c 1000 -2 --get http://127.0.0.1:8080/ >/dev/null 2>&1
 
 echo "WebBench finished, killing server..."
 
@@ -84,6 +83,6 @@ echo "Drawing... (\`$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH\` -> \`$FLAME_GRAPH_SVG
 
 echo "Removing auxiliary files..."
 
-rm "$PERF_DATA_FILE_PATH"* "$PERF_SCRIPT_OUTPUT_FILE_PATH" "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH"
+rm "$PERF_DATA_FILE_PATH"* # perf.data, perf.data.out, perf.data.out.folded
 
 echo "Completed, result is at \`$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH\`. ✔️"
