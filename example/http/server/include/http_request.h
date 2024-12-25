@@ -121,7 +121,7 @@ private:
     HttpMethodType _method = UNSUPPORTED_HTTP_METHOD;
     std::string _path;
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
-    util::TimePoint _receive_time_point;
+    util::TimePoint _receive_time_point{0};
     // std::unordered_map<std::string, std::string> _headers;
     std::map<std::string, std::string>
         _headers; // for testing; more efficient than std::map when the number
