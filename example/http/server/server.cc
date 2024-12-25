@@ -270,7 +270,7 @@ constexpr size_t hello_world_response_content_size =
     sizeof(hello_world_response_content);
 
 void http_request_callback(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     const xubinh_server::HttpRequest &http_request
 ) {
     if (tcp_connect_socketfd_ptr->is_write_end_shutdown()) {
@@ -281,7 +281,7 @@ void http_request_callback(
 #ifndef __XUBINH_KEEP_ALIVE
     // WebBench requests close by default
     tcp_connect_socketfd_ptr->register_write_complete_callback(
-        [](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+        [](xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
             tcp_connect_socketfd_ptr->shutdown_write();
         }
     );

@@ -56,7 +56,8 @@ private:
 
     void _write_event_callback();
 
-    // must be guarded by shared_from_this()
+    // must be guarded by shared_from_this() as it might be called before
+    // being registered in the poller
     void _try_once();
 
     static const util::TimeInterval _INITIAL_RETRY_TIME_INTERVAL;

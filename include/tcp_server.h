@@ -84,7 +84,7 @@ private:
 
     // for tcp connect socketfd
     void _close_callback(
-        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+        TcpConnectSocketfd *tcp_connect_socketfd_ptr,
         uint64_t functor_blocking_queue_index
     );
 

@@ -146,8 +146,7 @@ void TcpServer::_new_connection_callback(
     );
     auto loop_index = loop->get_loop_index();
     new_tcp_connect_socketfd_ptr->register_close_callback(
-        [this,
-         loop_index](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+        [this, loop_index](TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
             _close_callback(tcp_connect_socketfd_ptr, loop_index);
         }
     );
@@ -160,7 +159,7 @@ void TcpServer::_new_connection_callback(
 }
 
 void TcpServer::_close_callback(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     uint64_t functor_blocking_queue_index
 ) {
     LOG_TRACE << "register event -> main: _close_callback";

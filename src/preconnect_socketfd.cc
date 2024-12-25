@@ -36,9 +36,12 @@ void PreconnectSocketfd::start() {
 
     LOG_TRACE << "register event -> main: _try_once";
 
-    const auto &this_ptr = shared_from_this();
-    _event_loop->run([this_ptr]() {
-        this_ptr->_try_once();
+    _event_loop->run([this]() {
+        {
+            const auto &this_ptr = shared_from_this();
+
+            _try_once();
+        }
     });
 }
 
@@ -93,7 +96,6 @@ void PreconnectSocketfd::_schedule_retry() {
     _pollable_file_descriptor.reset_to(Socketfd::create_socketfd());
 
     {
-        const auto &this_ptr = shared_from_this();
         auto timer_identifier = _event_loop->run_after_time_interval(
             std::min(
                 PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL,
@@ -101,8 +103,12 @@ void PreconnectSocketfd::_schedule_retry() {
             ),
             0,
             0,
-            [this_ptr]() {
-                this_ptr->_try_once();
+            [this]() {
+                {
+                    const auto &this_ptr = shared_from_this();
+
+                    _try_once();
+                }
             }
         );
 

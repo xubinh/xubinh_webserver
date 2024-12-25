@@ -17,7 +17,7 @@ void HttpServer::start() {
 
     _tcp_server.register_message_callback(
         [this](
-            const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+            TcpConnectSocketfd *tcp_connect_socketfd_ptr,
             MutableSizeTcpBuffer *input_buffer,
             TimePoint time_stamp
         ) {
@@ -45,7 +45,7 @@ void HttpServer::start() {
 }
 
 void HttpServer::_message_callback(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     MutableSizeTcpBuffer *input_buffer,
     TimePoint time_stamp
 ) {

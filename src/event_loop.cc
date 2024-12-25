@@ -153,7 +153,7 @@ void EventLoop::detach_fd_from_poller(int fd) {
 void EventLoop::run(
     FunctorType functor, uint64_t functor_blocking_queue_index
 ) {
-    if (_is_in_owner_thread()) {
+    if (is_in_owner_thread()) {
         functor();
     }
 

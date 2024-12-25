@@ -19,18 +19,15 @@ public:
     using TcpConnectSocketfdPtr = std::shared_ptr<TcpConnectSocketfd>;
 
     using MessageCallbackType = std::function<void(
-        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+        TcpConnectSocketfd *tcp_connect_socketfd_ptr,
         MutableSizeTcpBuffer *input_buffer,
         util::TimePoint time_stamp
     )>;
 
-    using WriteCompleteCallbackType =
-        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
-        )>;
+    using WriteCompleteCallbackType = std::function<void(TcpConnectSocketfd *)>;
 
     using CloseCallbackType =
-        std::function<void(const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
-        )>;
+        std::function<void(TcpConnectSocketfd *tcp_connect_socketfd_ptr)>;
 
     using PredicateType = std::function<bool()>;
 
@@ -80,7 +77,7 @@ public:
     // - can be called by user to start the four-way handshake; after which
     // it is the user's responsibility to ensure there will be no data sent to
     // the output buffer
-    // - must be called in the worker loop
+    // - should only be called inside a worker loop
     void shutdown_write();
 
     bool is_write_end_shutdown() const {
@@ -103,7 +100,7 @@ public:
     // - can be called either in main loop or in worker loop
     void check_and_abort(PredicateType predicate);
 
-    // should be called only inside a worker loop
+    // should only be called inside a worker loop
     void send(const char *data, size_t data_size);
 
     // thread-safe

@@ -113,7 +113,7 @@ void TcpConnectSocketfd::shutdown_write() {
     _pollable_file_descriptor.disable_write_event();
 
     if (_write_complete_callback) {
-        _write_complete_callback(shared_from_this());
+        _write_complete_callback(this);
     }
 
     // empty the output buffer, and after which it is the caller's
@@ -180,7 +180,7 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     // no need for further writing if all data is sent
     if (number_of_bytes_sent == data_size) {
         if (_write_complete_callback) {
-            _write_complete_callback(shared_from_this());
+            _write_complete_callback(this);
         }
 
         return;
@@ -208,7 +208,7 @@ void TcpConnectSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     // listening the writing event
     //
     // input buffer <-- R -- user -- W --> output buffer
-    _message_callback(shared_from_this(), &_input_buffer, time_stamp);
+    _message_callback(this, &_input_buffer, time_stamp);
 
     // shutdown write if (1) all data is read and processed, (2) the peer closed
     // its write end first, and (3) no data needs to be sent to the peer
@@ -257,7 +257,7 @@ void TcpConnectSocketfd::_write_event_callback() {
     _pollable_file_descriptor.disable_write_event();
 
     if (_write_complete_callback) {
-        _write_complete_callback(shared_from_this());
+        _write_complete_callback(this);
     }
 
     // shutdown write if (1) all data is read and processed, (2) the peer closed
@@ -283,7 +283,7 @@ void TcpConnectSocketfd::_close_event_callback() {
     // this iteration
 
     if (_close_callback) {
-        _close_callback(shared_from_this());
+        _close_callback(this);
     }
 }
 

@@ -46,6 +46,10 @@ public:
         return _loop_index;
     }
 
+    bool is_in_owner_thread() {
+        return util::current_thread::get_tid() == _owner_thread_tid;
+    }
+
     void loop();
 
     // not thread-safe
@@ -80,10 +84,6 @@ public:
     void ask_to_stop();
 
 private:
-    bool _is_in_owner_thread() {
-        return util::current_thread::get_tid() == _owner_thread_tid;
-    }
-
     void _leave_to_owner_thread(
         FunctorType functor, uint64_t functor_blocking_queue_index
     );

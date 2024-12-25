@@ -17,7 +17,7 @@ public:
     using ConnectSuccessCallbackType = TcpServer::ConnectSuccessCallbackType;
 
     using HttpRequestCallbackType = std::function<void(
-        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+        TcpConnectSocketfd *tcp_connect_socketfd_ptr,
         const HttpRequest &http_request
     )>;
 
@@ -94,7 +94,7 @@ private:
     }
 
     void _message_callback(
-        const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+        TcpConnectSocketfd *tcp_connect_socketfd_ptr,
         MutableSizeTcpBuffer *input_buffer,
         TimePoint time_stamp
     );

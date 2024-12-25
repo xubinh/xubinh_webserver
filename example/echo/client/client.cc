@@ -51,7 +51,7 @@ void signal_dispatcher(
 }
 
 void message_callback(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     xubinh_server::MutableSizeTcpBuffer *input_buffer,
     xubinh_server::util::TimePoint time_point
 ) {
