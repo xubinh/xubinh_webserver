@@ -12,20 +12,26 @@ EventLoop::EventLoop(
       ),
       _functor_blocking_queues(_number_of_functor_blocking_queues),
       _eventfds(_number_of_functor_blocking_queues),
+      _eventfd_pilot_lamps(_number_of_functor_blocking_queues),
       _timerfd(Timerfd::create_timerfd(0), this),
       _owner_thread_tid(util::current_thread::get_tid()) {
 
     for (int i = 0; i < _number_of_functor_blocking_queues; i++) {
-        _functor_blocking_queues[i].reset(
-            new FunctorQueue(_FUNCTOR_QUEUE_CAPACITY)
+        _functor_blocking_queues[i] = new FunctorQueue(_FUNCTOR_QUEUE_CAPACITY);
+
+        _eventfds[i] = new Eventfd(Eventfd::create_eventfd(0), this);
+        auto &eventfd_pilot_lamp = _eventfd_pilot_lamps[i];
+        _eventfds[i]->register_eventfd_message_callback(
+            [this, &eventfd_pilot_lamp](uint64_t value) {
+                eventfd_pilot_lamp.store(false, std::memory_order_relaxed);
+
+                _eventfd_message_callback(value);
+            }
         );
 
-        _eventfds[i].reset(new Eventfd(Eventfd::create_eventfd(0), this));
-        _eventfds[i]->register_eventfd_message_callback([this](uint64_t value) {
-            _eventfd_message_callback(value);
-        });
-
         _eventfds[i]->start();
+
+        _eventfd_pilot_lamps[i].store(false, std::memory_order_relaxed);
     }
 
     _timerfd.register_timerfd_message_callback([this](uint64_t value) {
@@ -34,6 +40,18 @@ EventLoop::EventLoop(
 
     _timerfd.start();
 }
+
+EventLoop::~EventLoop() noexcept {
+    _release_all_timers();
+
+    for (auto ptr : _functor_blocking_queues) {
+        delete ptr;
+    }
+
+    for (auto ptr : _eventfds) {
+        delete ptr;
+    }
+};
 
 void EventLoop::loop() {
     while (true) {
@@ -195,15 +213,27 @@ void EventLoop::ask_to_stop() {
 void EventLoop::_leave_to_owner_thread(
     FunctorType functor, uint64_t functor_blocking_queue_index
 ) {
-    _functor_blocking_queues
-        [functor_blocking_queue_index % _number_of_functor_blocking_queues]
-            ->push(std::move(functor));
+    _functor_blocking_queues[functor_blocking_queue_index]->push(
+        std::move(functor)
+    );
 
     LOG_TRACE << "leave to owner thread, functor queue index: "
-              << (functor_blocking_queue_index
-                  % _number_of_functor_blocking_queues);
+              << (functor_blocking_queue_index);
 
     _wake_up_this_loop(functor_blocking_queue_index);
+}
+
+void EventLoop::_wake_up_this_loop(uint64_t functor_blocking_queue_index) {
+    bool expected = false;
+
+    // send to eventfd only when the pilot lamp is off
+    if (_eventfd_pilot_lamps[functor_blocking_queue_index]
+            .compare_exchange_strong(
+                expected, true, std::memory_order_relaxed
+            )) {
+
+        _eventfds[functor_blocking_queue_index]->increment_by_value(1);
+    }
 }
 
 void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {
@@ -215,7 +245,8 @@ void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {
     _timer_container.insert_one(timer_ptr);
 
     // newly inserted timer advanced the expiration
-    if (time_point < earliest_expiration_time_point_before_insertion) {
+    if (time_point < earliest_expiration_time_point_before_insertion
+                         - util::TimeInterval(_alarm_advancing_threshold)) {
         _set_alarm_at_time_point(time_point);
     }
 }
@@ -294,7 +325,9 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
     // set the alarm if it is not set inside the callback, or it is set inside
     // the callback but will be advanced by the insertion here
     if (!_new_callbacks_have_been_inserted
-        || exp_after_inserting_all < exp_after_executing_callbacks) {
+        || exp_after_inserting_all
+               < exp_after_executing_callbacks
+                     - util::TimeInterval(_alarm_advancing_threshold)) {
         _set_alarm_at_time_point(exp_after_inserting_all);
     }
 }
@@ -309,15 +342,13 @@ void EventLoop::_release_all_timers() {
 }
 
 void EventLoop::_eventfd_message_callback(uint64_t value) {
-    if (value) {
-        _eventfd_triggered = true;
-    }
+    _eventfd_triggered = true;
 }
 
 void EventLoop::_timerfd_message_callback(uint64_t value) {
-    if (value) {
-        _timerfd_triggered = true;
-    }
+    _timerfd_triggered = true;
 }
+
+int64_t EventLoop::_alarm_advancing_threshold = 3;
 
 } // namespace xubinh_server

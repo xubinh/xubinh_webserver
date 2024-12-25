@@ -29,15 +29,18 @@ public:
     using FunctorType = std::function<void()>;
     using FunctorQueue = util::BlockingQueue<EventLoop::FunctorType>;
 
+    static void set_alarm_advancing_threshold(int64_t alarm_advancing_threshold
+    ) noexcept {
+        _alarm_advancing_threshold = alarm_advancing_threshold;
+    }
+
     // should be initialized in the owner thread in order to get the tid
     // properly
     EventLoop(
         uint64_t loop_index = 0, size_t number_of_functor_blocking_queues = 1
     );
 
-    ~EventLoop() {
-        _release_all_timers();
-    };
+    ~EventLoop() noexcept;
 
     uint64_t get_loop_index() const noexcept {
         return _loop_index;
@@ -84,15 +87,7 @@ public:
     // not thread-safe
     void ask_to_stop();
 
-    uint64_t get_next_functor_blocking_queue_index() noexcept {
-        return _functor_blocking_queue_counter.fetch_add(
-            1, std::memory_order_relaxed
-        );
-    }
-
 private:
-    static constexpr int _FUNCTOR_QUEUE_CAPACITY = 1000;
-
     bool _is_in_owner_thread() {
         return util::current_thread::get_tid() == _owner_thread_tid;
     }
@@ -101,11 +96,7 @@ private:
         FunctorType functor, uint64_t functor_blocking_queue_index
     );
 
-    void _wake_up_this_loop(uint64_t functor_blocking_queue_index) {
-        _eventfds
-            [functor_blocking_queue_index % _number_of_functor_blocking_queues]
-                ->increment_by_value(1);
-    }
+    void _wake_up_this_loop(uint64_t functor_blocking_queue_index);
 
     void _set_alarm_at_time_point(TimePoint time_point) {
         _timerfd.set_alarm_at_time_point(time_point);
@@ -135,14 +126,19 @@ private:
     // for async-handling of timerfd notifications
     void _timerfd_message_callback(uint64_t value);
 
+    static constexpr int _FUNCTOR_QUEUE_CAPACITY = 1000;
+
+    // in seconds
+    static int64_t _alarm_advancing_threshold;
+
     const uint64_t _loop_index;
 
     EventPoller _event_poller;
 
     const size_t _number_of_functor_blocking_queues;
-    std::vector<std::unique_ptr<FunctorQueue>> _functor_blocking_queues;
-    std::vector<std::unique_ptr<Eventfd>> _eventfds;
-    std::atomic<uint64_t> _functor_blocking_queue_counter{0};
+    std::vector<FunctorQueue *> _functor_blocking_queues;
+    std::vector<Eventfd *> _eventfds;
+    std::vector<std::atomic<bool>> _eventfd_pilot_lamps;
     bool _eventfd_triggered = false;
 
     Timerfd _timerfd;
