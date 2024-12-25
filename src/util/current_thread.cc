@@ -67,7 +67,7 @@ void set_thread_name(const char *thread_name) {
     _set_linux_thread_name(_thread_name);
 }
 
-inline const char *get_thread_name() {
+const char *get_thread_name() {
     return _thread_name;
 }
 

@@ -22,7 +22,7 @@ int get_tid_string_length();
 
 void set_thread_name(const char *thread_name);
 
-inline const char *get_thread_name();
+const char *get_thread_name();
 
 } // namespace current_thread
 
