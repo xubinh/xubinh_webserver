@@ -117,23 +117,29 @@ void TcpServer::_new_connection_callback(
     const InetAddress &peer_address,
     util::TimePoint time_stamp
 ) {
-    uint64_t id =
-        _tcp_connection_id_counter.fetch_add(1, std::memory_order_relaxed);
+    uint64_t id;
+
+    // get next available id; success guaranteed in real world case
+    while (true) {
+        id = _tcp_connection_id_counter.fetch_add(1, std::memory_order_relaxed);
+
+        if (_tcp_connect_socketfds.find(id) == _tcp_connect_socketfds.end()) {
+            break;
+        }
+    }
+
     EventLoop *loop =
         _thread_pool_capacity > 0 ? _thread_pool_ptr->get_next_loop() : _loop;
     InetAddress local_address{connect_socketfd, InetAddress::LOCAL};
 
-    auto new_tcp_connect_socketfd_ptr = std::make_shared<TcpConnectSocketfd>(
-        connect_socketfd, loop, id, local_address, peer_address, time_stamp
-    );
+    auto &new_tcp_connect_socketfd_ptr =
+        (_tcp_connect_socketfds[id] = std::make_shared<TcpConnectSocketfd>(
+             connect_socketfd, loop, id, local_address, peer_address, time_stamp
+         ));
 
     if (_connect_success_callback) {
         _connect_success_callback(new_tcp_connect_socketfd_ptr);
     }
-
-    _tcp_connect_socketfds.insert(
-        std::make_pair(id, new_tcp_connect_socketfd_ptr)
-    );
 
     new_tcp_connect_socketfd_ptr->register_message_callback(_message_callback);
     new_tcp_connect_socketfd_ptr->register_write_complete_callback(
