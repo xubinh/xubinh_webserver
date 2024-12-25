@@ -302,33 +302,23 @@ H/W path    Device    Class      Description
 
 ### WebBench
 
-安装:
+#### 安装
 
 ```bash
 git clone https://github.com/EZLippi/WebBench.git
 cd WebBench
-make
-sudo make install PREFIX=your_path_to_webbench # 注: 可选
-
-sudo apt-get install rpcbind libtirpc-dev # 依赖
-# 注: 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 后添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 后添加链接选项 `-ltirpc`.
-
-sudo apt-get install exuberant-ctags # 依赖
+sudo apt-get install rpcbind libtirpc-dev # 此为依赖项
+sudo apt-get install exuberant-ctags # 此为依赖项
+# make # 执行前请先查看下方提示
+# sudo make install PREFIX=your_path_to_webbench # 可选
 ```
 
-- 参考资料:
-  - [linyacool/WebServer](https://github.com/linyacool/WebServer)
-  - [linyacool/WebBench](https://github.com/linyacool/WebBench)
-  - [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
-  - [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
+> [!IMPORTANT]
+>
+> - 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 后添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 后添加链接选项 `-ltirpc`.
+> - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 默认是 block-buffered 的, 导致在 fork 时缓冲区中还留存有一定数据并在此后复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);`.
 
-**重要提示**:
-
-- 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 默认是 block-buffered 的, 导致在 fork 时缓冲区中还留存有一定数据并在此后复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);`.
-
-使用方法示例:
-
-> - 注: 经测试, 60 秒的测试时间过长, 容易受到系统临时 CPU 占用的影响. 更好的方案是短时多测, 例如单次测试 10 秒, 同时连续测试 10 次, 以最大值作为最终结果.
+#### 使用示例
 
 ```bash
 # 短连接 (默认)
@@ -337,6 +327,17 @@ sudo apt-get install exuberant-ctags # 依赖
 # 长连接
 ./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 参考 [linyacool/WebBench](https://github.com/linyacool/WebBench)
 ```
+
+> [!TIP]
+>
+> - 经测试, 上述 60 秒的测试时间过长, 非常容易受到操作系统临时 CPU 占用的影响. 更好的方案是短时多测, 例如单次测试 10 秒并连续测试 10 次, 最后以最大值作为结果.
+
+#### 参考资料
+
+- [linyacool/WebServer](https://github.com/linyacool/WebServer)
+- [linyacool/WebBench](https://github.com/linyacool/WebBench)
+- [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
+- [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
 
 ### perf
 
