@@ -315,22 +315,22 @@ sudo apt-get install exuberant-ctags # 此为依赖项
 
 > [!IMPORTANT]
 >
-> - 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 后添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 后添加链接选项 `-ltirpc`.
-> - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 默认是 block-buffered 的, 导致在 fork 时缓冲区中还留存有一定数据并在此后复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);`.
+> - 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 中添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 中添加链接选项 `-ltirpc`.
+> - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 的 stdout 默认为 block-buffered, 导致在 fork 时缓冲区中还留存有一定数据并在此后被复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);` 清空缓冲区.
 
 #### 使用示例
 
 ```bash
 # 短连接 (默认)
-./webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/ # 测试持续 60 秒, 1000 个并发客户端进程, 使用 HTTP/1.1 协议, 使用 GET 请求, 目标 URL 为 http://127.0.0.1:8080/
+./webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/ # 持续测试 60 秒, 使用 1000 个并发客户端进程, 使用 HTTP/1.1 协议, 使用 GET 请求, 目标 URL 为 http://127.0.0.1:8080/
 
 # 长连接
-./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 参考 [linyacool/WebBench](https://github.com/linyacool/WebBench)
+./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 请参考 [linyacool/WebBench](https://github.com/linyacool/WebBench)
 ```
 
 > [!TIP]
 >
-> - 经测试, 上述 60 秒的测试时间过长, 非常容易受到操作系统临时 CPU 占用的影响. 更好的方案是短时多测, 例如单次测试 10 秒并连续测试 10 次, 最后以最大值作为结果.
+> - 经测试, 上述 60 秒的测试时间过长, 非常容易受到操作系统临时 CPU 占用的影响. 一种更好的方案是 "短时多测", 例如 "单次测试 10 秒, 连续测试 10 次, 并以最大值作为结果".
 
 #### 参考资料
 
