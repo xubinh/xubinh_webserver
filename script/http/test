@@ -86,4 +86,4 @@ average=$((webbench_max_succeed_number / test_duration))
 
 echo ""
 
-echo "Average: $average"
+echo "Average QPS: $average"
