@@ -22,7 +22,7 @@ make -j"$(nproc)"
 if [ "$NEED_TEST" = on ]; then
     echo "Running tests..."
     make test
-    echo "All tests passed. ✔️"
+    echo "All tests are passed. ✔️"
 else
-    echo "Build completed. ✔️"
+    echo "Building completed. ✔️"
 fi

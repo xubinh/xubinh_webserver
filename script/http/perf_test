@@ -18,10 +18,8 @@ clear
 
 echo "Building..."
 
-if "$BUILD_SCRIPT_PATH"; then
-    echo "Build success ✔️"
-else
-    echo "Build failed ❌"
+if ! "$BUILD_SCRIPT_PATH"; then
+    echo "Building failed ❌"
 
     exit 1
 fi
