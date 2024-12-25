@@ -30,6 +30,7 @@
 | 降低 TCP 连接的时间戳初始化的 `clock_gettime` 系统调用的执行粒度                                                  | 49,534     | -          | [`2efc90`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
 | 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率                                                           | 51,750     | -          | [`85855f`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
 | 将 `EventPoller` 的某成员函数从传值改为传引用, 并消除了 `TcpServer` 的某成员函数中对 `std::shared_ptr` 的重复拷贝 | 54,485     | -          | [`0b33da`](https://github.com/xubinh/xubinh_webserver/commit/0b33da78ac47c6301b4e256ee432fdfcf1808d2f) |
+| 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用 | 54,888 | - | [`afc6e3`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
 
 ### 与其他项目的横向比较
 
@@ -281,9 +282,10 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 探究为什么 `HttpRequest` 的 `_body` 成员没有用到也需要析构.
-  - 实现内存分配器, 替代 `std::vector<char>`, 优化 `MutableSizeTcpBuffer` 和 `HttpRequest` 的内存分配.
-  - 优化 `std::function` 的内存分配.
+  - 消除不必要的 `shared_from_this()`.
+  - 优化 `std::shared_ptr` 的内存分配.
+  - 优化 `std::vector<char>` 的内存分配, 包括 `MutableSizeTcpBuffer` 和 `HttpRequest` 等.
+  - 优化 `std::function` 的内存分配, 包括各个类的成员以及函子阻塞队列等.
   - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 避免在执行线程已知的情况下使用 `EventLoop->run`.
   - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
