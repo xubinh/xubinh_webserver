@@ -50,6 +50,26 @@ int Signalfd::create_signalfd(SignalSet initial_listening_set, int flags) {
     return fd;
 }
 
+Signalfd::~Signalfd() {
+    _pollable_file_descriptor.close_fd();
+
+    LOG_INFO << "exit destructor: Signalfd";
+}
+
+void Signalfd::start() {
+    if (!_signal_dispatcher) {
+        LOG_FATAL << "missing signal dispatcher";
+    }
+
+    _pollable_file_descriptor.register_read_event_callback(
+        [this](util::TimePoint time_stamp) {
+            _read_event_callback(time_stamp);
+        }
+    );
+
+    _pollable_file_descriptor.enable_read_event();
+}
+
 void Signalfd::_read_event_callback(util::TimePoint time_stamp) {
     struct signalfd_siginfo signal_info;
 

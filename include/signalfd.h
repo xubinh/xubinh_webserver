@@ -42,27 +42,13 @@ public:
     Signalfd(int fd, EventLoop *loop) : _pollable_file_descriptor(fd, loop) {
     }
 
-    ~Signalfd() {
-        _pollable_file_descriptor.close_fd();
-    }
+    ~Signalfd();
 
     void register_signal_dispatcher(SignalDispatcherType signal_dispatcher) {
         _signal_dispatcher = std::move(signal_dispatcher);
     }
 
-    void start() {
-        if (!_signal_dispatcher) {
-            LOG_FATAL << "missing signal dispatcher";
-        }
-
-        _pollable_file_descriptor.register_read_event_callback(
-            [this](util::TimePoint time_stamp) {
-                _read_event_callback(time_stamp);
-            }
-        );
-
-        _pollable_file_descriptor.enable_read_event();
-    }
+    void start();
 
     void stop() {
         _pollable_file_descriptor.detach_from_poller();

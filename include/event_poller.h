@@ -5,7 +5,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "util/type_traits.h"
 

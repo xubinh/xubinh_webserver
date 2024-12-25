@@ -27,6 +27,19 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     // disable_socketfd_nagle_algorithm(fd);
 }
 
+TcpConnectSocketfd::~TcpConnectSocketfd() {
+    if (!_is_closed()) {
+        LOG_FATAL << "tcp connect socketfd object (id: " << get_id()
+                  << ") destroyed before the connection is closed";
+    }
+
+    if (!_is_abotrted) {
+        _pollable_file_descriptor.close_fd();
+    }
+
+    LOG_TRACE << "TCP connection closed, id: " << _id;
+}
+
 void TcpConnectSocketfd::start() {
     if (_is_reading()) {
         LOG_ERROR << "try to start an already started tcp connect socketfd";
@@ -280,6 +293,14 @@ void TcpConnectSocketfd::_error_event_callback() {
     auto saved_errno = get_socketfd_errno(_pollable_file_descriptor.get_fd());
 
     LOG_SYS_ERROR << "TCP connection socket error, id: " << _id;
+}
+
+void TcpConnectSocketfd::_check_and_abort_impl(PredicateType predicate) {
+    LOG_TRACE << "enter event: _check_and_abort_impl";
+
+    if (predicate()) {
+        abort();
+    }
 }
 
 void TcpConnectSocketfd::_receive_all_data() {

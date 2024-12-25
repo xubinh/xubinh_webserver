@@ -43,18 +43,7 @@ public:
         util::TimePoint time_stamp
     );
 
-    ~TcpConnectSocketfd() {
-        if (!_is_closed()) {
-            LOG_FATAL << "tcp connect socketfd object (id: " << get_id()
-                      << ") destroyed before the connection is closed";
-        }
-
-        if (!_is_abotrted) {
-            _pollable_file_descriptor.close_fd();
-        }
-
-        LOG_TRACE << "TCP connection closed, id: " << _id;
-    }
+    ~TcpConnectSocketfd();
 
     const uint64_t &get_id() const {
         return _id;
@@ -160,13 +149,7 @@ private:
         return _pollable_file_descriptor.is_detached();
     }
 
-    void _check_and_abort_impl(PredicateType predicate) {
-        LOG_TRACE << "enter event: _check_and_abort_impl";
-
-        if (predicate()) {
-            abort();
-        }
-    }
+    void _check_and_abort_impl(PredicateType predicate);
 
     // only start reading when a read event is encountered
     void _receive_all_data();

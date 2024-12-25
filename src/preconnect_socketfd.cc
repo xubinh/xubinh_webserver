@@ -16,6 +16,10 @@ PreconnectSocketfd::PreconnectSocketfd(
       _pollable_file_descriptor(Socketfd::create_socketfd(), event_loop) {
 }
 
+PreconnectSocketfd::~PreconnectSocketfd() {
+    LOG_INFO << "exit destructor: PreconnectSocketfd";
+};
+
 void PreconnectSocketfd::start() {
     if (!_new_connection_callback) {
         LOG_FATAL << "missing new connection callback";

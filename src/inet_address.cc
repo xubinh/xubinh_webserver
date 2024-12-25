@@ -77,4 +77,12 @@ std::string InetAddress::get_ip() const {
     return std::string(ip_c_str);
 }
 
+void InetAddress::_check_validity() const {
+    auto protocol = _get_sa_family(&_in_unknown);
+
+    if (protocol != AF_INET && protocol != AF_INET6) {
+        LOG_FATAL << "unknown InetAddress protocol";
+    }
+}
+
 } // namespace xubinh_server

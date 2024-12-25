@@ -32,11 +32,7 @@ public:
         : _loop(loop), _server_address(server_address) {
     }
 
-    ~TcpClient() {
-        if (!_is_started) {
-            LOG_FATAL << "tried to destruct tcp client before starting it";
-        }
-    }
+    ~TcpClient();
 
     void register_connect_success_callback(
         ConnectSuccessCallbackType connect_success_callback

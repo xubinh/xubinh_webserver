@@ -44,6 +44,32 @@ ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop, bool prefer_et)
     : _pollable_file_descriptor(fd, event_loop, prefer_et, prefer_et) {
 }
 
+ListenSocketfd::~ListenSocketfd() {
+    _close_spare_fd();
+
+    _pollable_file_descriptor.detach_from_poller();
+
+    _pollable_file_descriptor.close_fd();
+
+    LOG_INFO << "exit destructor: ListenSocketfd";
+}
+
+void ListenSocketfd::start() {
+    if (!_new_connection_callback) {
+        LOG_FATAL << "missing new connection callback";
+    }
+
+    _pollable_file_descriptor.register_read_event_callback(
+        [this](util::TimePoint time_stamp) {
+            _read_event_callback(time_stamp);
+        }
+    );
+
+    _open_spare_fd();
+
+    _pollable_file_descriptor.enable_read_event();
+}
+
 int ListenSocketfd::_accept_new_connection(
     int listen_socketfd,
     std::unique_ptr<InetAddress> &peer_address_ptr,

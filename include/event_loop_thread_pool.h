@@ -6,7 +6,6 @@
 
 #include "event_loop.h"
 #include "event_loop_thread.h"
-#include "log_builder.h"
 
 namespace xubinh_server {
 

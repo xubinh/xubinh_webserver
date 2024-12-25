@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <functional>
 
-#include "log_builder.h"
 #include "util/time_point.h"
 
 namespace xubinh_server {
@@ -23,25 +22,7 @@ public:
         TimeInterval repetition_time_interval,
         int number_of_repetitions_left,
         TimerCallbackType callback
-    )
-        : _expiration_time_point(expiration_time_point),
-          _repetition_time_interval(std::max(
-              static_cast<int64_t>(0), repetition_time_interval.nanoseconds
-          )),
-          _number_of_repetitions_left(std::max(-1, number_of_repetitions_left)),
-          _callback(std::move(callback)) {
-        LOG_TRACE << "Timer::Timer";
-
-        LOG_TRACE << "address: " << this
-                  << ", expiration time: "
-                         + _expiration_time_point.to_datetime_string(
-                             TimePoint::Purpose::PRINTING
-                         )
-                         + ", number of repetitions left: "
-                         + (_number_of_repetitions_left == -1
-                                ? "∞"
-                                : std::to_string(_number_of_repetitions_left));
-    }
+    );
 
     // no copying
     Timer(const Timer &) = delete;

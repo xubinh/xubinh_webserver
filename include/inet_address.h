@@ -4,8 +4,6 @@
 #include <arpa/inet.h>
 #include <string>
 
-#include "log_builder.h"
-
 namespace xubinh_server {
 
 class InetAddress {
@@ -61,13 +59,7 @@ private:
         return *reinterpret_cast<const sa_family_t *>(address);
     }
 
-    void _check_validity() const {
-        auto protocol = _get_sa_family(&_in_unknown);
-
-        if (protocol != AF_INET && protocol != AF_INET6) {
-            LOG_FATAL << "unknown InetAddress protocol";
-        }
-    }
+    void _check_validity() const;
 
     // always store as network order
     union {

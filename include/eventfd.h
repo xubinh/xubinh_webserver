@@ -3,7 +3,6 @@
 
 #include <sys/eventfd.h>
 
-#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "util/time_point.h"
 
@@ -35,19 +34,7 @@ public:
         _message_callback = std::move(eventfd_message_callback);
     }
 
-    void start() {
-        if (!_message_callback) {
-            LOG_FATAL << "missing message callback";
-        }
-
-        _pollable_file_descriptor.register_read_event_callback(
-            [this](util::TimePoint time_stamp) {
-                _read_event_callback(time_stamp);
-            }
-        );
-
-        _pollable_file_descriptor.enable_read_event();
-    }
+    void start();
 
     // write operation
     //

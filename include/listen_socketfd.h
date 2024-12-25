@@ -4,7 +4,6 @@
 #include <functional>
 
 #include "inet_address.h"
-#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "socketfd.h"
 #include "util/time_point.h"
@@ -27,15 +26,7 @@ public:
 
     ListenSocketfd(int fd, EventLoop *event_loop, bool prefer_et = true);
 
-    ~ListenSocketfd() {
-        _close_spare_fd();
-
-        _pollable_file_descriptor.detach_from_poller();
-
-        _pollable_file_descriptor.close_fd();
-
-        LOG_INFO << "exit destructor: ListenSocketfd";
-    }
+    ~ListenSocketfd();
 
     // used by internal framework
     void register_new_connection_callback(
@@ -51,21 +42,7 @@ public:
     //         max_number_of_new_connections_at_a_time;
     // }
 
-    void start() {
-        if (!_new_connection_callback) {
-            LOG_FATAL << "missing new connection callback";
-        }
-
-        _pollable_file_descriptor.register_read_event_callback(
-            [this](util::TimePoint time_stamp) {
-                _read_event_callback(time_stamp);
-            }
-        );
-
-        _open_spare_fd();
-
-        _pollable_file_descriptor.enable_read_event();
-    }
+    void start();
 
 private:
     // simple wrapper for `::accept` with return values unchanged

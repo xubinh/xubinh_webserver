@@ -1,6 +1,13 @@
 #include "tcp_client.h"
+#include "log_builder.h"
 
 namespace xubinh_server {
+
+TcpClient::~TcpClient() {
+    if (!_is_started) {
+        LOG_FATAL << "tried to destruct tcp client before starting it";
+    }
+}
 
 void TcpClient::start() {
     if (_is_started) {

@@ -68,17 +68,7 @@ public:
     void stop();
 
     // runs in main loop
-    void run_for_each_connection(RunForEachConnectionCallbackType callback) {
-        LOG_TRACE << "register event -> main: run_for_each_connection";
-
-        _loop->run([&]() {
-            LOG_TRACE << "enter event: run_for_each_connection";
-
-            for (const auto &pair : _tcp_connect_socketfds) {
-                callback(pair.second);
-            }
-        });
-    }
+    void run_for_each_connection(RunForEachConnectionCallbackType callback);
 
     size_t get_number_of_tcp_connections() const {
         return _tcp_connect_socketfds.size();

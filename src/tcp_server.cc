@@ -1,4 +1,5 @@
 #include "tcp_server.h"
+#include "log_builder.h"
 #include "log_collector.h"
 
 namespace xubinh_server {
@@ -95,6 +96,20 @@ void TcpServer::stop() {
     _is_stopped = true;
 
     LOG_INFO << "TCP server has stopped";
+}
+
+void TcpServer::run_for_each_connection(
+    RunForEachConnectionCallbackType callback
+) {
+    LOG_TRACE << "register event -> main: run_for_each_connection";
+
+    _loop->run([&]() {
+        LOG_TRACE << "enter event: run_for_each_connection";
+
+        for (const auto &pair : _tcp_connect_socketfds) {
+            callback(pair.second);
+        }
+    });
 }
 
 void TcpServer::_new_connection_callback(

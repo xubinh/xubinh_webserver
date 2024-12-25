@@ -11,6 +11,20 @@ Eventfd::~Eventfd() {
     LOG_INFO << "exit destructor: Eventfd";
 }
 
+void Eventfd::start() {
+    if (!_message_callback) {
+        LOG_FATAL << "missing message callback";
+    }
+
+    _pollable_file_descriptor.register_read_event_callback(
+        [this](util::TimePoint time_stamp) {
+            _read_event_callback(time_stamp);
+        }
+    );
+
+    _pollable_file_descriptor.enable_read_event();
+}
+
 void Eventfd::increment_by_value(uint64_t value) {
     ssize_t bytes_written =
         ::write(_pollable_file_descriptor.get_fd(), &value, sizeof(value));

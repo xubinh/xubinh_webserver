@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "log_builder.h"
 #include "tcp_buffer.h"
 #include "tcp_connect_socketfd.h"
 

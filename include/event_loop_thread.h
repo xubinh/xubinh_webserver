@@ -21,17 +21,7 @@ public:
         const std::string &thread_name,
         ThreadInitializationCallbackType thread_initialization_callback,
         uint64_t loop_index = 0
-    )
-        : _thread(
-            [this, loop_index]() {
-                _worker_function(loop_index);
-            },
-            thread_name
-        ),
-          _thread_initialization_callback(
-              std::move(thread_initialization_callback)
-          ) {
-    }
+    );
 
     // no copy
     EventLoopThread(const EventLoopThread &) = delete;
@@ -41,11 +31,7 @@ public:
     EventLoopThread(EventLoopThread &&) = delete;
     EventLoopThread &operator=(EventLoopThread &&) = delete;
 
-    ~EventLoopThread() {
-        if (!is_joined()) {
-            LOG_FATAL << "event loop thread must be joined before destruction";
-        }
-    }
+    ~EventLoopThread();
 
     bool is_started() const {
         return _thread.is_started();

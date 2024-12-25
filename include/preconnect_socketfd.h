@@ -2,7 +2,6 @@
 #define __XUBINH_SERVER_PRECONNECT_SOCKETFD
 
 #include "inet_address.h"
-#include "log_builder.h"
 #include "pollable_file_descriptor.h"
 #include "socketfd.h"
 #include "util/time_point.h"
@@ -29,9 +28,7 @@ public:
 
     // should not modify the listening state of the underlying fd since the
     // ownership will be transfered later to the newly established connection
-    ~PreconnectSocketfd() {
-        LOG_INFO << "exit destructor: PreconnectSocketfd";
-    };
+    ~PreconnectSocketfd();
 
     void register_new_connection_callback(
         NewConnectionCallbackType new_connection_callback
