@@ -88,7 +88,7 @@ public:
         _method = UNSUPPORTED_HTTP_METHOD;
         _path.clear();
         _version = UNSUPPORTED_HTTP_VERSION;
-        _receive_time_point = util::TimePoint();
+        _receive_time_point = 0;
         _headers.clear();
         _body.clear();
     }
