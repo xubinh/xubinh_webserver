@@ -61,12 +61,6 @@ void message_callback(
             break;
         }
 
-        // LOG_DEBUG << "recieve message, buffer image: "
-        //                  + std::string(
-        //                      input_buffer->get_current_read_position(),
-        //                      input_buffer->get_current_write_position()
-        //                  );
-
         const char *client_message_end = newline_position + 1;
 
         const char *client_message_start =
@@ -84,7 +78,7 @@ void message_callback(
 
         tcp_connect_socketfd_ptr->send(msg.c_str(), msg.length());
 
-        LOG_DEBUG << "send message: "
+        LOG_TRACE << "send message: "
                          + std::string(
                              msg.c_str(), msg.c_str() + msg.length() - 1
                          );

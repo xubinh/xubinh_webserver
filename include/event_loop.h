@@ -68,7 +68,7 @@ public:
 
     TimerIdentifier run_at_time_point(
         TimePoint time_point,
-        const TimeInterval &repetition_time_interval,
+        TimeInterval repetition_time_interval,
         int number_of_repetitions,
         FunctorType functor,
         uint64_t functor_blocking_queue_index = 0
@@ -76,7 +76,7 @@ public:
 
     TimerIdentifier run_after_time_interval(
         TimeInterval time_interval,
-        const TimeInterval &repetition_time_interval,
+        TimeInterval repetition_time_interval,
         int number_of_repetitions,
         FunctorType functor,
         uint64_t functor_blocking_queue_index = 0

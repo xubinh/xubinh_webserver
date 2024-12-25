@@ -26,7 +26,7 @@ void Timerfd::start() {
 }
 
 void Timerfd::set_alarm_at_time_point(TimePoint time_point) {
-    LOG_DEBUG << "set alarm at time point: "
+    LOG_TRACE << "set alarm at time point: "
                      + time_point.to_datetime_string(
                          TimePoint::Purpose::PRINTING
                      );
@@ -44,7 +44,15 @@ void Timerfd::set_alarm_at_time_point(TimePoint time_point) {
         )
         == -1) {
 
-        LOG_SYS_FATAL << "timerfd_settime failed";
+        // the timer is rearmed successfully, according to the man page
+        if (errno == ECANCELED) {
+            LOG_TRACE << "a timer has been canceled due to discontinuous "
+                         "changes to the real-time clock";
+        }
+
+        else {
+            LOG_SYS_FATAL << "timerfd_settime failed";
+        }
     }
 }
 
@@ -57,7 +65,15 @@ void Timerfd::cancel() {
         )
         == -1) {
 
-        LOG_SYS_FATAL << "timerfd_settime failed";
+        // the timer is cancelled successfully, according to the man page
+        if (errno == ECANCELED) {
+            LOG_TRACE << "a timer has been canceled due to discontinuous "
+                         "changes to the real-time clock";
+        }
+
+        else {
+            LOG_SYS_FATAL << "timerfd_settime failed";
+        }
     }
 }
 
@@ -72,8 +88,8 @@ uint64_t Timerfd::_retrieve_the_number_of_expirations() {
 
     if (bytes_read == -1) {
         if (errno == ECANCELED) {
-            LOG_INFO << "a timer has been canceled due to discontinuous "
-                        "changes to the real-time clock";
+            LOG_TRACE << "a timer has been canceled due to discontinuous "
+                         "changes to the real-time clock";
         }
 
         else if (errno == EAGAIN) {

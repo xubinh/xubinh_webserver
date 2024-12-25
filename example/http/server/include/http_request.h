@@ -46,11 +46,11 @@ public:
 
     const char *get_version_type_as_string() const;
 
-    void set_receive_time_point(const util::TimePoint &receive_time_point) {
+    void set_receive_time_point(util::TimePoint receive_time_point) {
         _receive_time_point = receive_time_point;
     }
 
-    const util::TimePoint &get_receive_time_point() const {
+    util::TimePoint get_receive_time_point() const {
         return _receive_time_point;
     }
 

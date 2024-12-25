@@ -133,6 +133,10 @@ void TcpServer::_new_connection_callback(
     );
 
     new_tcp_connect_socketfd_ptr->start();
+
+    if (id % 10000 == 0) {
+        LOG_DEBUG << "TCP connection establishment checkpoint, id: " << id;
+    }
 }
 
 void TcpServer::_close_callback(
@@ -150,7 +154,7 @@ void TcpServer::_close_callback(
 
             LOG_TRACE << "erase TCP connection, id: " << connection_id;
 
-            LOG_DEBUG
+            LOG_TRACE
                 << "number of reference after releasing: "
                 << (_tcp_connect_socketfds.find(connection_id)
                             == _tcp_connect_socketfds.end()

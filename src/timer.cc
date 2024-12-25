@@ -3,7 +3,7 @@
 namespace xubinh_server {
 
 bool Timer::expire_once() {
-    LOG_DEBUG << "added a timer, address: " << this
+    LOG_TRACE << "added a timer, address: " << this
               << ", expiration time: "
                      + _expiration_time_point.to_datetime_string(
                          TimePoint::Purpose::PRINTING
@@ -46,7 +46,7 @@ bool Timer::expire_until(TimePoint time_point) {
         }
     }
 
-    LOG_DEBUG << "is still valid after expire_until: "
+    LOG_TRACE << "is still valid after expire_until: "
               << is_still_valid_after_last_time_of_expiration;
 
     return is_still_valid_after_last_time_of_expiration;

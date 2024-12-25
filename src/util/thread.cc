@@ -1,5 +1,4 @@
 #include "util/thread.h"
-#include "log_builder.h"
 #include "util/current_thread.h"
 
 namespace xubinh_server {
@@ -45,7 +44,9 @@ _MainThreadInitializer _thread_name_initializer;
 
 Thread::~Thread() {
     if (!_is_joined) {
-        LOG_FATAL << "destructor called before joining of the thread";
+        fprintf(stderr, "destructor called before joining of the thread\n");
+
+        ::abort();
     }
 }
 
@@ -64,7 +65,9 @@ void Thread::start() {
                 this
             )) {
 
-            LOG_SYS_FATAL << "failed to create new thread";
+            fprintf(stderr, "failed to create new thread\n");
+
+            ::abort();
         }
 
         // handover control to the worker thread
@@ -74,6 +77,14 @@ void Thread::start() {
     }
 
     _is_started = true;
+
+    // // debug
+    // fprintf(
+    //     stderr,
+    //     "thread started, name: %s, TID: %d\n",
+    //     _thread_name.c_str(),
+    //     _tid
+    // );
 }
 
 void Thread::join() {
@@ -90,19 +101,25 @@ void Thread::join() {
     if (_pthread_join_result) {
         switch (errno) {
         case EDEADLK:
-            LOG_FATAL << "dead lock detected when joining a thread";
+            fprintf(stderr, "dead lock detected when joining a thread\n");
+
+            ::abort();
 
             break;
 
         // will never encounter these, so make them fatal
         case EINVAL:
         case ESRCH:
-            LOG_FATAL << "something that is not supposed to happen happened";
+            fprintf(
+                stderr, "something that is not supposed to happen happened\n"
+            );
+
+            ::abort();
 
             break;
 
         default:
-            LOG_SYS_ERROR << "unknown error";
+            fprintf(stderr, "unknown error\n");
 
             break;
         }

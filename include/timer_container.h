@@ -29,7 +29,7 @@ public:
     // move out all the timers that are supposed to expire before or right at
     // the given time point
     std::vector<const Timer *>
-    move_out_before_or_at(const TimePoint &expiration_time_point);
+    move_out_before_or_at(TimePoint expiration_time_point);
 
 private:
     std::set<std::pair<TimePoint, const Timer *>> _timers;

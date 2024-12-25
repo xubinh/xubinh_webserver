@@ -77,9 +77,8 @@ public:
         _tcp_server.run_for_each_connection(std::move(callback));
     }
 
-    void set_connection_timeout_interval(
-        const TimeInterval &connection_timeout_interval
-    ) {
+    void
+    set_connection_timeout_interval(TimeInterval connection_timeout_interval) {
         _connection_timeout_interval = connection_timeout_interval;
     }
 

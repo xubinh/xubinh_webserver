@@ -19,8 +19,8 @@ public:
     using TimerCallbackType = std::function<void()>;
 
     Timer(
-        const TimePoint &expiration_time_point,
-        const TimeInterval &repetition_time_interval,
+        TimePoint expiration_time_point,
+        TimeInterval repetition_time_interval,
         int number_of_repetitions_left,
         TimerCallbackType callback
     )
@@ -32,7 +32,7 @@ public:
           _callback(std::move(callback)) {
         LOG_TRACE << "Timer::Timer";
 
-        LOG_DEBUG << "address: " << this
+        LOG_TRACE << "address: " << this
                   << ", expiration time: "
                          + _expiration_time_point.to_datetime_string(
                              TimePoint::Purpose::PRINTING

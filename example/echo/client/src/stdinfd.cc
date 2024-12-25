@@ -23,7 +23,7 @@ void Stdinfd::_read_event_callback(xubinh_server::util::TimePoint time_stamp) {
         if (bytes_read > 0) {
             _tcp_connect_socketfd_ptr->send(buffer, bytes_read);
 
-            LOG_DEBUG << "send message: "
+            LOG_TRACE << "send message: "
                              + std::string(buffer, buffer + bytes_read - 1);
 
             continue;

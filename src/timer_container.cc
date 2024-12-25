@@ -18,8 +18,7 @@ void TimerContainer::insert_all(const std::vector<const Timer *> &timers) {
 }
 
 bool TimerContainer::remove_one(const Timer *timer_ptr) {
-    const TimePoint &expiration_time_point =
-        timer_ptr->get_expiration_time_point();
+    TimePoint expiration_time_point = timer_ptr->get_expiration_time_point();
 
     const int &number_of_removed_timers =
         _timers.erase({expiration_time_point, timer_ptr});
@@ -28,7 +27,7 @@ bool TimerContainer::remove_one(const Timer *timer_ptr) {
 }
 
 std::vector<const Timer *>
-TimerContainer::move_out_before_or_at(const TimePoint &expiration_time_point) {
+TimerContainer::move_out_before_or_at(TimePoint expiration_time_point) {
     std::vector<const Timer *> timers_to_be_returned;
 
     auto range_begin = _timers.begin();

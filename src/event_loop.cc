@@ -39,6 +39,12 @@ EventLoop::EventLoop(
     });
 
     _timerfd.start();
+
+    // for debug purpose; yell to prove the thread is not dead
+    int64_t yell_interval = 3 * 1000 * static_cast<int64_t>(1000 * 1000);
+    run_after_time_interval(yell_interval, yell_interval, -1, []() {
+        LOG_DEBUG << "I'm not dead";
+    });
 }
 
 EventLoop::~EventLoop() noexcept {
@@ -70,7 +76,7 @@ void EventLoop::loop() {
         auto event_dispatchers =
             _event_poller.poll_for_active_events_of_all_fds();
 
-        LOG_DEBUG << "number of dispatchers: "
+        LOG_TRACE << "number of dispatchers: "
                          + std::to_string(event_dispatchers.size());
 
         util::TimePoint time_stamp;
@@ -124,7 +130,7 @@ void EventLoop::loop() {
             LOG_TRACE << "nothing happened on timerfd";
         }
 
-        LOG_DEBUG << "current size of poller: " << _event_poller.size();
+        LOG_TRACE << "current size of poller: " << _event_poller.size();
     }
 
     // clean up is done inside destructor
@@ -146,7 +152,7 @@ void EventLoop::run(
 
 TimerIdentifier EventLoop::run_at_time_point(
     TimePoint time_point,
-    const TimeInterval &repetition_time_interval,
+    TimeInterval repetition_time_interval,
     int number_of_repetitions,
     FunctorType functor,
     uint64_t functor_blocking_queue_index
@@ -170,7 +176,7 @@ TimerIdentifier EventLoop::run_at_time_point(
 
 TimerIdentifier EventLoop::run_after_time_interval(
     TimeInterval time_interval,
-    const TimeInterval &repetition_time_interval,
+    TimeInterval repetition_time_interval,
     int number_of_repetitions,
     FunctorType functor,
     uint64_t functor_blocking_queue_index
@@ -239,7 +245,7 @@ void EventLoop::_wake_up_this_loop(uint64_t functor_blocking_queue_index) {
 void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {
     TimePoint time_point = timer_ptr->get_expiration_time_point();
 
-    const TimePoint &earliest_expiration_time_point_before_insertion =
+    TimePoint earliest_expiration_time_point_before_insertion =
         _timer_container.get_earliest_expiration_time_point();
 
     _timer_container.insert_one(timer_ptr);
@@ -258,7 +264,7 @@ void EventLoop::_cancel_a_timer_and_update_alarm(const Timer *timer_ptr) {
         return;
     }
 
-    const TimePoint &earliest_expiration_time_point_after_removal =
+    TimePoint earliest_expiration_time_point_after_removal =
         _timer_container.get_earliest_expiration_time_point();
 
     // expiration delayed after removal
@@ -288,7 +294,7 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
     std::vector<const Timer *> expired_timers =
         _timer_container.move_out_before_or_at(time_point);
 
-    const TimePoint &exp_after_moving_out =
+    TimePoint exp_after_moving_out =
         _timer_container.get_earliest_expiration_time_point();
 
     std::vector<const Timer *> timers_that_are_still_valid;
@@ -311,7 +317,7 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
         return;
     }
 
-    const TimePoint &exp_after_executing_callbacks =
+    TimePoint exp_after_executing_callbacks =
         _timer_container.get_earliest_expiration_time_point();
 
     bool _new_callbacks_have_been_inserted =
@@ -319,7 +325,7 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
 
     _timer_container.insert_all(timers_that_are_still_valid);
 
-    const TimePoint &exp_after_inserting_all =
+    TimePoint exp_after_inserting_all =
         _timer_container.get_earliest_expiration_time_point();
 
     // set the alarm if it is not set inside the callback, or it is set inside

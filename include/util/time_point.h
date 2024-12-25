@@ -134,7 +134,7 @@ struct TimePoint {
         return TimePoint(*this) -= time_interval;
     }
 
-    TimeInterval operator-(TimePoint time_point) const noexcept {
+    TimeInterval operator-(const TimePoint &time_point) const noexcept {
         return nanoseconds_from_epoch - time_point.nanoseconds_from_epoch;
     }
 

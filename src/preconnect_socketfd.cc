@@ -82,7 +82,7 @@ void PreconnectSocketfd::_schedule_retry() {
 
     _number_of_retries += 1;
 
-    LOG_DEBUG << "scheduling retry, number of times: "
+    LOG_TRACE << "scheduling retry, number of times: "
                      + std::to_string(_number_of_retries);
 
     _pollable_file_descriptor.reset_to(Socketfd::create_socketfd());
@@ -126,7 +126,7 @@ void PreconnectSocketfd::_write_event_callback() {
     // must be retryable errors since otherwise would have already been blocked
     // by `_try_once()`
     else {
-        LOG_DEBUG << "error when trying to connect to server: "
+        LOG_TRACE << "error when trying to connect to server: "
                          + util::strerror_tl(saved_errno)
                          + " (errno=" + std::to_string(saved_errno)
                   << ")";
@@ -158,7 +158,7 @@ void PreconnectSocketfd::_try_once() {
 
     // error
     else {
-        LOG_DEBUG << "error when trying to connect to server: "
+        LOG_TRACE << "error when trying to connect to server: "
                          + util::strerror_tl(errno)
                          + " (errno=" + std::to_string(errno)
                   << ")";

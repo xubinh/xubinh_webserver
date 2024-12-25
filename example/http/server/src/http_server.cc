@@ -77,7 +77,7 @@ void HttpServer::_message_callback(
 void HttpServer::_remove_inactive_connections() {
     LOG_TRACE << "enter event: remove_inactive_connections";
 
-    LOG_DEBUG << "current number of TCP connections: "
+    LOG_TRACE << "current number of TCP connections: "
               << _tcp_server.get_number_of_tcp_connections();
 
     // draw a line to determine which connections are inactive
