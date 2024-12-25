@@ -13,6 +13,21 @@
   - [muduo 项目中所采用的抽象](#muduo-%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%80%E9%87%87%E7%94%A8%E7%9A%84%E6%8A%BD%E8%B1%A1)
 - [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
 
+## 部署本项目
+
+```bash
+git clone https://github.com/xubinh/xubinh_webserver.git
+cd xubinh_webserver
+git clone https://github.com/xubinh/WebBench.git
+cd WebBench
+sudo apt-get install rpcbind libtirpc-dev exuberant-ctags
+make
+cd ..
+mkdir bin
+cp -t bin/ WebBench/webbench
+./script/http/test
+```
+
 ## 基准测试
 
 ### 结果展示
