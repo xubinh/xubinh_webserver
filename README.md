@@ -17,18 +17,19 @@
 
 ### 结果展示
 
-| 项目改进描述                                                                       | 短连接 QPS | 长连接 QPS | commit                                                                                                 |
-| ---------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------ |
-| 初代稳定版本                                                                       | 38,661     | 84,392     | [`279433`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
-| 为每个工作线程在主线程中独立配备阻塞队列                                           | 37,852     | 80,460     | [`c48a40`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
-| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                       | 40,023     | 90,434     | [`6f1c4c`](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
-| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                        | 41,323     | 92,449     | [`60554e`](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
-| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`             | 39,577     | 96,732     | [`e82333`](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
-| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                   | 42,302     | 92,049     | [`0f5cf4`](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
-| 降低缓冲区的扩展大小, 避免 HTTP 请求体简短但离散的的情况下发生的无意义的内存重分配 | 43,958     | 90,321     | [`140107`](https://github.com/xubinh/xubinh_webserver/commit/14010785ea5ea7f38f8848ac0776d5d0ddb1caa5) |
-| 使用 lambda 表达式替换绝大多数的 `std::bind`                                       | 45,970     | -          | [`6b8a85`](https://github.com/xubinh/xubinh_webserver/commit/6b8a85437a6461cf759066222af6d4bd30989b9e) |
-| 降低 TCP 连接的时间戳初始化的 `clock_gettime` 系统调用的执行粒度                   | 49,534     | -          | [`2efc90`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
-| 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率                            | 51,750     | -          | [`85855f`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
+| 项目改进描述                                                                                                      | 短连接 QPS | 长连接 QPS | commit                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| 初代稳定版本                                                                                                      | 38,661     | 84,392     | [`279433`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
+| 为每个工作线程在主线程中独立配备阻塞队列                                                                          | 37,852     | 80,460     | [`c48a40`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
+| 取消 `TcpServer::_close_callback` 中对 `shared_ptr` 的值捕获                                                      | 40,023     | 90,434     | [`6f1c4c`](https://github.com/xubinh/xubinh_webserver/commit/6f1c4c8b9b9e928d1376ad660bdfa77d96fb891f) |
+| 将 TCP 连接对象的容器从 RBT 改为 Hash Table                                                                       | 41,323     | 92,449     | [`60554e`](https://github.com/xubinh/xubinh_webserver/commit/60554e960918c790de1fcd1c26864dffdc84f085) |
+| 将 `HttpRequest` 恢复为可复制的, 并取消 `HttpParser` 中的 `shared_ptr`                                            | 39,577     | 96,732     | [`e82333`](https://github.com/xubinh/xubinh_webserver/commit/e823334b7b9a944dcc9a179d2c43e7bd2c46cfac) |
+| 将 TCP 连接的单独的 non-blocking 设置操作整合至 `accept4` 调用中                                                  | 42,302     | 92,049     | [`0f5cf4`](https://github.com/xubinh/xubinh_webserver/commit/0f5cf40b5ed1e6a0fde23f3017e657aa2419046f) |
+| 降低缓冲区的扩展大小, 避免 HTTP 请求体简短但离散的的情况下发生的无意义的内存重分配                                | 43,958     | 90,321     | [`140107`](https://github.com/xubinh/xubinh_webserver/commit/14010785ea5ea7f38f8848ac0776d5d0ddb1caa5) |
+| 使用 lambda 表达式替换绝大多数的 `std::bind`                                                                      | 45,970     | -          | [`6b8a85`](https://github.com/xubinh/xubinh_webserver/commit/6b8a85437a6461cf759066222af6d4bd30989b9e) |
+| 降低 TCP 连接的时间戳初始化的 `clock_gettime` 系统调用的执行粒度                                                  | 49,534     | -          | [`2efc90`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
+| 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率                                                           | 51,750     | -          | [`85855f`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
+| 将 `EventPoller` 的某成员函数从传值改为传引用, 并消除了 `TcpServer` 的某成员函数中对 `std::shared_ptr` 的重复拷贝 | 53,815     | -          | [`c60e25`](https://github.com/xubinh/xubinh_webserver/commit/c60e25c7246e88c048bd7ee8c8888b669dd4934d) |
 
 ### 与其他项目的横向比较
 
@@ -280,6 +281,9 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
+  - 探究为什么 `HttpRequest` 的 `_body` 成员没有用到也需要析构.
+  - 实现内存分配器, 替代 `std::vector<char>`, 优化 `MutableSizeTcpBuffer` 和 `HttpRequest` 的内存分配.
+  - 优化 `std::function` 的内存分配.
   - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 避免在执行线程已知的情况下使用 `EventLoop->run`.
   - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
@@ -320,7 +324,9 @@ sudo apt-get install exuberant-ctags # 依赖
 
 - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 默认是 block-buffered 的, 导致在 fork 时缓冲区中还留存有一定数据并在此后复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);`.
 
-测试:
+使用方法示例:
+
+> - 注: 经测试, 60 秒的测试时间过长, 容易受到系统临时 CPU 占用的影响. 更好的方案是短时多测, 例如单次测试 10 秒, 同时连续测试 10 次, 以最大值作为最终结果.
 
 ```bash
 # 短连接 (默认)
