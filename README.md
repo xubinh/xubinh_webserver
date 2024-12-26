@@ -301,7 +301,6 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 消除不必要的 `shared_from_this()`.
   - 优化 `std::shared_ptr` 的内存分配.
   - 优化 `std::vector<char>` 的内存分配, 包括 `MutableSizeTcpBuffer` 和 `HttpRequest` 等.
   - 优化 `std::function` 的内存分配, 包括各个类的成员以及函子阻塞队列等.

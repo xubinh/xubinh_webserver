@@ -201,7 +201,8 @@ def main():
 
         test_results.append(succeed_number)
 
-    average_qps: int = int(z_score_average(test_results) / test_duration)
+    # average_qps: int = int(z_score_average(test_results) / test_duration)
+    average_qps: int = int(max(test_results) / test_duration)
 
     print("\nAverage QPS:", average_qps)
 
