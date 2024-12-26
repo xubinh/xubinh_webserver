@@ -14,9 +14,9 @@ namespace util {
 
 //////////////////////////////
 // [TODO]: clean these up
-template <typename T>
+template <typename T, typename T2 = T>
 using enable_if_is_pointer_type_t =
-    type_traits::enable_if_t<std::is_pointer<T>::value>;
+    type_traits::enable_if_t<std::is_pointer<T>::value, T2>;
 
 template <typename T>
 using disable_if_is_pointer_type_t =
@@ -82,6 +82,10 @@ private:
         }
 
         Holder(DecayedValueType &&value) : _value(std::move(value)) {
+        }
+
+        template <typename... Args>
+        Holder(Args &&...args) : _value(std::forward<Args>(args)...) {
         }
 
         // no copy (use clone instead)
@@ -184,23 +188,29 @@ public:
 
 private:
     // safe: returns a nullptr if the casting fails
-    template <
-        typename PointerType,
-        typename = enable_if_is_pointer_type_t<PointerType>>
-    friend PointerType any_cast(Any *source) noexcept {
-        using DecayedValueType = remove_cv_t<remove_pointer_t<PointerType>>;
+    template <typename PointerType>
+    friend enable_if_is_pointer_type_t<PointerType> any_cast(Any *source
+    ) noexcept;
 
-        return source && source->type() == typeid(DecayedValueType)
-                   ? address_of(static_cast<Any::Holder<DecayedValueType> *>(
-                                    source->_holder_base
-                   )
-                                    ->_value)
-                   : nullptr;
-    }
+    template <typename ValueType, typename... Args>
+    friend type_traits::disable_if_t<std::is_same<ValueType, Any &>::value, Any>
+    make_any(Args &&...args);
 
     // [NOTE]: might lead to memory leaks if exceptions are thrown
     HolderBase *_holder_base;
 };
+
+template <typename PointerType>
+enable_if_is_pointer_type_t<PointerType> any_cast(Any *source) noexcept {
+    using DecayedValueType = remove_cv_t<remove_pointer_t<PointerType>>;
+
+    return source && source->type() == typeid(DecayedValueType)
+               ? address_of(static_cast<Any::Holder<DecayedValueType> *>(
+                                source->_holder_base
+               )
+                                ->_value)
+               : nullptr;
+}
 
 // safe: compile-time error if the user tries to convert to non-const pointer
 template <typename PointerType>
@@ -265,7 +275,7 @@ inline ValueOrReferenceType any_cast(const Any &source) {
 template <
     typename ValueOrReferenceType,
     typename = disable_if_is_pointer_type_t<ValueOrReferenceType>>
-ValueOrReferenceType any_cast(Any &&source) {
+inline ValueOrReferenceType any_cast(Any &&source) {
     // generates compile-time error only if `ValueOrReferenceType` is non-const
     // lvalue reference type
     static_assert(
@@ -279,6 +289,18 @@ ValueOrReferenceType any_cast(Any &&source) {
     using ReferenceType = add_lvalue_reference_t<ValueOrReferenceType>;
 
     return any_cast<ReferenceType>(source);
+}
+
+template <typename ValueType, typename... Args>
+type_traits::disable_if_t<std::is_same<ValueType, Any &>::value, Any>
+make_any(Args &&...args) {
+    Any any;
+
+    any._holder_base =
+        new Any::Holder<type_traits::decay_t<ValueType>>(std::forward<Args>(args
+        )...);
+
+    return any;
 }
 
 } // namespace util
