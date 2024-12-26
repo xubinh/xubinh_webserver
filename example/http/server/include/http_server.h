@@ -85,13 +85,7 @@ public:
 private:
     void _connect_success_callback_wrapper(
         const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
-    ) {
-        tcp_connect_socketfd_ptr->context = HttpParser();
-
-        if (_connect_success_callback) {
-            _connect_success_callback(tcp_connect_socketfd_ptr);
-        }
-    }
+    );
 
     void _message_callback(
         TcpConnectSocketfd *tcp_connect_socketfd_ptr,

@@ -1,4 +1,5 @@
 #include "log_builder.h"
+#include "util/any.h"
 
 #include "../include/http_server.h"
 
@@ -42,6 +43,17 @@ void HttpServer::start() {
     }
 
     _tcp_server.start();
+}
+
+void HttpServer::_connect_success_callback_wrapper(
+    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
+) {
+    tcp_connect_socketfd_ptr->context =
+        xubinh_server::util::make_any<HttpParser>();
+
+    if (_connect_success_callback) {
+        _connect_success_callback(tcp_connect_socketfd_ptr);
+    }
 }
 
 void HttpServer::_message_callback(
