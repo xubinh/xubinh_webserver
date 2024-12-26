@@ -54,18 +54,34 @@ public:
         return _remote_address;
     }
 
-    void register_message_callback(MessageCallbackType message_callback) {
+    void register_message_callback(const MessageCallbackType &message_callback
+    ) {
+        _message_callback = message_callback;
+    }
+
+    void register_message_callback(MessageCallbackType &&message_callback) {
         _message_callback = std::move(message_callback);
     }
 
     void register_write_complete_callback(
-        WriteCompleteCallbackType write_complete_callback
+        const WriteCompleteCallbackType &write_complete_callback
+    ) {
+        _write_complete_callback = write_complete_callback;
+    }
+
+    void register_write_complete_callback(
+        WriteCompleteCallbackType &&write_complete_callback
     ) {
         _write_complete_callback = std::move(write_complete_callback);
     }
 
     // used by internal framework
-    void register_close_callback(CloseCallbackType close_callback) {
+    void register_close_callback(const CloseCallbackType &close_callback) {
+        _close_callback = close_callback;
+    }
+
+    // used by internal framework
+    void register_close_callback(CloseCallbackType &&close_callback) {
         _close_callback = std::move(close_callback);
     }
 

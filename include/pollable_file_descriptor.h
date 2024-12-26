@@ -59,23 +59,50 @@ public:
 
     void close_fd() const;
 
-    void register_read_event_callback(ReadEventCallbackType read_event_callback
+    void register_read_event_callback(
+        const ReadEventCallbackType &read_event_callback
     ) {
+        _read_event_callback = read_event_callback;
+    }
+
+    void
+    register_read_event_callback(ReadEventCallbackType &&read_event_callback) {
         _read_event_callback = std::move(read_event_callback);
     }
 
+    void register_write_event_callback(
+        const WriteEventCallbackType &write_event_callback
+    ) {
+        _write_event_callback = write_event_callback;
+    }
+
     void
-    register_write_event_callback(WriteEventCallbackType write_event_callback) {
+    register_write_event_callback(WriteEventCallbackType &&write_event_callback
+    ) {
         _write_event_callback = std::move(write_event_callback);
     }
 
-    void
-    register_close_event_callback(CloseEventCallbackType close_event_callback) {
-        _close_event_callback = std::move(close_event_callback);
+    void register_close_event_callback(
+        const CloseEventCallbackType &close_event_callback
+    ) {
+        _close_event_callback = close_event_callback;
     }
 
     void
-    register_error_event_callback(ErrorEventCallbackType error_event_callback) {
+    register_close_event_callback(CloseEventCallbackType &&close_event_callback
+    ) {
+        _close_event_callback = std::move(close_event_callback);
+    }
+
+    void register_error_event_callback(
+        const ErrorEventCallbackType &error_event_callback
+    ) {
+        _error_event_callback = error_event_callback;
+    }
+
+    void
+    register_error_event_callback(ErrorEventCallbackType &&error_event_callback
+    ) {
         _error_event_callback = std::move(error_event_callback);
     }
 
