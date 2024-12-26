@@ -30,6 +30,8 @@ public:
         EVENT_TYPE_ALL = EVENT_TYPE_READ | EVENT_TYPE_WRITE
     };
 
+    static size_t get_max_number_limit_of_file_descriptors_per_process();
+
     EventPoller();
 
     ~EventPoller();
@@ -39,7 +41,7 @@ public:
     void detach_fd(int fd);
 
     size_t size() const {
-        return _fds_that_are_listening_on.size();
+        return _number_of_fds_that_are_listening_on;
     }
 
     bool empty() const {
@@ -52,8 +54,6 @@ public:
     );
 
 private:
-    static constexpr int _MAX_SIZE_OF_EVENT_ARRAY = 65536;
-
     // - ignored but still must be greater than zero since Linux 2.6.8
     // - only used by `epoll_create`
     static constexpr int _SIZE_ARGUMENT_FOR_EPOLL_CREATE = 1;
@@ -61,9 +61,12 @@ private:
     // - only used by `epoll_create1` (added to the kernel in version 2.6.27)
     static constexpr int _EPOLL_CREATE1_FLAGS = EPOLL_CLOEXEC;
 
+    static const size_t _MAX_SIZE_OF_EVENT_ARRAY;
+
     int _epoll_fd;
-    epoll_event _event_array[_MAX_SIZE_OF_EVENT_ARRAY];
-    std::unordered_set<int> _fds_that_are_listening_on;
+    epoll_event *_event_array{new epoll_event[_MAX_SIZE_OF_EVENT_ARRAY]};
+    bool *_fds_that_are_listening_on{new bool[_MAX_SIZE_OF_EVENT_ARRAY]};
+    size_t _number_of_fds_that_are_listening_on{0};
 };
 
 } // namespace xubinh_server

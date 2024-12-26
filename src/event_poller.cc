@@ -1,9 +1,20 @@
 #include <sys/epoll.h>
+#include <sys/resource.h>
 
 #include "event_poller.h"
 #include "log_builder.h"
 
 namespace xubinh_server {
+
+size_t EventPoller::get_max_number_limit_of_file_descriptors_per_process() {
+    struct rlimit limit;
+
+    if (::getrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        LOG_SYS_FATAL << "getrlimit failed";
+    }
+
+    return static_cast<size_t>(limit.rlim_cur);
+}
 
 EventPoller::EventPoller() : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
 
@@ -13,7 +24,7 @@ EventPoller::EventPoller() : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
 }
 
 EventPoller::~EventPoller() {
-    if (!_fds_that_are_listening_on.empty()) {
+    if (_number_of_fds_that_are_listening_on) {
         LOG_WARN << "poller closed while there are still fds being listened on";
     }
 
@@ -21,9 +32,7 @@ EventPoller::~EventPoller() {
 }
 
 void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
-    auto it = _fds_that_are_listening_on.find(fd);
-
-    bool is_attached = it != _fds_that_are_listening_on.end();
+    bool is_attached = _fds_that_are_listening_on[fd];
 
     decltype(EPOLL_CTL_ADD) epoll_ctl_method_type =
         is_attached ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
@@ -40,17 +49,18 @@ void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
     }
 
     if (!is_attached) {
-        _fds_that_are_listening_on.insert(fd);
+        _fds_that_are_listening_on[fd] = true;
+        _number_of_fds_that_are_listening_on += 1;
     }
 }
 
 void EventPoller::detach_fd(int fd) {
-    auto it = _fds_that_are_listening_on.find(fd);
-
-    bool is_attached = it != _fds_that_are_listening_on.end();
+    bool is_attached = _fds_that_are_listening_on[fd];
 
     if (!is_attached) {
         LOG_WARN << "try to detach a fd that is not yet attached";
+
+        return;
     }
 
     if (::epoll_ctl(
@@ -64,7 +74,8 @@ void EventPoller::detach_fd(int fd) {
         LOG_SYS_FATAL << "epoll_ctl failed";
     }
 
-    _fds_that_are_listening_on.erase(fd);
+    _fds_that_are_listening_on[fd] = false;
+    _number_of_fds_that_are_listening_on -= 1;
 }
 
 void EventPoller::poll_for_active_events_of_all_fds(
@@ -94,5 +105,8 @@ void EventPoller::poll_for_active_events_of_all_fds(
 
     return;
 }
+
+const size_t EventPoller::_MAX_SIZE_OF_EVENT_ARRAY =
+    get_max_number_limit_of_file_descriptors_per_process();
 
 } // namespace xubinh_server
