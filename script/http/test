@@ -76,7 +76,14 @@ def run_server(test_name: str) -> subprocess.Popen:
 
 
 def run_webbench(duration: int) -> tuple[int, int]:
-    command = f"{WEBBENCH_EXECUTABLE_PATH} -t {duration} -c {WEBBENCH_CLIENT_NUMBER} {ENABLE_HTTP_1_1_SWITCH} {METHOD_SWITCH} {SERVER_HTTP_URL}"
+    command = "{} -t {} -c {} {} {} {}".format(
+        WEBBENCH_EXECUTABLE_PATH,
+        duration,
+        WEBBENCH_CLIENT_NUMBER,
+        ENABLE_HTTP_1_1_SWITCH,
+        METHOD_SWITCH,
+        SERVER_HTTP_URL,
+    )
 
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
