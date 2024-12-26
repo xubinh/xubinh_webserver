@@ -52,6 +52,7 @@ cp -t bin/ WebBench/webbench
 | 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用                                  | 54,888     | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
 | 使用右值引用避免对 `std::function` 的不必要的重复移动                                | 52,591     | -          | [`bf42f6f`](https://github.com/xubinh/xubinh_webserver/commit/bf42f6f89cdf2857cc25b9e3267ca02b84efbe6a) |
 | 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化                             | 51,791     | -          | [`4c98acb`](https://github.com/xubinh/xubinh_webserver/commit/4c98acb793fecc7224d6b033bd43f665fe16c183) |
+| 将 `EventPoller` 的文件描述符登记容器更改为定长布尔数组, 放弃 `std::unordered_map`   | 51,903     | -          | [`aa544e5`](https://github.com/xubinh/xubinh_webserver/commit/aa544e5c0d8e57372cb8677d0325a51dc8fc785e) |
 
 ### 与其他项目的横向比较
 
@@ -303,7 +304,6 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
   - 优化 `std::shared_ptr` 的内存分配.
   - 优化 `std::vector<char>` 的内存分配, 包括 `MutableSizeTcpBuffer` 和 `HttpRequest` 等.
   - 优化 `std::function` 的内存分配, 包括各个类的成员以及函子阻塞队列等.
