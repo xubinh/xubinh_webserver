@@ -68,7 +68,11 @@ public:
     void stop();
 
     // runs in main loop
-    void run_for_each_connection(RunForEachConnectionCallbackType callback);
+    void
+    run_for_each_connection(const RunForEachConnectionCallbackType &callback);
+
+    // runs in main loop
+    void run_for_each_connection(RunForEachConnectionCallbackType &&callback);
 
     size_t get_number_of_tcp_connections() const {
         return _tcp_connect_socketfds.size();

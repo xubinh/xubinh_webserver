@@ -99,17 +99,33 @@ void TcpServer::stop() {
 }
 
 void TcpServer::run_for_each_connection(
-    RunForEachConnectionCallbackType callback
+    const RunForEachConnectionCallbackType &callback
 ) {
     LOG_TRACE << "register event -> main: run_for_each_connection";
 
-    _loop->run([&]() {
+    _loop->run([=]() {
         LOG_TRACE << "enter event: run_for_each_connection";
 
         for (const auto &pair : _tcp_connect_socketfds) {
             callback(pair.second);
         }
     });
+}
+
+void TcpServer::run_for_each_connection(
+    RunForEachConnectionCallbackType &&callback
+) {
+    LOG_TRACE << "register event -> main: run_for_each_connection";
+
+    auto callback_wrapper = [this](RunForEachConnectionCallbackType &callback) {
+        LOG_TRACE << "enter event: run_for_each_connection";
+
+        for (const auto &pair : _tcp_connect_socketfds) {
+            callback(pair.second);
+        }
+    };
+
+    _loop->run(std::bind(std::move(callback_wrapper), std::move(callback)));
 }
 
 void TcpServer::_new_connection_callback(
