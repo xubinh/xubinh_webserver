@@ -36,7 +36,7 @@ cp -t bin/ WebBench/webbench
 
 ### 结果展示
 
-| 项目改进描述                                                                         | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                                  |
+| 项目改进描述                                                                         | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
 | ------------------------------------------------------------------------------------ | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
 | 初代稳定版本                                                                         | 38,661     | 84,392     | [`2794336`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
 | 为每个工作线程在主线程中独立配备阻塞队列                                             | 37,852     | 80,460     | [`c48a407`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
@@ -49,12 +49,13 @@ cp -t bin/ WebBench/webbench
 | 降低 TCP 连接的时间戳初始化的 `clock_gettime` 系统调用的执行粒度                     | 49,534     | -          | [`2efc904`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
 | 降低 `EventLoop` 的 timerfd 和 eventfd 的系统调用的频率                              | 51,750     | -          | [`85855f8`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
 | 将 "按值返回 `std::vector`" 改为 "按引用传入", 并消除对 `std::shared_ptr` 的重复拷贝 | 54,485     | -          | [`0b33da7`](https://github.com/xubinh/xubinh_webserver/commit/0b33da78ac47c6301b4e256ee432fdfcf1808d2f) |
-| 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用                                  | 54,888     | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b)  |
+| 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用                                  | 54,888     | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
+| 使用右值引用避免对 `std::function` 的不必要的重复移动                                | 52,591     | -          | [`bf42f6f`](https://github.com/xubinh/xubinh_webserver/commit/bf42f6f89cdf2857cc25b9e3267ca02b84efbe6a) |
 
 ### 与其他项目的横向比较
 
-| 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                          |
-| ---------------------------------------------------------- | ---------- | ---------- | ----------------------------------------------------------------------------------------------- |
+| 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                           |
+| ---------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------ |
 | [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
 
 ### 测试机硬件参数
@@ -301,14 +302,13 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
+  - 避免在执行线程已知的情况下使用 `EventLoop->run`.
+  - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
   - 优化 `std::shared_ptr` 的内存分配.
   - 优化 `std::vector<char>` 的内存分配, 包括 `MutableSizeTcpBuffer` 和 `HttpRequest` 等.
   - 优化 `std::function` 的内存分配, 包括各个类的成员以及函子阻塞队列等.
   - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
-  - 避免在执行线程已知的情况下使用 `EventLoop->run`.
-  - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
   - 手动实现各种同步原语, 尽可能降低线程间的竞争代价.
-  - 尽可能使用右值引用避免不必要的拷贝和移动.
 - [ ] 其他:
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
