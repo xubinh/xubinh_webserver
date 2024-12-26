@@ -302,12 +302,12 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
+  - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 避免在执行线程已知的情况下使用 `EventLoop->run`.
   - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
   - 优化 `std::shared_ptr` 的内存分配.
   - 优化 `std::vector<char>` 的内存分配, 包括 `MutableSizeTcpBuffer` 和 `HttpRequest` 等.
   - 优化 `std::function` 的内存分配, 包括各个类的成员以及函子阻塞队列等.
-  - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 手动实现各种同步原语, 尽可能降低线程间的竞争代价.
 - [ ] 其他:
   - 检查是否存在内存泄漏.
