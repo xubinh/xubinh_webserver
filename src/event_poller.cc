@@ -29,6 +29,9 @@ EventPoller::~EventPoller() {
     }
 
     ::close(_epoll_fd);
+
+    delete[] _event_array;
+    delete[] _fds_that_are_listening_on;
 }
 
 void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
