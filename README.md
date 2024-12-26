@@ -51,6 +51,7 @@ cp -t bin/ WebBench/webbench
 | 将 "按值返回 `std::vector`" 改为 "按引用传入", 并消除对 `std::shared_ptr` 的重复拷贝 | 54,485     | -          | [`0b33da7`](https://github.com/xubinh/xubinh_webserver/commit/0b33da78ac47c6301b4e256ee432fdfcf1808d2f) |
 | 删除 `HttpRequest` 的初始化时间戳的不必要的系统调用                                  | 54,888     | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
 | 使用右值引用避免对 `std::function` 的不必要的重复移动                                | 52,591     | -          | [`bf42f6f`](https://github.com/xubinh/xubinh_webserver/commit/bf42f6f89cdf2857cc25b9e3267ca02b84efbe6a) |
+| 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化                             | 51,791     | -          | [`4c98acb`](https://github.com/xubinh/xubinh_webserver/commit/4c98acb793fecc7224d6b033bd43f665fe16c183) |
 
 ### 与其他项目的横向比较
 
@@ -302,7 +303,6 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化.
   - 避免在执行线程已知的情况下使用 `EventLoop->run`.
   - 放弃 `std::unordered_map`, 更改 `EventPoller` 的文件描述符登记容器为定长布尔数组.
   - 优化 `std::shared_ptr` 的内存分配.
