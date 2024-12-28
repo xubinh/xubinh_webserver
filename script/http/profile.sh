@@ -4,10 +4,10 @@ APP_NAME="http"
 SERVER_EXECUTABLE_PATH="./build/example/$APP_NAME/server/$APP_NAME""_server"
 SLEEP_SECONDS=1
 
-BUILD_SCRIPT_PATH="./script/build"
+BUILD_SCRIPT_PATH="./script/build.sh"
 
 WEBBENCH_EXECUTABLE_PATH="./bin/webbench"
-NUMBER_OF_SECONDS_TO_TEST=120
+NUMBER_OF_SECONDS_TO_TEST=300
 
 PERF_DATA_FILE_PATH="perf.data"
 PERF_SCRIPT_OUTPUT_FILE_PATH="$PERF_DATA_FILE_PATH".out
@@ -79,7 +79,8 @@ echo "Drawing... (\`$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH\` -> \`$FLAME_GRAPH_SVG
 
 # gray color is not supported by default; one could go to the flamegraph code base and write his own color palette
 # ../FlameGraph/flamegraph.pl "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH" >"$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH"
-../FlameGraph/flamegraph.pl --colors=gray "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH" >"$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH"
+../FlameGraph/flamegraph.pl --colors=gray --fonttype="monospace" --height=20 \
+    "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH" >"$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH"
 
 echo "Removing auxiliary files..."
 
