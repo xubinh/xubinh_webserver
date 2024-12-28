@@ -6,6 +6,21 @@ namespace xubinh_server {
 
 namespace util {
 
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+template <typename T>
+BlockingQueue<T>::~BlockingQueue() {
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        while (!_queue.empty()) {
+            delete _queue.front();
+
+            _queue.pop_front();
+        }
+    }
+}
+#endif
+
 template <typename T>
 void BlockingQueue<T>::push(T element) {
     {
@@ -18,15 +33,24 @@ void BlockingQueue<T>::push(T element) {
             });
         }
 
-        _queue.push_back(std::move(element)); // move whenever possible
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+        _queue.push_back(new T(std::move(element)));
+#else
+        _queue.push_back(std::move(element));
+#endif
     }
 
     _cond_queue_not_empty.notify_one();
 }
 
 template <typename T>
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+T *BlockingQueue<T>::pop() {
+    T *popped_element;
+#else
 T BlockingQueue<T>::pop() {
     T popped_element;
+#endif
 
     {
         std::unique_lock<std::mutex> lock(_mutex);
@@ -38,7 +62,11 @@ T BlockingQueue<T>::pop() {
             });
         }
 
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+        popped_element = _queue.front();
+#else
         popped_element = std::move(_queue.front());
+#endif
 
         _queue.pop_front();
     }

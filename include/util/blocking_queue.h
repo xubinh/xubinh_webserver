@@ -14,7 +14,11 @@ namespace util {
 template <typename T>
 class BlockingQueue {
 public:
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+    using ContainerType = std::deque<T *>;
+#else
     using ContainerType = std::deque<T>;
+#endif
 
     explicit BlockingQueue(int capacity) : _capacity(capacity) {
     }
@@ -27,14 +31,24 @@ public:
     BlockingQueue(BlockingQueue &&) = delete;
     BlockingQueue &operator=(BlockingQueue &&) = delete;
 
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+    ~BlockingQueue();
+#else
+    ~BlockingQueue() = default;
+#endif
+
     void push(T element);
 
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+    T *pop();
+#else
     T pop();
+#endif
 
     ContainerType pop_all();
 
 private:
-    std::deque<T> _queue;
+    ContainerType _queue;
     const size_t _capacity;
     std::mutex _mutex;
     std::condition_variable _cond_queue_not_full;
