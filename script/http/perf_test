@@ -77,7 +77,9 @@ echo "Folding... (\`$PERF_SCRIPT_OUTPUT_FILE_PATH\` -> \`$FOLDED_PERF_SCRIPT_OUT
 
 echo "Drawing... (\`$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH\` -> \`$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH\`)"
 
-../FlameGraph/flamegraph.pl "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH" >"$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH"
+# gray color is not supported by default; one could go to the flamegraph code base and write his own color palette
+# ../FlameGraph/flamegraph.pl "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH" >"$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH"
+../FlameGraph/flamegraph.pl --colors=gray "$FOLDED_PERF_SCRIPT_OUTPUT_FILE_PATH" >"$FLAME_GRAPH_SVG_OUTPUT_FILE_PATH"
 
 echo "Removing auxiliary files..."
 
