@@ -305,10 +305,12 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 继续探究同步机制是否是性能瓶颈.
-  - 优化 `std::shared_ptr` 的内存分配.
-  - 优化 `std::vector<char>` 的内存分配, 包括 `MutableSizeTcpBuffer` 和 `HttpRequest` 等.
-  - 优化 `std::function` 的内存分配, 包括各个类的成员以及函子阻塞队列等.
+  - 优化内存分配:
+    - 考虑在使用 `std::shared_ptr` 的场景下究竟是使用 `std::map` 作为容器好还是使用 `std::unordered_map` 作为容器好, 并优化内存分配.
+    - 使用 `std::shared_ptr<TcpConnectSocketfd>` 时底层的 `TcpConnectSocketfd` 对象的内存分配.
+    - 在 `TcpConnectSocketfd` 及其成员 `PollableFileDescriptor` 中的 `std::function` 成员的内存分配.
+    - 在 `TcpConnectSocketfd` 的成员 `MutableSizeTcpBuffer` 中的 `std::vector<char>` 成员的内存分配与初始化.
+    - 在 `HttpRequest` 中的 `std::map<std::string, std::string>` 成员和 `std::vector<char>` 成员的内存分配.
 - [ ] 其他:
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
