@@ -18,7 +18,11 @@ EventLoop::EventLoop(
       _owner_thread_tid(util::current_thread::get_tid()) {
 
     for (int i = 0; i < _number_of_functor_blocking_queues; i++) {
+#ifdef __USE_LOCK_FREE_QUEUE
+        _functor_blocking_queues[i] = new FunctorQueue;
+#else
         _functor_blocking_queues[i] = new FunctorQueue(_FUNCTOR_QUEUE_CAPACITY);
+#endif
 
         _eventfds[i] = new Eventfd(Eventfd::create_eventfd(0), this);
         auto &eventfd_pilot_lamp = _eventfd_pilot_lamps[i];
@@ -101,12 +105,40 @@ void EventLoop::loop() {
             LOG_TRACE << "eventfd triggered";
 
             for (auto &_functor_blocking_queue_ptr : _functor_blocking_queues) {
+#ifdef __USE_LOCK_FREE_QUEUE
+#ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
+                FunctorType *functor_ptr;
+
+                while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
+                    (*functor_ptr)();
+                    delete functor_ptr;
+                }
+#else
+                std::shared_ptr<FunctorType> functor_ptr;
+
+                while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
+                    (*functor_ptr)();
+                }
+#endif
+#else
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+                const auto &queued_functors =
+                    _functor_blocking_queue_ptr->pop_all();
+
+                for (auto &functor : queued_functors) {
+                    (*functor)();
+
+                    delete functor;
+                }
+#else
                 const auto &queued_functors =
                     _functor_blocking_queue_ptr->pop_all();
 
                 for (auto &functor : queued_functors) {
                     functor();
                 }
+#endif
+#endif
             }
 
             _eventfd_triggered = false;

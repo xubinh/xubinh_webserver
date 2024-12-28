@@ -13,6 +13,11 @@
 #include "timerfd.h"
 #include "util/blocking_queue.h"
 #include "util/current_thread.h"
+#ifdef __USE_LOCK_FREE_QUEUE
+#include "util/lock_free_queue.h"
+#else
+#include "util/blocking_queue.h"
+#endif
 
 namespace xubinh_server {
 
@@ -27,7 +32,11 @@ private:
 
 public:
     using FunctorType = std::function<void()>;
+#ifdef __USE_LOCK_FREE_QUEUE
+    using FunctorQueue = util::SpscLockFreeQueue<EventLoop::FunctorType>;
+#else
     using FunctorQueue = util::BlockingQueue<EventLoop::FunctorType>;
+#endif
 
     static void set_alarm_advancing_threshold(int64_t alarm_advancing_threshold
     ) noexcept {
