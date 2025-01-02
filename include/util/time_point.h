@@ -176,7 +176,9 @@ struct TimePoint {
         Purpose::NUMBER_OF_ALL_PURPOSES
     )]{29, 29};
 
-    static constexpr int64_t FOREVER = 0x7fffffffffffffff;
+    static constexpr int64_t FOREVER =
+        0x7ffffffffffffffe; // leave one second of room for implementing the
+                            // semantics of "longer-than-forever"
 
     int64_t nanoseconds_from_epoch;
 };
