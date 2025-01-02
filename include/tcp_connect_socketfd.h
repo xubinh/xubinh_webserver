@@ -159,8 +159,7 @@ private:
     }
 
     bool _is_stopped() const {
-        // either hasn't started at all or already stopped
-        return !_is_reading() || _pollable_file_descriptor.is_detached();
+        return _pollable_file_descriptor.is_detached();
     }
 
     void _check_and_abort_impl(PredicateType predicate);

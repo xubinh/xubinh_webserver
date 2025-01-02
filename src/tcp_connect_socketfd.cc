@@ -31,8 +31,11 @@ TcpConnectSocketfd::TcpConnectSocketfd(
 
 TcpConnectSocketfd::~TcpConnectSocketfd() {
     if (!_is_stopped()) {
-        LOG_FATAL << "tcp connect socketfd object (id: " << get_id()
-                  << ") destroyed before the connection is closed";
+        // might occur when the connection is sent to be registered by the
+        // current loop but the worker loop exit before actually registering it
+        // (and detaching it)
+        LOG_WARN << "tcp connect socketfd object (id: " << get_id()
+                 << ") destroyed before the connection is closed";
     }
 
     if (!_is_abotrted) {
