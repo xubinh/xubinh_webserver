@@ -596,8 +596,9 @@ public:
 
     // do nothing; each instance is independent
     template <typename AnotherSlabType>
-    constexpr StaticSlabAllocator(const StaticSlabAllocator<AnotherSlabType>
-                                      &) {
+    constexpr StaticSlabAllocator(const StaticSlabAllocator<
+                                  AnotherSlabType,
+                                  LOCK_TYPE> &) {
     }
 
     SlabType *allocate(size_t n) {
