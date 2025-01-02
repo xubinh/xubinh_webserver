@@ -25,10 +25,12 @@ TcpConnectSocketfd::TcpConnectSocketfd(
 
     // [NOTE]: this line is for testing
     // disable_socketfd_nagle_algorithm(fd);
+
+    // LOG_TRACE << "TCP connection created, id: " << _id;
 }
 
 TcpConnectSocketfd::~TcpConnectSocketfd() {
-    if (!_is_closed()) {
+    if (!_is_stopped()) {
         LOG_FATAL << "tcp connect socketfd object (id: " << get_id()
                   << ") destroyed before the connection is closed";
     }
@@ -37,7 +39,7 @@ TcpConnectSocketfd::~TcpConnectSocketfd() {
         _pollable_file_descriptor.close_fd();
     }
 
-    LOG_TRACE << "TCP connection closed, id: " << _id;
+    // LOG_TRACE << "TCP connection closed, id: " << _id;
 }
 
 void TcpConnectSocketfd::start() {
@@ -163,7 +165,7 @@ void TcpConnectSocketfd::check_and_abort(PredicateType predicate) {
 
 void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     // could be called after the connection is closed, so check it first
-    if (_is_closed()) {
+    if (_is_stopped()) {
         return;
     }
 
@@ -225,7 +227,7 @@ void TcpConnectSocketfd::_write_event_callback() {
     // triggered at least till the next poll; but if the close event is also
     // triggered at this poll, then it suggests that there might be something
     // wrong with the peer and the local should stop sending data
-    if (_is_closed()) {
+    if (_is_stopped()) {
         return;
     }
 
@@ -270,7 +272,7 @@ void TcpConnectSocketfd::_write_event_callback() {
 void TcpConnectSocketfd::_close_event_callback() {
     LOG_TRACE << "tcp connect socketfd close event encountered, id: " << _id;
 
-    // if (_is_closed()) {
+    // if (_is_stopped()) {
     //     LOG_FATAL << "close event encountered after being closed";
     // }
 
@@ -290,7 +292,7 @@ void TcpConnectSocketfd::_close_event_callback() {
 void TcpConnectSocketfd::_error_event_callback() {
     LOG_TRACE << "tcp connect socketfd error event encountered, id: " << _id;
 
-    auto saved_errno = get_socketfd_errno(_pollable_file_descriptor.get_fd());
+    errno = get_socketfd_errno(_pollable_file_descriptor.get_fd());
 
     LOG_SYS_ERROR << "TCP connection socket error, id: " << _id;
 }

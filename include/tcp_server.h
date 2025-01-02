@@ -1,12 +1,12 @@
 #ifndef __XUBINH_SERVER_TCP_SERVER
 #define __XUBINH_SERVER_TCP_SERVER
 
-// #include <map>
-#include <unordered_map>
+#include <map>
 
 #include "event_loop_thread_pool.h"
 #include "listen_socketfd.h"
 #include "tcp_connect_socketfd.h"
+#include "util/slab_allocator.h"
 
 namespace xubinh_server {
 
@@ -108,7 +108,13 @@ private:
     std::unique_ptr<ListenSocketfd> _listen_socketfd;
 
     // std::map<uint64_t, TcpConnectSocketfdPtr> _tcp_connect_socketfds;
-    std::unordered_map<uint64_t, TcpConnectSocketfdPtr> _tcp_connect_socketfds;
+    std::map<
+        uint64_t,
+        TcpConnectSocketfdPtr,
+        std::less<uint64_t>,
+        util::SimpleSlabAllocator<
+            std::pair<const uint64_t, TcpConnectSocketfdPtr>>>
+        _tcp_connect_socketfds;
 
     std::atomic<uint64_t> _tcp_connection_id_counter{0};
 

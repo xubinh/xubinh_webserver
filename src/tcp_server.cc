@@ -9,6 +9,17 @@ TcpServer::~TcpServer() {
         LOG_SYS_FATAL << "tried to destruct tcp server before stopping it";
     }
 
+    _thread_pool_ptr.reset();
+
+    if (!_tcp_connect_socketfds.empty()) {
+        LOG_WARN << "TCP server stopped when there are still connections "
+                    "left, closing them abruptly...";
+
+        for (auto &pair : _tcp_connect_socketfds) {
+            _close_callback(&(*pair.second), 0);
+        }
+    }
+
     LOG_INFO << "exit destructor: TcpServer";
 
     // for the case where worker threads got blocked and thread pool
@@ -135,14 +146,27 @@ void TcpServer::_new_connection_callback(
 ) {
     uint64_t id =
         _tcp_connection_id_counter.fetch_add(1, std::memory_order_relaxed);
+    LOG_TRACE << "Does connection (id: " << id << ") already exist: "
+              << (_tcp_connect_socketfds.find(id)
+                  != _tcp_connect_socketfds.end());
     EventLoop *loop =
         _thread_pool_capacity > 0 ? _thread_pool_ptr->get_next_loop() : _loop;
     InetAddress local_address{connect_socketfd, InetAddress::LOCAL};
 
     auto insert_result = _tcp_connect_socketfds.emplace(
         id,
-        std::make_shared<TcpConnectSocketfd>(
-            connect_socketfd, loop, id, local_address, peer_address, time_stamp
+        // std::make_shared<TcpConnectSocketfd>(
+        //     connect_socketfd, loop, id, local_address, peer_address,
+        //     time_stamp
+        // )
+        std::allocate_shared<TcpConnectSocketfd>(
+            util::StaticSlabAllocator<TcpConnectSocketfd>(),
+            connect_socketfd,
+            loop,
+            id,
+            local_address,
+            peer_address,
+            time_stamp
         )
     );
 
