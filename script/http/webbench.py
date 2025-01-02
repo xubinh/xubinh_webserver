@@ -199,6 +199,20 @@ def main():
         print(f"Succeed number: {succeed_number}")
         print(f"Failed number: {failed_number}")
 
+        if failed_number > 0:
+            output_file_name = f"server-crash-report-{i + 1}.txt"
+
+            print(
+                f"Something went wrong, `stdout` and `stderr` are output to file: ./{output_file_name}"
+            )
+            assert server_process.stdout and server_process.stderr
+
+            with open(output_file_name, "wb") as file:
+                file.write(b"stdout:\n\n")
+                file.write(server_process.stdout.read())
+                file.write(b"\nstdout:\n\n")
+                file.write(server_process.stderr.read())
+
         test_results.append(succeed_number)
 
     # average_qps: int = int(z_score_average(test_results) / test_duration)
