@@ -106,7 +106,7 @@ def run_webbench(duration: int) -> tuple[int, int]:
         raise RuntimeError(msg)
 
 
-def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int]:
+def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int, int]:
     assert len(values) > 0, "empty list"
 
     mean = sum(values) / len(values)
@@ -115,7 +115,7 @@ def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int
 
     # all values are identical
     if abs(standard_deviation) < 1e-8:
-        return values[0], 0
+        return values[0], values[0], 0
 
     values = [
         value
@@ -128,9 +128,9 @@ def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int
 
     new_mean = sum(values) / len(values)
     new_variance = sum((value - mean) ** 2 for value in values) / len(values)
-    new_standard_deviation = variance**0.5
+    new_standard_deviation = new_variance**0.5
 
-    return int(new_mean), int(new_standard_deviation)
+    return max(values), int(new_mean), int(new_standard_deviation)
 
 
 def get_input_arguments() -> tuple[int, int]:
@@ -222,13 +222,16 @@ def main():
         test_results.append(succeed_number)
 
     # queries per test
-    average_qpt, standard_deviation = z_score_average(test_results)
+    max_qpt, mean_qpt, standard_deviation_qpt = z_score_average(test_results)
 
-    average_qps: int = average_qpt // test_duration
+    max_qps: int = max_qpt // test_duration
+    mean_qps: int = mean_qpt // test_duration
+    standard_deviation_qps: int = standard_deviation_qpt // test_duration
 
     print("")
-    print(f"Average QPS: {average_qps}")
-    print(f"Standard Deviation: {standard_deviation}")
+    print(f"Max QPS: {max_qps}")
+    print(f"Average QPS: {mean_qps}")
+    print(f"Standard Deviation: {standard_deviation_qps}")
 
 
 if __name__ == "__main__":
