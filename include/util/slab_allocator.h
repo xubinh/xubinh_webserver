@@ -50,7 +50,7 @@ protected:
 
     static constexpr const size_t _SLAB_ALIGNMENT = alignof(SlabType);
 
-    static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 400;
+    static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 4000;
 };
 
 // allocate and deallocate exactly one object each time
