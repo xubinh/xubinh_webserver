@@ -14,6 +14,18 @@ namespace xubinh_server {
 
 class LogCollector {
 public:
+    struct CleanUpHelper {
+        // must be called exactly once and before the definitions of all global
+        // variables that depends on the logger
+        CleanUpHelper() = default;
+
+        ~CleanUpHelper() {
+            if (_is_instantiated.load(std::memory_order_relaxed)) {
+                delete _log_collector_singleton_instance;
+            }
+        }
+    };
+
     // not thread-safe
     static void set_base_name(const std::string &path);
 
@@ -65,6 +77,9 @@ private:
     static constexpr decltype(BufferVector().size()
     ) _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
 
+    static LogCollector *_log_collector_singleton_instance;
+
+    // only for flush
     static std::atomic<bool> _is_instantiated;
 
     ChunkBufferPtr _current_chunk_buffer_ptr{new LogChunkBuffer};

@@ -25,6 +25,9 @@
 
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
+// manually release the singleton logger instance
+xubinh_server::LogCollector::CleanUpHelper logger_clean_up_hook;
+
 std::unique_ptr<xubinh_server::Signalfd>
     signalfd_ptr; // for lazy initialization
 
@@ -323,10 +326,12 @@ void http_request_callback(
 
 int main(int argc, char *argv[]) {
     if (argc > 2) {
-        LOG_FATAL << "Usage: " << argv[0] << " [log_file_base_name]";
+        ::fprintf(stderr, "Usage: %s [log_file_base_name]\n", argv[0]);
+
+        ::exit(1);
     }
 
-    std::string log_file_base_name = argc == 2 ? std::string(argv[1]) : "";
+    std::string log_file_base_name = (argc == 2 ? std::string(argv[1]) : "");
 
     xubinh_server::LogCollector::set_base_name(log_file_base_name);
 
@@ -394,6 +399,8 @@ int main(int argc, char *argv[]) {
     server.start();
 
     LOG_INFO << "server started listening on " + server_address.to_string();
+
+    xubinh_server::LogCollector::flush();
 
     loop.loop();
 

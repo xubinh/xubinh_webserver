@@ -58,14 +58,14 @@ void Thread::start() {
     {
         std::unique_lock<std::mutex> lock(_mutex);
 
-        if (pthread_create(
+        if (::pthread_create(
                 &_pthread_id,
                 nullptr,
                 Thread::_adaptor_function_for_pthread_create,
                 this
             )) {
 
-            fprintf(stderr, "failed to create new thread\n");
+            ::fprintf(stderr, "failed to create new thread\n");
 
             ::abort();
         }

@@ -15,11 +15,16 @@ void LogCollector::set_base_name(const std::string &path) {
 }
 
 LogCollector &LogCollector::get_instance() {
-    static LogCollector instance;
+    static LogCollector *instance = []() -> LogCollector * {
+        // released by CleanUpHelper instance
+        _log_collector_singleton_instance = new LogCollector;
 
-    _is_instantiated.store(true, std::memory_order_relaxed);
+        _is_instantiated.store(true, std::memory_order_relaxed);
 
-    return instance;
+        return _log_collector_singleton_instance;
+    }();
+
+    return *instance;
 }
 
 void LogCollector::flush() {
@@ -35,7 +40,7 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
             ::write(STDOUT_FILENO, entry_address, entry_size);
 
         if (bytes_written != entry_size) {
-            ::printf("error when try to print log into stdout\n");
+            ::fprintf(stderr, "error when try to print log into stdout\n");
 
             ::abort();
         }
@@ -77,13 +82,6 @@ void LogCollector::abort() {
     _stop(true);
 }
 
-bool LogCollector::_need_output_directly_to_terminal = false;
-
-std::string LogCollector::_base_name = "log_collector";
-
-constexpr std::chrono::seconds::rep
-    LogCollector::_COLLECT_LOOP_TIMEOUT_IN_SECONDS;
-
 LogCollector::LogCollector()
     : _background_thread(
         [this]() {
@@ -97,6 +95,8 @@ LogCollector::LogCollector()
 
 LogCollector::~LogCollector() {
     _stop(false);
+
+    // ::fprintf(stderr, "exit destructor of LogCollector\n");
 }
 
 void LogCollector::_background_io_thread_worker_functor() {
@@ -152,7 +152,7 @@ void LogCollector::_background_io_thread_worker_functor() {
                 // happen when the process is about to finish yet blocked due to
                 // some bug which in turn requires the log stucking in here to
                 // get debugged)
-                _spare_chunk_buffer_ptr->append("\nflush\n", 7);
+                _spare_chunk_buffer_ptr->append("flush\n", 6);
                 _fulled_chunk_buffers.push_back(
                     std::move(_spare_chunk_buffer_ptr)
                 );
@@ -227,6 +227,8 @@ void LogCollector::_background_io_thread_worker_functor() {
         );
     }
 
+    // ::fprintf(stderr, "exit LogCollector background thread\n");
+
     return;
 }
 
@@ -243,10 +245,25 @@ void LogCollector::_stop(bool also_need_abort) {
     _background_thread.join();
 
     if (also_need_abort) {
+        // ::fprintf(stderr, "also need abort\n");
+
         ::abort();
     }
+
+    // else {
+    //     ::fprintf(stderr, "does not need abort\n");
+    // }
 }
 
-std::atomic<bool> LogCollector::_is_instantiated{};
+LogCollector *LogCollector::_log_collector_singleton_instance = nullptr;
+
+bool LogCollector::_need_output_directly_to_terminal = false;
+
+std::string LogCollector::_base_name = "log_collector";
+
+constexpr std::chrono::seconds::rep
+    LogCollector::_COLLECT_LOOP_TIMEOUT_IN_SECONDS;
+
+std::atomic<bool> LogCollector::_is_instantiated{false};
 
 } // namespace xubinh_server
