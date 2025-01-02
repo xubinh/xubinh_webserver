@@ -106,25 +106,31 @@ def run_webbench(duration: int) -> tuple[int, int]:
         raise RuntimeError(msg)
 
 
-def z_score_average(values: list[int], threshold: float = 3.0) -> int:
-    assert len(values) > 0, "Empty list."
+def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int]:
+    assert len(values) > 0, "empty list"
 
     mean = sum(values) / len(values)
     variance = sum((value - mean) ** 2 for value in values) / len(values)
-    std_dev = variance**0.5
+    standard_deviation = variance**0.5
 
     # all values are identical
-    if abs(std_dev) < 1e-8:
-        return values[0]
+    if abs(standard_deviation) < 1e-8:
+        return values[0], 0
 
-    filtered_values = [
-        value for value in values if abs((value - mean) / std_dev) <= threshold
+    values = [
+        value
+        for value in values
+        if abs((value - mean) / standard_deviation) <= threshold
     ]
 
-    if not filtered_values:
-        raise ValueError("No values left after removing outliers.")
+    if not values:
+        raise ValueError("no values left after removing outliers")
 
-    return int(sum(filtered_values) / len(filtered_values))
+    new_mean = sum(values) / len(values)
+    new_variance = sum((value - mean) ** 2 for value in values) / len(values)
+    new_standard_deviation = variance**0.5
+
+    return int(new_mean), int(new_standard_deviation)
 
 
 def get_input_arguments() -> tuple[int, int]:
@@ -215,10 +221,14 @@ def main():
 
         test_results.append(succeed_number)
 
-    # average_qps: int = int(z_score_average(test_results) / test_duration)
-    # print("\nAverage QPS:", average_qps)
-    max_qps: int = int(max(test_results) / test_duration)
-    print("\nMax QPS:", max_qps)
+    # queries per test
+    average_qpt, standard_deviation = z_score_average(test_results)
+
+    average_qps: int = average_qpt // test_duration
+
+    print("")
+    print(f"Average QPS: {average_qps}")
+    print(f"Standard Deviation: {standard_deviation}")
 
 
 if __name__ == "__main__":
