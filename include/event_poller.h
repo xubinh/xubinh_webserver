@@ -65,7 +65,7 @@ private:
 
     int _epoll_fd;
     epoll_event *_event_array{new epoll_event[_MAX_SIZE_OF_EVENT_ARRAY]};
-    bool *_fds_that_are_listening_on{new bool[_MAX_SIZE_OF_EVENT_ARRAY]};
+    bool *_fds_that_are_listening_on{new bool[_MAX_SIZE_OF_EVENT_ARRAY]{false}};
     size_t _number_of_fds_that_are_listening_on{0};
 };
 
