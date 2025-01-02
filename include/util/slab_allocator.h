@@ -1,7 +1,7 @@
 #ifndef __XUBINH_SERVER_UTIL_ALLOCATOR
 #define __XUBINH_SERVER_UTIL_ALLOCATOR
 
-#define __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
+// #define __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
 
 #include <atomic>
 #include <cstdio>
@@ -67,13 +67,11 @@ private:
     static_assert(_Base::_NUMBER_OF_SLABS_PER_CHUNK >= 1);
 
 public:
-    SimpleSlabAllocator() {
-        _allocate_one_chunk();
-    }
+    constexpr SimpleSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    SimpleSlabAllocator(const SimpleSlabAllocator<U> &)
+    constexpr SimpleSlabAllocator(const SimpleSlabAllocator<U> &)
         : SimpleSlabAllocator() {
     }
 
@@ -130,7 +128,7 @@ public:
             throw std::bad_alloc();
         }
 
-        if (_number_of_available_slabs == 0) {
+        if (!_linked_list_of_available_slabs) {
             _allocate_one_chunk();
         }
 
@@ -152,9 +150,9 @@ public:
 
         _linked_list_of_available_slabs = _linked_list_of_available_slabs->next;
 
+#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
         _number_of_available_slabs--;
 
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
         _addresses_of_allocated_slabs.insert(
             reinterpret_cast<uint64_t>(chosen_slab)
         );
@@ -214,6 +212,8 @@ public:
 
             ::abort();
         }
+
+        _number_of_available_slabs++;
 #endif
 
         reinterpret_cast<LinkedListNode *>(slab)->next =
@@ -221,8 +221,6 @@ public:
 
         _linked_list_of_available_slabs =
             reinterpret_cast<LinkedListNode *>(slab);
-
-        _number_of_available_slabs++;
     }
 
     template <typename... Args>
@@ -282,9 +280,9 @@ private:
             );
         }
 
+#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
         _number_of_available_slabs += _Base::_NUMBER_OF_SLABS_PER_CHUNK;
 
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
         ::fprintf(
             stderr,
             "new raw memory buffer address: %lx | "
@@ -357,15 +355,11 @@ private:
     };
 
 public:
-    LockFreeSlabAllocator() {
-        auto preserved_slab = _allocate_one_chunk();
-
-        deallocate(preserved_slab, 1);
-    }
+    constexpr LockFreeSlabAllocator() = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    LockFreeSlabAllocator(const LockFreeSlabAllocator<U> &)
+    constexpr LockFreeSlabAllocator(const LockFreeSlabAllocator<U> &)
         : LockFreeSlabAllocator() {
     }
 
