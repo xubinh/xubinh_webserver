@@ -181,9 +181,9 @@ private:
     std::vector<void *> _allocated_raw_memory_buffers;
 };
 
-// non-static lock-free multi-threaded allocator
+// non-static semi lock-free multi-threaded allocator
 template <typename SlabType>
-class LockFreeSlabAllocator : public SlabAllocatorBase<SlabType> {
+class SemiLockFreeSlabAllocator : public SlabAllocatorBase<SlabType> {
 private:
     using _Base = SlabAllocatorBase<SlabType>;
 
@@ -192,25 +192,26 @@ private:
 public:
     using typename _Base::value_type;
 
-    LockFreeSlabAllocator() noexcept = default;
+    SemiLockFreeSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    LockFreeSlabAllocator(const LockFreeSlabAllocator<U> &) noexcept
-        : LockFreeSlabAllocator() {
+    SemiLockFreeSlabAllocator(const SemiLockFreeSlabAllocator<U> &) noexcept
+        : SemiLockFreeSlabAllocator() {
     }
 
     // [TODO]: implement copy
     using propagate_on_container_copy_assignment = std::false_type;
-    LockFreeSlabAllocator(const LockFreeSlabAllocator &) = delete;
-    LockFreeSlabAllocator &operator=(const LockFreeSlabAllocator &) = delete;
+    SemiLockFreeSlabAllocator(const SemiLockFreeSlabAllocator &) = delete;
+    SemiLockFreeSlabAllocator &
+    operator=(const SemiLockFreeSlabAllocator &) = delete;
 
     // [TODO]: implement move
     using propagate_on_container_move_assignment = std::false_type;
-    LockFreeSlabAllocator(LockFreeSlabAllocator &&) = delete;
-    LockFreeSlabAllocator &operator=(LockFreeSlabAllocator &&) = delete;
+    SemiLockFreeSlabAllocator(SemiLockFreeSlabAllocator &&) = delete;
+    SemiLockFreeSlabAllocator &operator=(SemiLockFreeSlabAllocator &&) = delete;
 
-    ~LockFreeSlabAllocator() noexcept {
+    ~SemiLockFreeSlabAllocator() noexcept {
         {
             std::lock_guard<std::mutex> lock(_mutex);
 
@@ -288,12 +289,12 @@ public:
     }
 
     friend bool
-    operator==(const LockFreeSlabAllocator &, const LockFreeSlabAllocator &) noexcept {
+    operator==(const SemiLockFreeSlabAllocator &, const SemiLockFreeSlabAllocator &) noexcept {
         return false;
     }
 
     friend bool
-    operator!=(const LockFreeSlabAllocator &, const LockFreeSlabAllocator &) noexcept {
+    operator!=(const SemiLockFreeSlabAllocator &, const SemiLockFreeSlabAllocator &) noexcept {
         return true;
     }
 
@@ -532,9 +533,9 @@ template <typename SlabType>
 typename StaticSimpleSlabAllocator<SlabType>::RawMemoryBufferManager
     StaticSimpleSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
 
-// static lock-free multi-threaded allocator
+// static semi lock-free multi-threaded allocator
 template <typename SlabType>
-class StaticLockFreeSlabAllocator : public SlabAllocatorBase<SlabType> {
+class StaticSemiLockFreeSlabAllocator : public SlabAllocatorBase<SlabType> {
 private:
     using _Base = SlabAllocatorBase<SlabType>;
 
@@ -568,16 +569,16 @@ private:
 public:
     using typename _Base::value_type;
 
-    constexpr StaticLockFreeSlabAllocator() noexcept = default;
+    constexpr StaticSemiLockFreeSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    constexpr StaticLockFreeSlabAllocator(const StaticLockFreeSlabAllocator<U>
-                                              &) noexcept
-        : StaticLockFreeSlabAllocator() {
+    constexpr StaticSemiLockFreeSlabAllocator(const StaticSemiLockFreeSlabAllocator<
+                                              U> &) noexcept
+        : StaticSemiLockFreeSlabAllocator() {
     }
 
-    ~StaticLockFreeSlabAllocator() noexcept = default;
+    ~StaticSemiLockFreeSlabAllocator() noexcept = default;
 
     SlabType *allocate(size_t n) {
         if (n != 1) {
@@ -640,12 +641,12 @@ public:
     }
 
     friend bool
-    operator==(const StaticLockFreeSlabAllocator &, const StaticLockFreeSlabAllocator &) noexcept {
+    operator==(const StaticSemiLockFreeSlabAllocator &, const StaticSemiLockFreeSlabAllocator &) noexcept {
         return true;
     }
 
     friend bool
-    operator!=(const StaticLockFreeSlabAllocator &, const StaticLockFreeSlabAllocator &) noexcept {
+    operator!=(const StaticSemiLockFreeSlabAllocator &, const StaticSemiLockFreeSlabAllocator &) noexcept {
         return false;
     }
 
@@ -725,17 +726,18 @@ private:
     static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 4000;
 
     static std::atomic<LinkedListNode *> _linked_list_of_free_slabs;
-
     static RawMemoryBufferManager _allocated_raw_memory_buffers;
 };
 
 // initialization of static members
 template <typename SlabType>
-std::atomic<typename StaticLockFreeSlabAllocator<SlabType>::LinkedListNode *>
-    StaticLockFreeSlabAllocator<SlabType>::_linked_list_of_free_slabs{nullptr};
+std::atomic<
+    typename StaticSemiLockFreeSlabAllocator<SlabType>::LinkedListNode *>
+    StaticSemiLockFreeSlabAllocator<SlabType>::_linked_list_of_free_slabs{
+        nullptr};
 template <typename SlabType>
-typename StaticLockFreeSlabAllocator<SlabType>::RawMemoryBufferManager
-    StaticLockFreeSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
+typename StaticSemiLockFreeSlabAllocator<SlabType>::RawMemoryBufferManager
+    StaticSemiLockFreeSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
 
 // static multi-threaded allocator that combines thread-local pools with a
 // central memory pool
