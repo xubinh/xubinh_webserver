@@ -106,7 +106,7 @@ def run_webbench(duration: int) -> tuple[int, int]:
         raise RuntimeError(msg)
 
 
-def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int, int]:
+def z_score_average(values: list[int], threshold: float = 2.0) -> tuple[int, int, int]:
     assert len(values) > 0, "empty list"
 
     mean = sum(values) / len(values)
@@ -126,11 +126,11 @@ def z_score_average(values: list[int], threshold: float = 3.0) -> tuple[int, int
     if not values:
         raise ValueError("no values left after removing outliers")
 
-    new_mean = sum(values) / len(values)
-    new_variance = sum((value - mean) ** 2 for value in values) / len(values)
-    new_standard_deviation = new_variance**0.5
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / len(values)
+    standard_deviation = variance**0.5
 
-    return max(values), int(new_mean), int(new_standard_deviation)
+    return max(values), int(mean), int(standard_deviation)
 
 
 def get_input_arguments() -> tuple[int, int]:
