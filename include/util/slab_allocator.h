@@ -6,6 +6,7 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <mutex>
 #include <set>
 #include <vector>
 
@@ -34,6 +35,10 @@ public:
     );
 
     using value_type = SlabType;
+
+    static constexpr const size_t get_number_of_slabs_per_chunk() noexcept {
+        return _NUMBER_OF_SLABS_PER_CHUNK;
+    }
 
     virtual ~SlabAllocatorBase() noexcept = default;
 
@@ -64,7 +69,8 @@ private:
 
     using LinkedListNode = typename _Base::LinkedListNode;
 
-    static_assert(_Base::_NUMBER_OF_SLABS_PER_CHUNK >= 1);
+    template <typename AnotherSlabType>
+    friend class ThreadLocalStaticSlabAllocator;
 
 public:
     constexpr SimpleSlabAllocator() noexcept = default;
@@ -77,7 +83,7 @@ public:
 
     ~SimpleSlabAllocator() noexcept override {
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        if (_number_of_available_slabs
+        if (_number_of_free_slabs
             != _allocated_raw_memory_buffers.size()
                    * _Base::_NUMBER_OF_SLABS_PER_CHUNK) {
 
@@ -88,7 +94,7 @@ public:
                 static_cast<int>(
                     _allocated_raw_memory_buffers.size()
                         * _Base::_NUMBER_OF_SLABS_PER_CHUNK
-                    - _number_of_available_slabs
+                    - _number_of_free_slabs
                 ),
                 TypeName<SlabType>::get_name().c_str(),
                 TimePoint::get_datetime_string(TimePoint::Purpose::PRINTING)
@@ -128,17 +134,17 @@ public:
             throw std::bad_alloc();
         }
 
-        if (!_linked_list_of_available_slabs) {
+        if (!_linked_list_of_free_slabs) {
             _allocate_one_chunk();
         }
 
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        if (_linked_list_of_available_slabs
-            && !_check_if_is_in_range(_linked_list_of_available_slabs)) {
+        if (_linked_list_of_free_slabs
+            && !_check_if_is_in_range(_linked_list_of_free_slabs)) {
             ::fprintf(
                 stderr,
                 "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(_linked_list_of_available_slabs)
+                reinterpret_cast<uint64_t>(_linked_list_of_free_slabs)
             );
 
             ::abort();
@@ -146,12 +152,12 @@ public:
 #endif
 
         auto chosen_slab =
-            reinterpret_cast<SlabType *>(_linked_list_of_available_slabs);
+            reinterpret_cast<SlabType *>(_linked_list_of_free_slabs);
 
-        _linked_list_of_available_slabs = _linked_list_of_available_slabs->next;
+        _linked_list_of_free_slabs = _linked_list_of_free_slabs->next;
 
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        _number_of_available_slabs--;
+        _number_of_free_slabs--;
 
         _addresses_of_allocated_slabs.insert(
             reinterpret_cast<uint64_t>(chosen_slab)
@@ -167,12 +173,12 @@ public:
             ::abort();
         }
 
-        if (_linked_list_of_available_slabs
-            && !_check_if_is_in_range(_linked_list_of_available_slabs)) {
+        if (_linked_list_of_free_slabs
+            && !_check_if_is_in_range(_linked_list_of_free_slabs)) {
             ::fprintf(
                 stderr,
                 "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(_linked_list_of_available_slabs)
+                reinterpret_cast<uint64_t>(_linked_list_of_free_slabs)
             );
 
             ::abort();
@@ -202,25 +208,24 @@ public:
             ::abort();
         }
 
-        if (_linked_list_of_available_slabs
-            && !_check_if_is_in_range(_linked_list_of_available_slabs)) {
+        if (_linked_list_of_free_slabs
+            && !_check_if_is_in_range(_linked_list_of_free_slabs)) {
             ::fprintf(
                 stderr,
                 "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(_linked_list_of_available_slabs)
+                reinterpret_cast<uint64_t>(_linked_list_of_free_slabs)
             );
 
             ::abort();
         }
 
-        _number_of_available_slabs++;
+        _number_of_free_slabs++;
 #endif
 
         reinterpret_cast<LinkedListNode *>(slab)->next =
-            _linked_list_of_available_slabs;
+            _linked_list_of_free_slabs;
 
-        _linked_list_of_available_slabs =
-            reinterpret_cast<LinkedListNode *>(slab);
+        _linked_list_of_free_slabs = reinterpret_cast<LinkedListNode *>(slab);
     }
 
     template <typename... Args>
@@ -271,9 +276,9 @@ private:
 #endif
 
         for (size_t i = 0; i < _Base::_NUMBER_OF_SLABS_PER_CHUNK; i++) {
-            current_node->next = _linked_list_of_available_slabs;
+            current_node->next = _linked_list_of_free_slabs;
 
-            _linked_list_of_available_slabs = current_node;
+            _linked_list_of_free_slabs = current_node;
 
             current_node = reinterpret_cast<LinkedListNode *>(
                 reinterpret_cast<SlabType *>(current_node) + 1
@@ -281,7 +286,7 @@ private:
         }
 
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        _number_of_available_slabs += _Base::_NUMBER_OF_SLABS_PER_CHUNK;
+        _number_of_free_slabs += _Base::_NUMBER_OF_SLABS_PER_CHUNK;
 
         ::fprintf(
             stderr,
@@ -331,11 +336,11 @@ private:
     }
 #endif
 
-    LinkedListNode *_linked_list_of_available_slabs{nullptr};
+    LinkedListNode *_linked_list_of_free_slabs{nullptr};
     std::vector<void *> _allocated_raw_memory_buffers;
 
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-    size_t _number_of_available_slabs{0};
+    size_t _number_of_free_slabs{0};
     std::set<uint64_t> _addresses_of_allocated_slabs;
 #endif
 };
@@ -346,8 +351,6 @@ private:
     using _Base = SlabAllocatorBase<SlabType>;
 
     using LinkedListNode = typename _Base::LinkedListNode;
-
-    static_assert(_Base::_NUMBER_OF_SLABS_PER_CHUNK >= 2);
 
     struct RawMemoryBufferAddressLinkedListNode {
         RawMemoryBufferAddressLinkedListNode *next{nullptr};
@@ -399,7 +402,7 @@ public:
 
         do {
             old_head =
-                _linked_list_of_available_slabs.load(std::memory_order_relaxed);
+                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
 
             // if saw an empty list, allocates a new chunk and returns the
             // preserved slab directly
@@ -408,7 +411,7 @@ public:
 
                 return preserved_slab;
             }
-        } while (!_linked_list_of_available_slabs.compare_exchange_weak(
+        } while (!_linked_list_of_free_slabs.compare_exchange_weak(
             old_head,
             old_head->next,
             std::memory_order_relaxed,
@@ -433,10 +436,10 @@ public:
 
         do {
             old_head =
-                _linked_list_of_available_slabs.load(std::memory_order_relaxed);
+                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
 
             head->next = old_head;
-        } while (!_linked_list_of_available_slabs.compare_exchange_weak(
+        } while (!_linked_list_of_free_slabs.compare_exchange_weak(
             old_head, head, std::memory_order_relaxed, std::memory_order_relaxed
         ));
     }
@@ -502,6 +505,10 @@ private:
             ::abort();
         }
 
+        if (_Base::_NUMBER_OF_SLABS_PER_CHUNK == 1) {
+            return reinterpret_cast<SlabType *>(new_chunk);
+        }
+
         LinkedListNode *current_node =
             reinterpret_cast<LinkedListNode *>(new_chunk);
 
@@ -526,12 +533,11 @@ private:
             LinkedListNode *old_head;
 
             do {
-                old_head = _linked_list_of_available_slabs.load(
-                    std::memory_order_relaxed
-                );
+                old_head =
+                    _linked_list_of_free_slabs.load(std::memory_order_relaxed);
 
                 tail->next = old_head;
-            } while (!_linked_list_of_available_slabs.compare_exchange_weak(
+            } while (!_linked_list_of_free_slabs.compare_exchange_weak(
                 old_head,
                 head,
                 std::memory_order_relaxed,
@@ -544,7 +550,7 @@ private:
         return preserved_slab;
     }
 
-    std::atomic<LinkedListNode *> _linked_list_of_available_slabs{nullptr};
+    std::atomic<LinkedListNode *> _linked_list_of_free_slabs{nullptr};
     std::atomic<RawMemoryBufferAddressLinkedListNode *>
         _linked_list_of_allocated_raw_memory_buffers{nullptr};
 };
@@ -568,7 +574,6 @@ struct __SlabAllocatorTypeDispatcher<
 
 // allocate and deallocate exactly one object each time
 //
-// - not thread-safe
 // - static: all instances use one same static memory pool
 template <
     typename SlabType,
@@ -624,9 +629,161 @@ private:
     static SlabAllocatorType _slab_allocator;
 };
 
+// static member initailization
 template <typename SlabType, SlabAllocatorLockType LOCK_TYPE>
 typename StaticSlabAllocator<SlabType, LOCK_TYPE>::SlabAllocatorType
     StaticSlabAllocator<SlabType, LOCK_TYPE>::_slab_allocator;
+
+// allocate and deallocate exactly one object each time
+//
+// - static: combines thread-local pool with a central memory pool for
+// performance
+template <typename SlabType>
+class ThreadLocalStaticSlabAllocator {
+private:
+    using LinkedListNode =
+        typename SimpleSlabAllocator<SlabType>::LinkedListNode;
+
+    struct FreeChunkNode {
+        LinkedListNode *chunk_head{nullptr};
+        LinkedListNode *chunk_tail{nullptr};
+    };
+
+public:
+    using value_type = SlabType;
+
+    template <typename AnotherSlabType>
+    struct rebind {
+        using other = ThreadLocalStaticSlabAllocator<AnotherSlabType>;
+    };
+
+    constexpr ThreadLocalStaticSlabAllocator() = default;
+
+    // do nothing; each instance is independent
+    template <typename AnotherSlabType>
+    constexpr ThreadLocalStaticSlabAllocator(const ThreadLocalStaticSlabAllocator<
+                                             AnotherSlabType> &) {
+    }
+
+    SlabType *allocate(size_t n) {
+        if (_number_of_free_slabs == 0) {
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+
+                if (!_free_chunks.empty()) {
+                    auto free_chunk_node = _free_chunks.back();
+
+                    _free_chunks.pop_back();
+
+                    free_chunk_node.chunk_tail->next =
+                        _slab_allocator._linked_list_of_free_slabs;
+
+                    _slab_allocator._linked_list_of_free_slabs =
+                        free_chunk_node.chunk_head;
+                }
+
+                else {
+                    _cut_down_threshold += _NUMBER_OF_SLABS_PER_CHUNK;
+                }
+            }
+
+            // a new chunk is always allocated, either from the central pool or
+            // directly from the local pool below
+            _number_of_free_slabs += _NUMBER_OF_SLABS_PER_CHUNK;
+        }
+
+        auto slabs = _slab_allocator.allocate(n);
+
+        _number_of_free_slabs -= n;
+
+        return slabs;
+    }
+
+    void deallocate(SlabType *slab, size_t n) noexcept {
+        _slab_allocator.deallocate(slab, n);
+
+        _number_of_free_slabs += n;
+
+        if (_number_of_free_slabs >= _cut_down_threshold) {
+            LinkedListNode *chunk_head =
+                _slab_allocator._linked_list_of_free_slabs;
+            LinkedListNode *chunk_tail = chunk_head;
+
+            for (int i = 0; i < _NUMBER_OF_SLABS_PER_CHUNK - 1; i++) {
+                chunk_tail = chunk_tail->next;
+            }
+
+            _slab_allocator._linked_list_of_free_slabs = chunk_tail->next;
+
+            chunk_tail->next = nullptr;
+
+            FreeChunkNode new_node;
+
+            new_node.chunk_head = chunk_head;
+            new_node.chunk_tail = chunk_tail;
+
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+
+                _free_chunks.push_back(new_node);
+            }
+
+            _number_of_free_slabs -= _NUMBER_OF_SLABS_PER_CHUNK;
+        }
+    }
+
+    template <typename... Args>
+    void construct(SlabType *slab, Args &&...args) {
+        ::new (static_cast<void *>(slab)) SlabType(std::forward<Args>(args)...);
+    }
+
+    void destroy(SlabType *slab) noexcept {
+        slab->~SlabType();
+    }
+
+    bool operator==(const ThreadLocalStaticSlabAllocator &other
+    ) const noexcept {
+        return true;
+    }
+
+    bool operator!=(const ThreadLocalStaticSlabAllocator &other
+    ) const noexcept {
+        return false;
+    }
+
+private:
+    static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK =
+        SimpleSlabAllocator<SlabType>::get_number_of_slabs_per_chunk();
+
+    // local pool
+    static thread_local SimpleSlabAllocator<SlabType> _slab_allocator;
+    static thread_local size_t _number_of_free_slabs;
+    static thread_local size_t _cut_down_threshold;
+
+    // central pool
+    static std::vector<FreeChunkNode> _free_chunks;
+    static std::mutex _mutex;
+};
+
+template <typename SlabType>
+thread_local SimpleSlabAllocator<SlabType>
+    ThreadLocalStaticSlabAllocator<SlabType>::_slab_allocator;
+
+template <typename SlabType>
+thread_local size_t
+    ThreadLocalStaticSlabAllocator<SlabType>::_number_of_free_slabs{0};
+
+template <typename SlabType>
+thread_local size_t
+    ThreadLocalStaticSlabAllocator<SlabType>::_cut_down_threshold{
+        _NUMBER_OF_SLABS_PER_CHUNK};
+
+template <typename SlabType>
+std::vector<typename ThreadLocalStaticSlabAllocator<SlabType>::FreeChunkNode>
+    ThreadLocalStaticSlabAllocator<SlabType>::_free_chunks;
+
+template <typename SlabType>
+std::mutex ThreadLocalStaticSlabAllocator<SlabType>::_mutex;
 
 } // namespace util
 
