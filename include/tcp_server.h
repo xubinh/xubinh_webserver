@@ -92,10 +92,6 @@ private:
         uint64_t functor_blocking_queue_index
     );
 
-    // void _close_callback_impl(
-    //     uint64_t connection_id, uint64_t functor_blocking_queue_index
-    // );
-
     bool _is_started = false;
     bool _is_stopped = false;
 

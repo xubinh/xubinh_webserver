@@ -221,49 +221,6 @@ void TcpServer::_close_callback(
         },
         functor_blocking_queue_index
     );
-    // _loop->run(
-    //     [this, connection_id, functor_blocking_queue_index]() {
-    //         _close_callback_impl(connection_id,
-    //         functor_blocking_queue_index);
-    //     },
-    //     functor_blocking_queue_index
-    // );
 }
-
-// void TcpServer::_close_callback_impl(
-//     uint64_t connection_id, uint64_t functor_blocking_queue_index
-// ) {
-//     LOG_TRACE << "enter event: _close_callback";
-
-//     auto it = _tcp_connect_socketfds.find(connection_id);
-
-//     auto &tcp_connect_socketfd_ptr = it->second;
-
-//     auto use_count = tcp_connect_socketfd_ptr.use_count();
-
-//     LOG_TRACE << "TCP connection use count: " << use_count;
-
-//     if (use_count == 1) {
-//         _tcp_connect_socketfds.erase(it);
-
-//         LOG_TRACE << "erase TCP connection, id: " << connection_id;
-//     }
-//     else {
-//         _loop->run_after_time_interval(
-//             3 * 1000 * static_cast<int64_t>(1000 * 1000),
-//             0,
-//             0,
-//             [this, connection_id, functor_blocking_queue_index]() {
-//                 _close_callback_impl(
-//                     connection_id, functor_blocking_queue_index
-//                 );
-//             },
-//             functor_blocking_queue_index
-//         );
-
-//         LOG_TRACE << "defer TCP connection erasure for 3 seconds, id: "
-//                   << connection_id;
-//     }
-// }
 
 } // namespace xubinh_server
