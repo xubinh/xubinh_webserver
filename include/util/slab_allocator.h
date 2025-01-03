@@ -57,7 +57,7 @@ public:
 
     // do nothing; each instance is independent
     template <typename U>
-    SimpleSlabAllocator(const SimpleSlabAllocator<U> &)
+    SimpleSlabAllocator(const SimpleSlabAllocator<U> &) noexcept
         : SimpleSlabAllocator() {
     }
 
@@ -107,7 +107,7 @@ public:
     }
 
 private:
-    void _allocate_one_chunk() {
+    void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
         size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
@@ -169,11 +169,11 @@ private:
 public:
     using typename _Base::value_type;
 
-    LockFreeSlabAllocator() = default;
+    LockFreeSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    LockFreeSlabAllocator(const LockFreeSlabAllocator<U> &)
+    LockFreeSlabAllocator(const LockFreeSlabAllocator<U> &) noexcept
         : LockFreeSlabAllocator() {
     }
 
@@ -252,7 +252,7 @@ public:
     }
 
 private:
-    SlabType *_allocate_one_chunk() {
+    SlabType *_allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
         size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
@@ -276,6 +276,7 @@ private:
         if (!std::align(
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
+
             ::fprintf(stderr, "alignment failed\n");
 
             ::abort();
@@ -344,19 +345,19 @@ private:
     using typename _Base::LinkedListNode;
 
     struct RawMemoryBufferManager {
-        RawMemoryBufferManager() = default;
+        RawMemoryBufferManager() noexcept = default;
 
         RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
         RawMemoryBufferManager &
         operator=(const RawMemoryBufferManager &) = delete;
 
-        ~RawMemoryBufferManager() {
+        ~RawMemoryBufferManager() noexcept {
             for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
                 ::free(raw_memory_buffer);
             }
         }
 
-        void push_back(void *raw_memory_buffer) {
+        void push_back(void *raw_memory_buffer) noexcept {
             _allocated_raw_memory_buffers.push_back(raw_memory_buffer);
         }
 
@@ -366,11 +367,12 @@ private:
 public:
     using typename _Base::value_type;
 
-    StaticSimpleSlabAllocator() noexcept = default;
+    constexpr StaticSimpleSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    StaticSimpleSlabAllocator(const StaticSimpleSlabAllocator<U> &)
+    constexpr StaticSimpleSlabAllocator(const StaticSimpleSlabAllocator<U>
+                                            &) noexcept
         : StaticSimpleSlabAllocator() {
     }
 
@@ -416,7 +418,7 @@ public:
     }
 
 private:
-    void _allocate_one_chunk() {
+    void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
         size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
@@ -483,19 +485,19 @@ private:
     using typename _Base::LinkedListNode;
 
     struct RawMemoryBufferManager {
-        RawMemoryBufferManager() = default;
+        RawMemoryBufferManager() noexcept = default;
 
         RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
         RawMemoryBufferManager &
         operator=(const RawMemoryBufferManager &) = delete;
 
-        ~RawMemoryBufferManager() {
+        ~RawMemoryBufferManager() noexcept {
             for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
                 ::free(raw_memory_buffer);
             }
         }
 
-        void push_back(void *raw_memory_buffer) {
+        void push_back(void *raw_memory_buffer) noexcept {
             {
                 std::lock_guard<std::mutex> lock(_mutex);
 
@@ -510,11 +512,12 @@ private:
 public:
     using typename _Base::value_type;
 
-    StaticLockFreeSlabAllocator() = default;
+    constexpr StaticLockFreeSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename U>
-    StaticLockFreeSlabAllocator(const StaticLockFreeSlabAllocator<U> &)
+    constexpr StaticLockFreeSlabAllocator(const StaticLockFreeSlabAllocator<U>
+                                              &) noexcept
         : StaticLockFreeSlabAllocator() {
     }
 
@@ -581,7 +584,7 @@ public:
     }
 
 private:
-    SlabType *_allocate_one_chunk() {
+    SlabType *_allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
         size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
@@ -601,6 +604,7 @@ private:
         if (!std::align(
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
+
             ::fprintf(stderr, "alignment failed\n");
 
             ::abort();
@@ -677,19 +681,19 @@ private:
     using typename _Base::LinkedListNode;
 
     struct RawMemoryBufferManager {
-        RawMemoryBufferManager() = default;
+        RawMemoryBufferManager() noexcept = default;
 
         RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
         RawMemoryBufferManager &
         operator=(const RawMemoryBufferManager &) = delete;
 
-        ~RawMemoryBufferManager() {
+        ~RawMemoryBufferManager() noexcept {
             for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
                 ::free(raw_memory_buffer);
             }
         }
 
-        void push_back(void *raw_memory_buffer) {
+        void push_back(void *raw_memory_buffer) noexcept {
             _allocated_raw_memory_buffers.push_back(raw_memory_buffer);
         }
 
@@ -704,12 +708,13 @@ private:
 public:
     using typename _Base::value_type;
 
-    constexpr StaticThreadLocalSlabAllocator() = default;
+    constexpr StaticThreadLocalSlabAllocator() noexcept = default;
 
     // do nothing; each instance is independent
     template <typename AnotherSlabType>
     constexpr StaticThreadLocalSlabAllocator(const StaticThreadLocalSlabAllocator<
-                                             AnotherSlabType> &) {
+                                             AnotherSlabType> &) noexcept
+        : StaticThreadLocalSlabAllocator() {
     }
 
     SlabType *allocate(size_t n) {
@@ -805,18 +810,8 @@ public:
         slab->~SlabType();
     }
 
-    bool operator==(const StaticThreadLocalSlabAllocator &other
-    ) const noexcept {
-        return true;
-    }
-
-    bool operator!=(const StaticThreadLocalSlabAllocator &other
-    ) const noexcept {
-        return false;
-    }
-
 private:
-    void _allocate_one_chunk() {
+    void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
         size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
