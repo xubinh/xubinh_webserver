@@ -328,7 +328,7 @@ private:
             ::abort();
         }
 
-        if (_NUMBER_OF_SLABS_PER_CHUNK == 1) {
+        if (__builtin_expect(_NUMBER_OF_SLABS_PER_CHUNK == 1, false)) {
             auto preserved_slab = reinterpret_cast<SlabType *>(new_chunk);
 
             return preserved_slab;
@@ -676,7 +676,7 @@ private:
             ::abort();
         }
 
-        if (_NUMBER_OF_SLABS_PER_CHUNK == 1) {
+        if (__builtin_expect(_NUMBER_OF_SLABS_PER_CHUNK == 1, false)) {
             auto preserved_slab = reinterpret_cast<SlabType *>(new_chunk);
 
             return preserved_slab;
