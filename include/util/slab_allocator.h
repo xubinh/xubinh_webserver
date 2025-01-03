@@ -61,11 +61,24 @@ public:
         : SimpleSlabAllocator() {
     }
 
+    // [TODO]: implement copy
+    using propagate_on_container_copy_assignment = std::false_type;
+    SimpleSlabAllocator(const SimpleSlabAllocator &) = delete;
+    SimpleSlabAllocator &operator=(const SimpleSlabAllocator &) = delete;
+
+    // [TODO]: implement move
+    using propagate_on_container_move_assignment = std::false_type;
+    SimpleSlabAllocator(SimpleSlabAllocator &&) = delete;
+    SimpleSlabAllocator &operator=(SimpleSlabAllocator &&) = delete;
+
     ~SimpleSlabAllocator() noexcept {
         for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
             ::free(raw_memory_buffer);
         }
     }
+
+    // [TODO]: implement swap
+    using propagate_on_container_swap = std::false_type;
 
     SlabType *allocate(size_t n) {
         if (n != 1) {
@@ -104,6 +117,16 @@ public:
 
     void destroy(SlabType *slab) noexcept {
         slab->~SlabType();
+    }
+
+    friend bool
+    operator==(const SimpleSlabAllocator &, const SimpleSlabAllocator &) noexcept {
+        return false;
+    }
+
+    friend bool
+    operator!=(const SimpleSlabAllocator &, const SimpleSlabAllocator &) noexcept {
+        return true;
     }
 
 private:
@@ -177,6 +200,16 @@ public:
         : LockFreeSlabAllocator() {
     }
 
+    // [TODO]: implement copy
+    using propagate_on_container_copy_assignment = std::false_type;
+    LockFreeSlabAllocator(const LockFreeSlabAllocator &) = delete;
+    LockFreeSlabAllocator &operator=(const LockFreeSlabAllocator &) = delete;
+
+    // [TODO]: implement move
+    using propagate_on_container_move_assignment = std::false_type;
+    LockFreeSlabAllocator(LockFreeSlabAllocator &&) = delete;
+    LockFreeSlabAllocator &operator=(LockFreeSlabAllocator &&) = delete;
+
     ~LockFreeSlabAllocator() noexcept {
         {
             std::lock_guard<std::mutex> lock(_mutex);
@@ -190,6 +223,9 @@ public:
             }
         }
     }
+
+    // [TODO]: implement swap
+    using propagate_on_container_swap = std::false_type;
 
     SlabType *allocate(size_t n) {
         if (n != 1) {
@@ -249,6 +285,16 @@ public:
 
     void destroy(SlabType *slab) noexcept {
         slab->~SlabType();
+    }
+
+    friend bool
+    operator==(const LockFreeSlabAllocator &, const LockFreeSlabAllocator &) noexcept {
+        return false;
+    }
+
+    friend bool
+    operator!=(const LockFreeSlabAllocator &, const LockFreeSlabAllocator &) noexcept {
+        return true;
     }
 
 private:
@@ -417,6 +463,16 @@ public:
         slab->~SlabType();
     }
 
+    friend bool
+    operator==(const StaticSimpleSlabAllocator &, const StaticSimpleSlabAllocator &) noexcept {
+        return true;
+    }
+
+    friend bool
+    operator!=(const StaticSimpleSlabAllocator &, const StaticSimpleSlabAllocator &) noexcept {
+        return false;
+    }
+
 private:
     void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
@@ -581,6 +637,16 @@ public:
 
     void destroy(SlabType *slab) noexcept {
         slab->~SlabType();
+    }
+
+    friend bool
+    operator==(const StaticLockFreeSlabAllocator &, const StaticLockFreeSlabAllocator &) noexcept {
+        return true;
+    }
+
+    friend bool
+    operator!=(const StaticLockFreeSlabAllocator &, const StaticLockFreeSlabAllocator &) noexcept {
+        return false;
     }
 
 private:
@@ -808,6 +874,16 @@ public:
 
     void destroy(SlabType *slab) noexcept {
         slab->~SlabType();
+    }
+
+    friend bool
+    operator==(const StaticThreadLocalSlabAllocator &, const StaticThreadLocalSlabAllocator &) noexcept {
+        return true;
+    }
+
+    friend bool
+    operator!=(const StaticThreadLocalSlabAllocator &, const StaticThreadLocalSlabAllocator &) noexcept {
+        return false;
     }
 
 private:
