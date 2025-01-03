@@ -5,48 +5,37 @@ import re
 import subprocess
 import sys
 import time
-from os.path import join
 
 ROOT: str = os.getcwd()
-BUILD_DIR_NAME: str = "build"
-APP_BASE_DIR_NAME: str = "example"
+
+# build script path
+SCRIPT_DIR_PATH: str = f"{ROOT}/script"
+BUILD_SCRIPT_PATH: str = f"{SCRIPT_DIR_PATH}/build.sh"
+
+# server executable path
+BUILD_DIR_PATH: str = f"{ROOT}/build"
 APP_DIR_NAME: str = "http"
-SERVER_EXECUTABLE_NAME: str = APP_DIR_NAME + "_server"
+SERVER_EXECUTABLE_PATH: str = (
+    f"{BUILD_DIR_PATH}/example/{APP_DIR_NAME}/server/{APP_DIR_NAME}_server"
+)
 
-BUILD_DIR_PATH: str = join(ROOT, BUILD_DIR_NAME)
-APP_BASE_DIR_PATH: str = join(BUILD_DIR_PATH, APP_BASE_DIR_NAME)
-APP_DIR_PATH: str = join(APP_BASE_DIR_PATH, APP_DIR_NAME)
-APP_SERVER_DIR_PATH: str = join(APP_DIR_PATH, "server")
-SERVER_EXECUTABLE_PATH: str = join(APP_SERVER_DIR_PATH, SERVER_EXECUTABLE_NAME)
+# webbench executable path
+BIN_DIR_PATH: str = f"{ROOT}/bin"
+WEBBENCH_EXECUTABLE_PATH: str = f"{BIN_DIR_PATH}/webbench"
 
-SCRIPT_DIR_NAME: str = "script"
-BUILD_SCRIPT_NAME: str = "build.sh"
-
-SCRIPT_DIR_PATH: str = join(ROOT, SCRIPT_DIR_NAME)
-BUILD_SCRIPT_PATH: str = join(SCRIPT_DIR_PATH, BUILD_SCRIPT_NAME)
-
-BIN_DIR_NAME: str = "bin"
-WEBBENCH_EXECUTABLE_NAME: str = "webbench"
-
-BIN_DIR_PATH: str = join(ROOT, BIN_DIR_NAME)
-WEBBENCH_EXECUTABLE_PATH: str = join(BIN_DIR_PATH, WEBBENCH_EXECUTABLE_NAME)
-
+# for constructing webbench command
 WEBBENCH_CLIENT_NUMBER: int = 1000
 ENABLE_HTTP_1_1: bool = True
-METHOD: str = "GET"
-SERVER_IP: str = "127.0.0.1"
-SERVER_PORT: str = "8080"
-
 ENABLE_HTTP_1_1_SWITCH: str = "-2" if ENABLE_HTTP_1_1 else "-1"
-METHOD_SWITCH: str = "--" + METHOD.lower()
-SERVER_SOCKET_ADDRESS: str = f"{SERVER_IP}:{SERVER_PORT}"
-SERVER_HTTP_URL: str = f"http://{SERVER_SOCKET_ADDRESS}/"
+METHOD_SWITCH: str = "--get"
+SERVER_HTTP_URL: str = f"http://127.0.0.1:8080/"
+
+# default testing config (i.e. one single 2-second test)
+DEFAULT_TEST_DURATION: int = 2
+DEFAULT_REPEAT_TIMES: int = 1
 
 # for waiting the programs (e.g. server, webbench) to start/finish completely
 SLEEP_SECONDS: int = 1
-
-DEFAULT_TEST_DURATION: int = 2
-DEFAULT_REPEAT_TIMES: int = 1
 
 
 def clear() -> None:

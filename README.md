@@ -29,7 +29,7 @@ make
 cd ..
 mkdir bin
 cp -t bin/ WebBench/webbench
-./script/http/test
+./script/http/webbench.py
 ```
 
 ## 基准测试
