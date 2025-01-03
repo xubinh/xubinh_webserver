@@ -111,7 +111,6 @@ private:
 
     std::unique_ptr<ListenSocketfd> _listen_socketfd;
 
-    // std::map<uint64_t, TcpConnectSocketfdPtr> _tcp_connect_socketfds;
     std::map<
         uint64_t,
         TcpConnectSocketfdPtr,
