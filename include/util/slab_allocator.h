@@ -1,19 +1,12 @@
 #ifndef __XUBINH_SERVER_UTIL_ALLOCATOR
 #define __XUBINH_SERVER_UTIL_ALLOCATOR
 
-// #define __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <mutex>
 #include <set>
 #include <vector>
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-#include "util/time_point.h"
-#include "util/type_name.h"
-#endif
 
 namespace xubinh_server {
 
@@ -82,47 +75,6 @@ public:
     }
 
     ~SimpleSlabAllocator() noexcept override {
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        if (_number_of_free_slabs
-            != _allocated_raw_memory_buffers.size()
-                   * _Base::_NUMBER_OF_SLABS_PER_CHUNK) {
-
-            ::fprintf(
-                stderr,
-                "slab allocator destructed before all slabs are returned, "
-                "number of missing slabs: %d, slab type: %s, time stamp: %s\n",
-                static_cast<int>(
-                    _allocated_raw_memory_buffers.size()
-                        * _Base::_NUMBER_OF_SLABS_PER_CHUNK
-                    - _number_of_free_slabs
-                ),
-                TypeName<SlabType>::get_name().c_str(),
-                TimePoint::get_datetime_string(TimePoint::Purpose::PRINTING)
-                    .c_str()
-            );
-
-            ::fprintf(stderr, "addresses of slabs:\n");
-
-            for (auto address : _addresses_of_allocated_slabs) {
-                ::fprintf(stderr, "%lx", address);
-
-                if (sizeof(SlabType) == sizeof(TcpConnectSocketfd) + 16) {
-                    ::fprintf(
-                        stderr,
-                        ", id: %ld\n",
-                        reinterpret_cast<TcpConnectSocketfd *>(
-                            reinterpret_cast<char *>(address) + 16
-                        )
-                            ->get_id()
-                    );
-                }
-
-                else {
-                    ::fprintf(stderr, "\n");
-                }
-            }
-        }
-#endif
 
         for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
             ::free(raw_memory_buffer);
@@ -138,52 +90,10 @@ public:
             _allocate_one_chunk();
         }
 
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        if (_linked_list_of_free_slabs
-            && !_check_if_is_in_range(_linked_list_of_free_slabs)) {
-            ::fprintf(
-                stderr,
-                "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(_linked_list_of_free_slabs)
-            );
-
-            ::abort();
-        }
-#endif
-
         auto chosen_slab =
             reinterpret_cast<SlabType *>(_linked_list_of_free_slabs);
 
         _linked_list_of_free_slabs = _linked_list_of_free_slabs->next;
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        _number_of_free_slabs--;
-
-        _addresses_of_allocated_slabs.insert(
-            reinterpret_cast<uint64_t>(chosen_slab)
-        );
-
-        if (!_check_if_is_in_range(chosen_slab)) {
-            ::fprintf(
-                stderr,
-                "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(chosen_slab)
-            );
-
-            ::abort();
-        }
-
-        if (_linked_list_of_free_slabs
-            && !_check_if_is_in_range(_linked_list_of_free_slabs)) {
-            ::fprintf(
-                stderr,
-                "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(_linked_list_of_free_slabs)
-            );
-
-            ::abort();
-        }
-#endif
 
         return chosen_slab;
     }
@@ -194,33 +104,6 @@ public:
 
             ::abort();
         }
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        _addresses_of_allocated_slabs.erase(reinterpret_cast<uint64_t>(slab));
-
-        if (!_check_if_is_in_range(slab)) {
-            ::fprintf(
-                stderr,
-                "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(slab)
-            );
-
-            ::abort();
-        }
-
-        if (_linked_list_of_free_slabs
-            && !_check_if_is_in_range(_linked_list_of_free_slabs)) {
-            ::fprintf(
-                stderr,
-                "not in range, address: %lx\n",
-                reinterpret_cast<uint64_t>(_linked_list_of_free_slabs)
-            );
-
-            ::abort();
-        }
-
-        _number_of_free_slabs++;
-#endif
 
         reinterpret_cast<LinkedListNode *>(slab)->next =
             _linked_list_of_free_slabs;
@@ -271,10 +154,6 @@ private:
         LinkedListNode *current_node =
             reinterpret_cast<LinkedListNode *>(new_chunk);
 
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        auto first_node = current_node;
-#endif
-
         for (size_t i = 0; i < _Base::_NUMBER_OF_SLABS_PER_CHUNK; i++) {
             current_node->next = _linked_list_of_free_slabs;
 
@@ -284,65 +163,10 @@ private:
                 reinterpret_cast<SlabType *>(current_node) + 1
             );
         }
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-        _number_of_free_slabs += _Base::_NUMBER_OF_SLABS_PER_CHUNK;
-
-        ::fprintf(
-            stderr,
-            "new raw memory buffer address: %lx | "
-            "new chunk address: %lx | "
-            "first node: %lx | "
-            "last node: %lx | "
-            "slab size: %ld | "
-            "slab alignment: %ld | "
-            "number of supplement: %ld | "
-            "chunk size: %ld | "
-            "time stamp: %s | "
-            "slab type: %s\n",
-            reinterpret_cast<uint64_t>(new_raw_memory_buffer),
-            reinterpret_cast<uint64_t>(new_chunk),
-            reinterpret_cast<uint64_t>(first_node),
-            reinterpret_cast<uint64_t>(current_node),
-            _Base::_SLAB_WIDTH,
-            _Base::_SLAB_ALIGNMENT,
-            _Base::_NUMBER_OF_SLABS_PER_CHUNK,
-            chunk_size,
-            TimePoint::get_datetime_string(TimePoint::Purpose::PRINTING)
-                .c_str(),
-            TypeName<SlabType>::get_name().c_str()
-        );
-#endif
     }
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-    bool _check_if_is_in_range(void *slab) {
-        bool is_in_range = false;
-
-        for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
-            if (reinterpret_cast<uint64_t>(slab)
-                    >= reinterpret_cast<uint64_t>(raw_memory_buffer)
-                && (reinterpret_cast<uint64_t>(slab)
-                    - reinterpret_cast<uint64_t>(raw_memory_buffer))
-                           / _Base::_SLAB_WIDTH
-                       < _Base::_NUMBER_OF_SLABS_PER_CHUNK + 5) {
-                is_in_range = true;
-
-                break;
-            }
-        }
-
-        return is_in_range;
-    }
-#endif
 
     LinkedListNode *_linked_list_of_free_slabs{nullptr};
     std::vector<void *> _allocated_raw_memory_buffers;
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR_DEBUG
-    size_t _number_of_free_slabs{0};
-    std::set<uint64_t> _addresses_of_allocated_slabs;
-#endif
 };
 
 template <typename SlabType>
