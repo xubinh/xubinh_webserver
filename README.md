@@ -313,6 +313,7 @@ H/W path    Device    Class      Description
     - 在 `HttpRequest` 中的 `std::map<std::string, std::string>` 成员和 `std::vector<char>` 成员的内存分配.
     - 在 `TcpConnectSocketfd` 及其成员 `PollableFileDescriptor` 中的 `std::function` 成员的内存分配.
   - 考虑更好的 lock-free 队列实现.
+  - 考虑使用协程.
 - [ ] 其他:
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
