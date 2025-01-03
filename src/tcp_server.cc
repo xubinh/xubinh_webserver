@@ -160,7 +160,8 @@ void TcpServer::_new_connection_callback(
         //     time_stamp
         // )
         std::allocate_shared<TcpConnectSocketfd>(
-            util::StaticSlabAllocator<TcpConnectSocketfd>(),
+            // util::StaticSlabAllocator<TcpConnectSocketfd>(),
+            util::ThreadLocalStaticSlabAllocator<TcpConnectSocketfd>(),
             connect_socketfd,
             loop,
             id,
