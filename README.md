@@ -53,7 +53,9 @@ cp -t bin/ WebBench/webbench
 | 使用右值引用避免对 `std::function` 的不必要的重复移动                                                                                                                                         | 52,591     | -          | [`bf42f6f`](https://github.com/xubinh/xubinh_webserver/commit/bf42f6f89cdf2857cc25b9e3267ca02b84efbe6a) |
 | 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化                                                                                                                                      | 51,791     | -          | [`4c98acb`](https://github.com/xubinh/xubinh_webserver/commit/4c98acb793fecc7224d6b033bd43f665fe16c183) |
 | 将 `EventPoller` 的文件描述符登记容器更改为定长布尔数组, 放弃 `std::unordered_map`                                                                                                            | 51,903     | -          | [`aa544e5`](https://github.com/xubinh/xubinh_webserver/commit/aa544e5c0d8e57372cb8677d0325a51dc8fc785e) |
-| 使用无锁队列方案 (lock-free queue + `new`) 替换阻塞队列方案 (`std::deque` + `std::mutex`), 在减少同步机制的使用所导致的性能影响的同时将内存分配与容器进行解耦, 为后续优化内存分配提供操作空间 | 54,220     | -          | [`0145b61`](https://github.com/xubinh/xubinh_webserver/commit/0145b61f2254796585907982e50a97958c4fb17c) |
+| 使用无锁队列方案 (lock-free queue + `new`) 替换阻塞队列方案 (`std::deque` + `std::mutex`), 在减少同步机制的使用所导致的性能影响的同时将内存分配与容器进行解耦, 为后续优化内存分配提供操作空间 | 50,879     | -          | [`0145b61`](https://github.com/xubinh/xubinh_webserver/commit/0145b61f2254796585907982e50a97958c4fb17c) |
+| 使用 `std::map` 作为 TCP 连接对象的容器, 并使用手写的 slab allocator 替代 `std::map` 与 `std::shared_ptr` 默认所使用的 `std::allocator`                                                       | 49,232     | -          | [`74b1617`](https://github.com/xubinh/xubinh_webserver/commit/74b161727979f6db904aa8a24dacf813427b34ee) |
+| 使用 thread local allocator 方案替代前一版本中 ``std::shared_ptr` 所使用的 lock-free allocator 方案                                                                                           | 49,004     | -          | [`c587c90`](https://github.com/xubinh/xubinh_webserver/commit/c587c90d7b956b78da2334155f40f85734dbb028) |
 
 ### 与其他项目的横向比较
 
@@ -306,11 +308,10 @@ H/W path    Device    Class      Description
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
   - 优化内存分配:
-    - 考虑在使用 `std::shared_ptr` 的场景下究竟是使用 `std::map` 作为容器好还是使用 `std::unordered_map` 作为容器好, 并优化内存分配.
-    - 使用 `std::shared_ptr<TcpConnectSocketfd>` 时底层的 `TcpConnectSocketfd` 对象的内存分配.
-    - 在 `TcpConnectSocketfd` 及其成员 `PollableFileDescriptor` 中的 `std::function` 成员的内存分配.
     - 在 `TcpConnectSocketfd` 的成员 `MutableSizeTcpBuffer` 中的 `std::vector<char>` 成员的内存分配与初始化.
     - 在 `HttpRequest` 中的 `std::map<std::string, std::string>` 成员和 `std::vector<char>` 成员的内存分配.
+    - 在 `TcpConnectSocketfd` 及其成员 `PollableFileDescriptor` 中的 `std::function` 成员的内存分配.
+  - 考虑更好的 lock-free 队列实现.
 - [ ] 其他:
   - 检查是否存在内存泄漏.
   - 尽可能将指针形式的形参更换为引用形式.
