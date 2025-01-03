@@ -56,6 +56,7 @@ cp -t bin/ WebBench/webbench
 | 使用无锁队列方案 (lock-free queue + `new`) 替换阻塞队列方案 (`std::deque` + `std::mutex`), 在减少同步机制的使用所导致的性能影响的同时将内存分配与容器进行解耦, 为后续优化内存分配提供操作空间 | 50,879     | -          | [`0145b61`](https://github.com/xubinh/xubinh_webserver/commit/0145b61f2254796585907982e50a97958c4fb17c) |
 | 使用 `std::map` 作为 TCP 连接对象的容器, 并使用手写的 slab allocator 替代 `std::map` 与 `std::shared_ptr` 默认所使用的 `std::allocator`                                                       | 49,232     | -          | [`74b1617`](https://github.com/xubinh/xubinh_webserver/commit/74b161727979f6db904aa8a24dacf813427b34ee) |
 | 使用 thread local allocator 方案替代前一版本中 ``std::shared_ptr` 所使用的 lock-free allocator 方案                                                                                           | 49,004     | -          | [`c587c90`](https://github.com/xubinh/xubinh_webserver/commit/c587c90d7b956b78da2334155f40f85734dbb028) |
+| 重构所有 static slab allocator, 放弃 "对 non-static allocator 进行包装" 的方案并直接对内存池进行管理以避免函数调用所引入的额外开销                                                            | 48,362     | -          | [`7307207`](https://github.com/xubinh/xubinh_webserver/commit/73072078011ecfd9911da0f6af0d44b29abf8303) |
 
 ### 与其他项目的横向比较
 
