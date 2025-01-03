@@ -676,6 +676,26 @@ private:
 
     using typename _Base::LinkedListNode;
 
+    struct RawMemoryBufferManager {
+        RawMemoryBufferManager() = default;
+
+        RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
+        RawMemoryBufferManager &
+        operator=(const RawMemoryBufferManager &) = delete;
+
+        ~RawMemoryBufferManager() {
+            for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
+                ::free(raw_memory_buffer);
+            }
+        }
+
+        void push_back(void *raw_memory_buffer) {
+            _allocated_raw_memory_buffers.push_back(raw_memory_buffer);
+        }
+
+        std::vector<void *> _allocated_raw_memory_buffers;
+    };
+
     struct FreeChunkNode {
         LinkedListNode *chunk_head{nullptr};
         LinkedListNode *chunk_tail{nullptr};
@@ -845,7 +865,7 @@ private:
     // local pool
     static thread_local LinkedListNode *_linked_list_of_free_slabs;
     static thread_local size_t _number_of_free_slabs;
-    static thread_local std::vector<void *> _allocated_raw_memory_buffers;
+    static thread_local RawMemoryBufferManager _allocated_raw_memory_buffers;
     static thread_local size_t _cut_off_threshold;
 
     // central pool
@@ -862,8 +882,9 @@ template <typename SlabType>
 thread_local size_t
     StaticThreadLocalSlabAllocator<SlabType>::_number_of_free_slabs{0};
 template <typename SlabType>
-thread_local std::vector<void *>
-    StaticThreadLocalSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
+thread_local
+    typename StaticThreadLocalSlabAllocator<SlabType>::RawMemoryBufferManager
+        StaticThreadLocalSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
 template <typename SlabType>
 thread_local size_t
     StaticThreadLocalSlabAllocator<SlabType>::_cut_off_threshold{
