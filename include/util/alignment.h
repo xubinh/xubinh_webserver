@@ -9,7 +9,7 @@ namespace util {
 
 namespace alignment {
 
-// aligned allocate
+// aligned allocate; promised to return non-null pointer
 void *aalloc(size_t alignment, size_t size);
 
 size_t get_level_1_data_cache_line_size();

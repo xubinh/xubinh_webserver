@@ -3,10 +3,10 @@
 
 #include <atomic>
 #include <cstdio>
-#include <cstdlib>
 #include <mutex>
-#include <set>
 #include <vector>
+
+#include "util/alignment.h"
 
 namespace xubinh_server {
 
@@ -72,8 +72,8 @@ public:
     SimpleSlabAllocator &operator=(SimpleSlabAllocator &&) = delete;
 
     ~SimpleSlabAllocator() noexcept {
-        for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
-            ::free(raw_memory_buffer);
+        for (auto chunk : _allocated_chunks) {
+            ::free(chunk);
         }
     }
 
@@ -137,36 +137,9 @@ private:
     void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
-        size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
+        void *new_chunk = alignment::aalloc(_SLAB_ALIGNMENT, chunk_size);
 
-        void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
-
-        if (!new_raw_memory_buffer) {
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::SimpleSlabAllocator::_allocate_one_"
-                "chunk: memory allocation failed\n"
-            );
-
-            ::abort();
-        }
-
-        _allocated_raw_memory_buffers.push_back(new_raw_memory_buffer);
-
-        auto new_chunk = new_raw_memory_buffer;
-
-        if (!std::align(
-                _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
-            )) {
-
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::SimpleSlabAllocator::_allocate_one_"
-                "chunk: alignment failed\n"
-            );
-
-            ::abort();
-        }
+        _allocated_chunks.push_back(new_chunk);
 
         LinkedListNode *current_node =
             reinterpret_cast<LinkedListNode *>(new_chunk);
@@ -190,7 +163,7 @@ private:
 
     LinkedListNode *_linked_list_of_free_slabs{nullptr};
 
-    std::vector<void *> _allocated_raw_memory_buffers;
+    std::vector<void *> _allocated_chunks;
 };
 
 // non-static semi lock-free multi-threaded allocator
@@ -227,12 +200,12 @@ public:
         {
             std::lock_guard<std::mutex> lock(_mutex);
 
-            if (_allocated_raw_memory_buffers.empty()) {
+            if (_allocated_chunks.empty()) {
                 return;
             }
 
-            for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
-                ::free(raw_memory_buffer);
+            for (auto chunk : _allocated_chunks) {
+                ::free(chunk);
             }
         }
     }
@@ -318,39 +291,12 @@ private:
     SlabType *_allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
-        size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
-
-        void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
-
-        if (!new_raw_memory_buffer) {
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::SemiLockFreeSlabAllocator::_allocate_"
-                "one_chunk: memory allocation failed\n"
-            );
-
-            ::abort();
-        }
+        void *new_chunk = alignment::aalloc(_SLAB_ALIGNMENT, chunk_size);
 
         {
             std::lock_guard<std::mutex> lock(_mutex);
 
-            _allocated_raw_memory_buffers.push_back(new_raw_memory_buffer);
-        }
-
-        auto new_chunk = new_raw_memory_buffer;
-
-        if (!std::align(
-                _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
-            )) {
-
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::SemiLockFreeSlabAllocator::_allocate_"
-                "one_chunk: alignment failed\n"
-            );
-
-            ::abort();
+            _allocated_chunks.push_back(new_chunk);
         }
 
         if (__builtin_expect(_NUMBER_OF_SLABS_PER_CHUNK == 1, false)) {
@@ -403,7 +349,7 @@ private:
 
     std::atomic<LinkedListNode *> _linked_list_of_free_slabs{nullptr};
 
-    std::vector<void *> _allocated_raw_memory_buffers;
+    std::vector<void *> _allocated_chunks;
     std::mutex _mutex;
 };
 
@@ -415,24 +361,23 @@ private:
 
     using typename _Base::LinkedListNode;
 
-    struct RawMemoryBufferManager {
-        RawMemoryBufferManager() noexcept = default;
+    struct ChunkManager {
+        ChunkManager() noexcept = default;
 
-        RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
-        RawMemoryBufferManager &
-        operator=(const RawMemoryBufferManager &) = delete;
+        ChunkManager(const ChunkManager &) = delete;
+        ChunkManager &operator=(const ChunkManager &) = delete;
 
-        ~RawMemoryBufferManager() noexcept {
-            for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
-                ::free(raw_memory_buffer);
+        ~ChunkManager() noexcept {
+            for (auto chunk : _allocated_chunks) {
+                ::free(chunk);
             }
         }
 
-        void push_back(void *raw_memory_buffer) noexcept {
-            _allocated_raw_memory_buffers.push_back(raw_memory_buffer);
+        void push_back(void *chunk) {
+            _allocated_chunks.push_back(chunk);
         }
 
-        std::vector<void *> _allocated_raw_memory_buffers;
+        std::vector<void *> _allocated_chunks;
     };
 
 public:
@@ -506,36 +451,9 @@ private:
     void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
-        size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
+        void *new_chunk = alignment::aalloc(_SLAB_ALIGNMENT, chunk_size);
 
-        void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
-
-        if (!new_raw_memory_buffer) {
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::StaticSimpleSlabAllocator::_allocate_"
-                "one_chunk: memory allocation failed\n"
-            );
-
-            ::abort();
-        }
-
-        _allocated_raw_memory_buffers.push_back(new_raw_memory_buffer);
-
-        auto new_chunk = new_raw_memory_buffer;
-
-        if (!std::align(
-                _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
-            )) {
-
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::StaticSimpleSlabAllocator::_allocate_"
-                "one_chunk: alignment failed\n"
-            );
-
-            ::abort();
-        }
+        _allocated_chunks.push_back(new_chunk);
 
         LinkedListNode *current_node =
             reinterpret_cast<LinkedListNode *>(new_chunk);
@@ -558,7 +476,7 @@ private:
     static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 4000;
 
     static LinkedListNode *_linked_list_of_free_slabs;
-    static RawMemoryBufferManager _allocated_raw_memory_buffers;
+    static ChunkManager _allocated_chunks;
 };
 
 // initialization of static members
@@ -566,8 +484,8 @@ template <typename SlabType>
 typename StaticSimpleSlabAllocator<SlabType>::LinkedListNode
     *StaticSimpleSlabAllocator<SlabType>::_linked_list_of_free_slabs{nullptr};
 template <typename SlabType>
-typename StaticSimpleSlabAllocator<SlabType>::RawMemoryBufferManager
-    StaticSimpleSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
+typename StaticSimpleSlabAllocator<SlabType>::ChunkManager
+    StaticSimpleSlabAllocator<SlabType>::_allocated_chunks;
 
 // static semi lock-free multi-threaded allocator
 template <typename SlabType>
@@ -577,28 +495,27 @@ private:
 
     using typename _Base::LinkedListNode;
 
-    struct RawMemoryBufferManager {
-        RawMemoryBufferManager() noexcept = default;
+    struct ChunkManager {
+        ChunkManager() noexcept = default;
 
-        RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
-        RawMemoryBufferManager &
-        operator=(const RawMemoryBufferManager &) = delete;
+        ChunkManager(const ChunkManager &) = delete;
+        ChunkManager &operator=(const ChunkManager &) = delete;
 
-        ~RawMemoryBufferManager() noexcept {
-            for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
-                ::free(raw_memory_buffer);
+        ~ChunkManager() noexcept {
+            for (auto chunk : _allocated_chunks) {
+                ::free(chunk);
             }
         }
 
-        void push_back(void *raw_memory_buffer) noexcept {
+        void push_back(void *chunk) {
             {
                 std::lock_guard<std::mutex> lock(_mutex);
 
-                _allocated_raw_memory_buffers.push_back(raw_memory_buffer);
+                _allocated_chunks.push_back(chunk);
             }
         }
 
-        std::vector<void *> _allocated_raw_memory_buffers;
+        std::vector<void *> _allocated_chunks;
         std::mutex _mutex;
     };
 
@@ -694,36 +611,9 @@ private:
     SlabType *_allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
-        size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
+        void *new_chunk = alignment::aalloc(_SLAB_ALIGNMENT, chunk_size);
 
-        void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
-
-        if (!new_raw_memory_buffer) {
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::StaticSemiLockFreeSlabAllocator::_"
-                "allocate_one_chunk: memory allocation failed\n"
-            );
-
-            ::abort();
-        }
-
-        _allocated_raw_memory_buffers.push_back(new_raw_memory_buffer);
-
-        auto new_chunk = new_raw_memory_buffer;
-
-        if (!std::align(
-                _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
-            )) {
-
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::StaticSemiLockFreeSlabAllocator::_"
-                "allocate_one_chunk: alignment failed\n"
-            );
-
-            ::abort();
-        }
+        _allocated_chunks.push_back(new_chunk);
 
         if (__builtin_expect(_NUMBER_OF_SLABS_PER_CHUNK == 1, false)) {
             auto preserved_slab = reinterpret_cast<SlabType *>(new_chunk);
@@ -774,7 +664,7 @@ private:
     static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 4000;
 
     static std::atomic<LinkedListNode *> _linked_list_of_free_slabs;
-    static RawMemoryBufferManager _allocated_raw_memory_buffers;
+    static ChunkManager _allocated_chunks;
 };
 
 // initialization of static members
@@ -784,8 +674,8 @@ std::atomic<
     StaticSemiLockFreeSlabAllocator<SlabType>::_linked_list_of_free_slabs{
         nullptr};
 template <typename SlabType>
-typename StaticSemiLockFreeSlabAllocator<SlabType>::RawMemoryBufferManager
-    StaticSemiLockFreeSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
+typename StaticSemiLockFreeSlabAllocator<SlabType>::ChunkManager
+    StaticSemiLockFreeSlabAllocator<SlabType>::_allocated_chunks;
 
 // static multi-threaded allocator that combines thread-local pools with a
 // central memory pool
@@ -796,24 +686,23 @@ private:
 
     using typename _Base::LinkedListNode;
 
-    struct RawMemoryBufferManager {
-        RawMemoryBufferManager() noexcept = default;
+    struct ChunkManager {
+        ChunkManager() noexcept = default;
 
-        RawMemoryBufferManager(const RawMemoryBufferManager &) = delete;
-        RawMemoryBufferManager &
-        operator=(const RawMemoryBufferManager &) = delete;
+        ChunkManager(const ChunkManager &) = delete;
+        ChunkManager &operator=(const ChunkManager &) = delete;
 
-        ~RawMemoryBufferManager() noexcept {
-            for (auto raw_memory_buffer : _allocated_raw_memory_buffers) {
-                ::free(raw_memory_buffer);
+        ~ChunkManager() noexcept {
+            for (auto chunk : _allocated_chunks) {
+                ::free(chunk);
             }
         }
 
-        void push_back(void *raw_memory_buffer) noexcept {
-            _allocated_raw_memory_buffers.push_back(raw_memory_buffer);
+        void push_back(void *chunk) {
+            _allocated_chunks.push_back(chunk);
         }
 
-        std::vector<void *> _allocated_raw_memory_buffers;
+        std::vector<void *> _allocated_chunks;
     };
 
     struct FreeChunkNode {
@@ -944,36 +833,9 @@ private:
     void _allocate_one_chunk() noexcept {
         size_t chunk_size = _SLAB_WIDTH * _NUMBER_OF_SLABS_PER_CHUNK;
 
-        size_t raw_memory_buffer_size = chunk_size + (_SLAB_ALIGNMENT - 1);
+        void *new_chunk = alignment::aalloc(_SLAB_ALIGNMENT, chunk_size);
 
-        void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
-
-        if (!new_raw_memory_buffer) {
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::StaticThreadLocalSlabAllocator::_"
-                "allocate_one_chunk: memory allocation failed\n"
-            );
-
-            ::abort();
-        }
-
-        _allocated_raw_memory_buffers.push_back(new_raw_memory_buffer);
-
-        auto new_chunk = new_raw_memory_buffer;
-
-        if (!std::align(
-                _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
-            )) {
-
-            ::fprintf(
-                stderr,
-                "@xubinh_server::util::StaticThreadLocalSlabAllocator::_"
-                "allocate_one_chunk: alignment failed\n"
-            );
-
-            ::abort();
-        }
+        _allocated_chunks.push_back(new_chunk);
 
         LinkedListNode *current_node =
             reinterpret_cast<LinkedListNode *>(new_chunk);
@@ -998,7 +860,7 @@ private:
     // local pool
     static thread_local LinkedListNode *_linked_list_of_free_slabs;
     static thread_local size_t _number_of_free_slabs;
-    static thread_local RawMemoryBufferManager _allocated_raw_memory_buffers;
+    static thread_local ChunkManager _allocated_chunks;
     static thread_local size_t _cut_off_threshold;
 
     // central pool
@@ -1015,9 +877,8 @@ template <typename SlabType>
 thread_local size_t
     StaticThreadLocalSlabAllocator<SlabType>::_number_of_free_slabs{0};
 template <typename SlabType>
-thread_local
-    typename StaticThreadLocalSlabAllocator<SlabType>::RawMemoryBufferManager
-        StaticThreadLocalSlabAllocator<SlabType>::_allocated_raw_memory_buffers;
+thread_local typename StaticThreadLocalSlabAllocator<SlabType>::ChunkManager
+    StaticThreadLocalSlabAllocator<SlabType>::_allocated_chunks;
 template <typename SlabType>
 thread_local size_t
     StaticThreadLocalSlabAllocator<SlabType>::_cut_off_threshold{
