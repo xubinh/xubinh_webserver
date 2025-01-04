@@ -16,9 +16,6 @@ public:
     explicit LogFile(const std::string &base_name);
 
     ~LogFile() noexcept = default;
-    // ~LogFile() noexcept {
-    //     ::fprintf(stderr, "exit destructor of LogFile\n");
-    // };
 
     void
     write_to_user_space_memory(const char *data, size_t data_size) noexcept {

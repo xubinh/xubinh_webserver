@@ -86,7 +86,7 @@ template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 
 LogBuilder &LogBuilder::operator<<(double floating_point) {
     if (_entry_buffer.length_of_spare() > _get_number_of_chars<double>()) {
-        _entry_buffer.increment_length(snprintf(
+        _entry_buffer.increment_length(::snprintf(
             _entry_buffer.get_start_address_of_spare(),
             _get_number_of_chars<double>(),
             "%.12g",

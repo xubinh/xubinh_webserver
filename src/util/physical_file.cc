@@ -46,8 +46,10 @@ void AppendOnlyPhysicalFile::write_to_user_space_memory(
 
         ::fprintf(
             stderr,
-            "AppendOnlyPhysicalFile::append failed, reason: %s\n",
-            strerror_tl(saved_errno).c_str()
+            "@xubinh_server::util::AppendOnlyPhysicalFile::write_to_user_space_"
+            "memory: %s (errno=%d)\n",
+            strerror_tl(saved_errno).c_str(),
+            saved_errno
         );
     }
 }

@@ -40,7 +40,11 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
             ::write(STDOUT_FILENO, entry_address, entry_size);
 
         if (bytes_written != entry_size) {
-            ::fprintf(stderr, "error when try to print log into stdout\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::LogCollector::take_this_log: error when try "
+                "to print log into stdout\n"
+            );
 
             ::abort();
         }
@@ -95,8 +99,6 @@ LogCollector::LogCollector()
 
 LogCollector::~LogCollector() {
     _stop(false);
-
-    // ::fprintf(stderr, "exit destructor of LogCollector\n");
 }
 
 void LogCollector::_background_io_thread_worker_functor() {
@@ -227,8 +229,6 @@ void LogCollector::_background_io_thread_worker_functor() {
         );
     }
 
-    // ::fprintf(stderr, "exit LogCollector background thread\n");
-
     return;
 }
 
@@ -245,14 +245,8 @@ void LogCollector::_stop(bool also_need_abort) {
     _background_thread.join();
 
     if (also_need_abort) {
-        // ::fprintf(stderr, "also need abort\n");
-
         ::abort();
     }
-
-    // else {
-    //     ::fprintf(stderr, "does not need abort\n");
-    // }
 }
 
 LogCollector *LogCollector::_log_collector_singleton_instance = nullptr;

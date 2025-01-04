@@ -50,11 +50,6 @@ public:
     FixedSizeLogBuffer &operator=(FixedSizeLogBuffer &&) = delete;
 
     ~FixedSizeLogBuffer() = default;
-    // ~FixedSizeLogBuffer() {
-    //     if (LOG_BUFFER_SIZE == LogBufferSizeConfig::LOG_CHUNK_BUFFER_SIZE) {
-    //         ::fprintf(stderr, "exit destructor of FixedSizeLogBuffer\n");
-    //     }
-    // }
 
     const char *get_start_address_of_buffer() const {
         return _buffer;

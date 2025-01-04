@@ -44,7 +44,11 @@ _MainThreadInitializer _thread_name_initializer;
 
 Thread::~Thread() {
     if (!_is_joined) {
-        fprintf(stderr, "destructor called before joining of the thread\n");
+        ::fprintf(
+            stderr,
+            "@xubinh_server::util::Thread::~Thread: destructor called before "
+            "joining of the thread\n"
+        );
 
         ::abort();
     }
@@ -65,7 +69,11 @@ void Thread::start() {
                 this
             )) {
 
-            ::fprintf(stderr, "failed to create new thread\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::Thread::start: failed to create new "
+                "thread\n"
+            );
 
             ::abort();
         }
@@ -77,14 +85,6 @@ void Thread::start() {
     }
 
     _is_started = true;
-
-    // // debug
-    // fprintf(
-    //     stderr,
-    //     "thread started, name: %s, TID: %d\n",
-    //     _thread_name.c_str(),
-    //     _tid
-    // );
 }
 
 void Thread::join() {
@@ -101,7 +101,11 @@ void Thread::join() {
     if (_pthread_join_result) {
         switch (errno) {
         case EDEADLK:
-            fprintf(stderr, "dead lock detected when joining a thread\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::Thread::join: dead lock detected when "
+                "joining a thread\n"
+            );
 
             ::abort();
 
@@ -110,8 +114,10 @@ void Thread::join() {
         // will never encounter these, so make them fatal
         case EINVAL:
         case ESRCH:
-            fprintf(
-                stderr, "something that is not supposed to happen happened\n"
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::Thread::join: something that is not "
+                "supposed to happen happened\n"
             );
 
             ::abort();
@@ -119,7 +125,9 @@ void Thread::join() {
             break;
 
         default:
-            fprintf(stderr, "unknown error\n");
+            ::fprintf(
+                stderr, "@xubinh_server::util::Thread::join: unknown error\n"
+            );
 
             break;
         }

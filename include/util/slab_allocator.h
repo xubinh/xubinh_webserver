@@ -99,7 +99,11 @@ public:
 
     void deallocate(SlabType *slab, size_t n) noexcept {
         if (n != 1) {
-            ::fprintf(stderr, "nultiple slabs are returned at once\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::SimpleSlabAllocator::deallocate: "
+                "multiple slabs are returned at once\n"
+            );
 
             ::abort();
         }
@@ -138,7 +142,11 @@ private:
         void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
 
         if (!new_raw_memory_buffer) {
-            ::fprintf(stderr, "memory allocation failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::SimpleSlabAllocator::_allocate_one_"
+                "chunk: memory allocation failed\n"
+            );
 
             ::abort();
         }
@@ -151,7 +159,11 @@ private:
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
 
-            ::fprintf(stderr, "alignment failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::SimpleSlabAllocator::_allocate_one_"
+                "chunk: alignment failed\n"
+            );
 
             ::abort();
         }
@@ -260,7 +272,11 @@ public:
 
     void deallocate(SlabType *slab, size_t n) noexcept {
         if (n != 1) {
-            ::fprintf(stderr, "nultiple slabs are returned at once\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::SemiLockFreeSlabAllocator::deallocate: "
+                "multiple slabs are returned at once\n"
+            );
 
             ::abort();
         }
@@ -307,7 +323,11 @@ private:
         void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
 
         if (!new_raw_memory_buffer) {
-            ::fprintf(stderr, "memory allocation failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::SemiLockFreeSlabAllocator::_allocate_"
+                "one_chunk: memory allocation failed\n"
+            );
 
             ::abort();
         }
@@ -324,7 +344,11 @@ private:
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
 
-            ::fprintf(stderr, "alignment failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::SemiLockFreeSlabAllocator::_allocate_"
+                "one_chunk: alignment failed\n"
+            );
 
             ::abort();
         }
@@ -444,7 +468,11 @@ public:
 
     void deallocate(SlabType *slab, size_t n) noexcept {
         if (n != 1) {
-            ::fprintf(stderr, "nultiple slabs are returned at once\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticSimpleSlabAllocator::deallocate: "
+                "multiple slabs are returned at once\n"
+            );
 
             ::abort();
         }
@@ -483,7 +511,11 @@ private:
         void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
 
         if (!new_raw_memory_buffer) {
-            ::fprintf(stderr, "memory allocation failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticSimpleSlabAllocator::_allocate_"
+                "one_chunk: memory allocation failed\n"
+            );
 
             ::abort();
         }
@@ -496,7 +528,11 @@ private:
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
 
-            ::fprintf(stderr, "alignment failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticSimpleSlabAllocator::_allocate_"
+                "one_chunk: alignment failed\n"
+            );
 
             ::abort();
         }
@@ -612,7 +648,11 @@ public:
 
     void deallocate(SlabType *slab, size_t n) noexcept {
         if (n != 1) {
-            ::fprintf(stderr, "nultiple slabs are returned at once\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticSemiLockFreeSlabAllocator::"
+                "deallocate: multiple slabs are returned at once\n"
+            );
 
             ::abort();
         }
@@ -659,7 +699,11 @@ private:
         void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
 
         if (!new_raw_memory_buffer) {
-            ::fprintf(stderr, "memory allocation failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticSemiLockFreeSlabAllocator::_"
+                "allocate_one_chunk: memory allocation failed\n"
+            );
 
             ::abort();
         }
@@ -672,7 +716,11 @@ private:
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
 
-            ::fprintf(stderr, "alignment failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticSemiLockFreeSlabAllocator::_"
+                "allocate_one_chunk: alignment failed\n"
+            );
 
             ::abort();
         }
@@ -830,7 +878,11 @@ public:
 
     void deallocate(SlabType *slab, size_t n) noexcept {
         if (n != 1) {
-            ::fprintf(stderr, "nultiple slabs are returned at once\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticThreadLocalSlabAllocator::"
+                "deallocate: multiple slabs are returned at once\n"
+            );
 
             ::abort();
         }
@@ -897,7 +949,11 @@ private:
         void *new_raw_memory_buffer = ::malloc(raw_memory_buffer_size);
 
         if (!new_raw_memory_buffer) {
-            ::fprintf(stderr, "memory allocation failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticThreadLocalSlabAllocator::_"
+                "allocate_one_chunk: memory allocation failed\n"
+            );
 
             ::abort();
         }
@@ -910,7 +966,11 @@ private:
                 _SLAB_ALIGNMENT, chunk_size, new_chunk, raw_memory_buffer_size
             )) {
 
-            ::fprintf(stderr, "alignment failed\n");
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::StaticThreadLocalSlabAllocator::_"
+                "allocate_one_chunk: alignment failed\n"
+            );
 
             ::abort();
         }
