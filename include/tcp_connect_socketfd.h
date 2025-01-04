@@ -12,7 +12,7 @@
 
 namespace xubinh_server {
 
-class TcpConnectSocketfd
+class alignas(64) TcpConnectSocketfd
     : public std::enable_shared_from_this<TcpConnectSocketfd>,
       public Socketfd {
 public:
