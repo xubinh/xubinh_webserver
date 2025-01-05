@@ -20,7 +20,7 @@ bool HttpParser::parse(
             return true;
         }
 
-        auto request_line_start = buffer.get_current_read_position();
+        auto request_line_start = buffer.get_read_position();
 
         if (!_request.parse_request_line(
                 request_line_start, request_line_end
@@ -49,7 +49,7 @@ bool HttpParser::parse(
                 return true;
             }
 
-            auto header_line_start = buffer.get_current_read_position();
+            auto header_line_start = buffer.get_read_position();
 
             // empty line; (2) all headers are parsed
             if (header_line_start == header_line_end) {
@@ -105,7 +105,7 @@ goto_header_finished:
             return true;
         }
 
-        auto body_start = buffer.get_current_read_position();
+        auto body_start = buffer.get_read_position();
 
         auto body_end = body_start + _body_length;
 

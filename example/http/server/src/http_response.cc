@@ -247,51 +247,51 @@ void HttpResponse::dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer) {
 
     auto version_str = get_version_type_as_string();
 
-    buffer.write(version_str, ::strlen(version_str));
+    buffer.append(version_str, ::strlen(version_str));
 
-    buffer.write_space();
+    buffer.append_space();
 
     auto status_code_and_description_str =
         get_status_code_and_description_as_string();
 
-    buffer.write(
+    buffer.append(
         status_code_and_description_str,
         ::strlen(status_code_and_description_str)
     );
 
-    buffer.write_crlf();
+    buffer.append_crlf();
 
     for (const auto &key_value_pair : _headers) {
-        buffer.write(
+        buffer.append(
             key_value_pair.first.c_str(), key_value_pair.first.length()
         );
 
-        buffer.write_colon();
+        buffer.append_colon();
 
-        buffer.write(
+        buffer.append(
             key_value_pair.second.c_str(), key_value_pair.second.length()
         );
 
-        buffer.write_crlf();
+        buffer.append_crlf();
     }
 
     // an empty line is required to end the header section
-    buffer.write_crlf();
+    buffer.append_crlf();
 
     if (!_body.empty()) {
-        buffer.write(&(*_body.begin()), _body.size());
+        buffer.append(_body);
     }
 }
 
 void HttpResponse::send_to_tcp_connection(
-    const std::shared_ptr<TcpConnectSocketfd> &tcp_connect_socketfd_ptr
+    TcpConnectSocketfd *tcp_connect_socketfd_ptr
 ) {
     MutableSizeTcpBuffer buffer;
 
     dump_to_tcp_buffer(buffer);
 
     tcp_connect_socketfd_ptr->send(
-        buffer.get_current_read_position(), buffer.get_readable_size()
+        buffer.get_read_position(), buffer.get_readable_size()
     );
 }
 

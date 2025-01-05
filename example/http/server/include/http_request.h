@@ -5,7 +5,6 @@
 #include <map>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "util/time_point.h"
 
@@ -99,7 +98,7 @@ public:
         _body.assign(start, end);
     }
 
-    const std::vector<char> &get_body() const {
+    const std::string &get_body() const {
         return _body;
     }
 
@@ -141,11 +140,8 @@ private:
     std::string _path;
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
     util::TimePoint _receive_time_point{0};
-    // std::unordered_map<std::string, std::string> _headers;
-    std::map<std::string, std::string>
-        _headers; // for testing; more efficient than std::map when the number
-                  // of headers is small
-    std::vector<char> _body;
+    std::map<std::string, std::string> _headers;
+    std::string _body;
 };
 
 } // namespace xubinh_server

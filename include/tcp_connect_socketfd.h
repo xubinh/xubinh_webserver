@@ -176,8 +176,9 @@ private:
     //
     // - make it half the initial size of the buffer to prevent unnecessary
     // reallocation
-    static constexpr const size_t _RECEIVE_DATA_SIZE =
-        MutableSizeTcpBuffer::DEFAULT_INITIAL_BUFFER_SIZE / 2;
+    static constexpr const size_t _RECEIVE_DATA_SIZE = 4096; // 4 KB
+
+    char recv_buffer[_RECEIVE_DATA_SIZE];
 
     const uint64_t _id;
     const InetAddress _local_address;
@@ -190,8 +191,8 @@ private:
     MutableSizeTcpBuffer _input_buffer;
     MutableSizeTcpBuffer
         _output_buffer; // [TODO]: make it a queue of heterogeneous data
-                        // sources, e.g. std::vector<char>, sendFile, mmap,
-                        // etc., for better performance
+                        // sources (e.g. std::string, sendFile, mmap,
+                        // etc.) for better performance
 
     MessageCallbackType _message_callback;
     WriteCompleteCallbackType _write_complete_callback;

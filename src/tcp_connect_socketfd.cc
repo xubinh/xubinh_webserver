@@ -174,7 +174,7 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
 
     // leave the writing to the event callback if already started listening
     if (_is_writing()) {
-        _output_buffer.write(data, data_size);
+        _output_buffer.append(data, data_size);
 
         return;
     }
@@ -192,7 +192,7 @@ void TcpConnectSocketfd::send(const char *data, size_t data_size) {
     }
 
     // otherwise leave what's left to the callback as well
-    _output_buffer.write(
+    _output_buffer.append(
         data + number_of_bytes_sent, data_size - number_of_bytes_sent
     );
 
@@ -246,7 +246,7 @@ void TcpConnectSocketfd::_write_event_callback() {
     if (total_number_of_bytes > 0) {
         // output buffer -- W --> fd
         auto number_of_bytes_sent = _send_as_many_data(
-            _output_buffer.get_current_read_position(), total_number_of_bytes
+            _output_buffer.get_read_position(), total_number_of_bytes
         );
 
         _output_buffer.forward_read_position(number_of_bytes_sent);
@@ -310,11 +310,9 @@ void TcpConnectSocketfd::_check_and_abort_impl(PredicateType predicate) {
 
 void TcpConnectSocketfd::_receive_all_data() {
     while (true) {
-        _input_buffer.make_space(_RECEIVE_DATA_SIZE);
-
         ssize_t bytes_read = ::recv(
             _pollable_file_descriptor.get_fd(),
-            _input_buffer.get_current_write_position(),
+            recv_buffer,
             _RECEIVE_DATA_SIZE,
             0
         );
@@ -323,7 +321,7 @@ void TcpConnectSocketfd::_receive_all_data() {
 
         // have read in some data but maybe not all
         if (bytes_read > 0) {
-            _input_buffer.forward_write_position(bytes_read);
+            _input_buffer.append(recv_buffer, bytes_read);
 
             continue;
         }

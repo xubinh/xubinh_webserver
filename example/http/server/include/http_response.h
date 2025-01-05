@@ -130,13 +130,13 @@ public:
     // true = found, false = not found
     bool erase_header(const std::string &key);
 
-    void set_body(const std::vector<char> &body) {
+    void set_body(const std::string &body) {
         _body = body;
 
         set_header("Content-Length", std::to_string(body.size()));
     }
 
-    void set_body(std::vector<char> &&body) {
+    void set_body(std::string &&body) {
         _body = std::move(body);
 
         set_header("Content-Length", std::to_string(body.size()));
@@ -150,23 +150,15 @@ public:
 
     void dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer);
 
-    void send_to_tcp_connection(
-        const std::shared_ptr<TcpConnectSocketfd> &tcp_connect_socketfd_ptr
-    );
+    void send_to_tcp_connection(TcpConnectSocketfd *tcp_connect_socketfd_ptr);
 
 private:
     static const std::string _empty_string;
 
     HttpVersionType _version;
-
     HttpStatusCode _status_code = S_NONE;
-
-    // std::unordered_map<std::string, std::string> _headers;
-    std::map<std::string, std::string>
-        _headers; // for testing; more efficient than std::map when the number
-                  // of headers is small
-
-    std::vector<char> _body;
+    std::map<std::string, std::string> _headers;
+    std::string _body;
 };
 
 } // namespace xubinh_server

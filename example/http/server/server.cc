@@ -165,7 +165,7 @@ std::string get_mime_type(const std::string &file_path) {
 }
 
 bool read_file_and_send(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     xubinh_server::HttpResponse &response,
     const std::string &file_path
 ) {
@@ -221,7 +221,7 @@ bool read_file_and_send(
 }
 
 void send_404(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr, bool need_close
+    xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr, bool need_close
 ) {
     xubinh_server::HttpResponse response;
 
@@ -241,7 +241,7 @@ void send_404(
 }
 
 void send_file(
-    const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr,
+    xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     bool need_close,
     const std::string &file_path
 ) {
@@ -299,7 +299,7 @@ void http_request_callback(
 
     if (need_close) {
         tcp_connect_socketfd_ptr->register_write_complete_callback(
-            [](const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr) {
+            [](xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
                 tcp_connect_socketfd_ptr->shutdown_write();
             }
         );

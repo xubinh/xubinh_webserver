@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <string>
 #include <vector>
 
 namespace xubinh_server {
@@ -11,135 +12,70 @@ namespace xubinh_server {
 // not thread-safe
 class MutableSizeTcpBuffer {
 public:
-    MutableSizeTcpBuffer(
-        size_t initial_buffer_size = DEFAULT_INITIAL_BUFFER_SIZE
-    )
-        // prevent UB produced by doing a `begin()` on an empty vector
-        : _buffer(std::max(initial_buffer_size, static_cast<size_t>(1))) {
-
-        _buffer.resize(_buffer.capacity());
+    MutableSizeTcpBuffer() noexcept {
+        _volatile_buffer_begin_ptr = const_cast<char *>(_buffer.c_str());
     }
 
-    char *get_current_read_position() {
-        return _begin() + _current_read_offset;
-    }
-
-    const char *get_current_read_position() const {
-        return _begin() + _current_read_offset;
-    }
-
-    char *get_current_write_position() {
-        return _begin() + _current_write_offset;
-    }
-
-    const char *get_current_write_position() const {
-        return _begin() + _current_write_offset;
-    }
-
-    size_t get_prependable_size() const {
-        return _current_read_offset;
+    const char *get_read_position() const {
+        return _volatile_buffer_begin_ptr + _read_offset;
     }
 
     size_t get_readable_size() const {
-        return _current_write_offset - _current_read_offset;
+        return _write_offset - _read_offset;
     }
 
-    size_t get_writable_size() const {
-        return _buffer.size() - _current_write_offset;
+    // does not check internally; make sure to use it well
+    void forward_read_position(size_t number_of_bytes_read) {
+        _read_offset =
+            std::min(_read_offset + number_of_bytes_read, _write_offset);
     }
 
-    void forward_read_position(size_t size_of_read) {
-        _current_read_offset += size_of_read;
+    const char *get_next_newline_position();
 
-        if (_current_read_offset > _current_write_offset) {
-            _current_read_offset = _current_write_offset;
-        }
+    const char *get_next_crlf_position();
+
+    // appends size-known external (i.e. already existed) buffer of data into
+    // this TCP buffer
+    void append(const char *external_buffer, size_t external_buffer_size) {
+        auto internal_buffer = _make_space(external_buffer_size);
+
+        ::memcpy(internal_buffer, external_buffer, external_buffer_size);
     }
 
-    void forward_write_position(size_t size_of_written) {
-        _current_write_offset += size_of_written;
-
-        if (_current_write_offset > _buffer.size()) {
-            _current_write_offset == _buffer.size();
-        }
+    void append(const std::string &external_buffer) {
+        append(external_buffer.c_str(), external_buffer.size());
     }
 
-    void make_space(size_t size_of_space);
-
-    // fixed-size write
-    void write(const char *buffer, size_t buffer_size);
-
-    const char *get_next_newline_position() {
-        return static_cast<const char *>(
-            ::memchr(get_current_read_position(), '\n', get_readable_size())
-        );
+    void append_space() {
+        append(" ", 1);
     }
 
-    const char *get_next_crlf_position() {
-        auto next_crlf_position = std::search(
-            get_current_read_position(),
-            get_current_write_position(),
-            CRLF,
-            CRLF + 2
-        );
-
-        return next_crlf_position == get_current_write_position()
-                   ? nullptr
-                   : next_crlf_position;
+    void append_newline() {
+        append("\n", 1);
     }
 
-    void write_space() {
-        write(" ", 1);
+    void append_crlf() {
+        append("\r\n", 2);
     }
 
-    void write_newline() {
-        write("\n", 1);
+    void append_colon() {
+        append(":", 1);
     }
-
-    void write_crlf() {
-        write("\r\n", 2);
-    }
-
-    void write_colon() {
-        write(":", 1);
-    }
-
-    static constexpr size_t DEFAULT_INITIAL_BUFFER_SIZE = 4000; // ~ 4 KB
 
 private:
-    static char CRLF[];
+    // makes space (and possibly reallocates memory), default initializes with
+    // `\0`, and return the begin address of the newly made space (the size of
+    // which is exactly the size that passed in)
+    //
+    // - the buffer size will always be added by the size of the newly made
+    // space, whether or not any data is written into it
+    // - returns `nullptr` if the size passed in is zero
+    char *_make_space(size_t size);
 
-    char *_begin() {
-        return &(*_buffer.begin());
-    }
-
-    const char *_begin() const {
-        return &(*_buffer.begin());
-    }
-
-    char *_end() {
-        return &(*_buffer.end());
-    }
-
-    const char *_end() const {
-        return &(*_buffer.end());
-    }
-
-    void _move_data_to_front() {
-        std::copy(
-            get_current_read_position(),
-            get_current_write_position(),
-            _buffer.begin()
-        );
-
-        _current_write_offset -= _current_read_offset;
-
-        _current_read_offset = 0;
-    }
-
-    std::vector<char> _buffer;
-    size_t _current_read_offset{0};
-    size_t _current_write_offset{0};
+    std::string _buffer;
+    char *_volatile_buffer_begin_ptr;
+    size_t _read_offset{0};
+    size_t _write_offset{0};
 };
 
 } // namespace xubinh_server

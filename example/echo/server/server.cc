@@ -65,7 +65,7 @@ void message_callback(
         const char *client_message_end = newline_position + 1;
 
         const char *client_message_start =
-            const_cast<const char *>(input_buffer->get_current_read_position());
+            const_cast<const char *>(input_buffer->get_read_position());
 
         std::string client_message =
             std::string(client_message_start, client_message_end);
