@@ -2,7 +2,6 @@
 #define __XUBINH_SERVER_HTTP_REQUEST
 
 #include <cstring>
-#include <map>
 #include <string>
 #include <unordered_map>
 
@@ -89,8 +88,7 @@ public:
         return get_header("Connection") == "close";
     }
 
-    // const std::unordered_map<std::string, std::string> &get_headers() const {
-    const std::map<std::string, std::string> &get_headers() const {
+    const std::unordered_map<std::string, std::string> &get_headers() const {
         return _headers;
     }
 
@@ -140,7 +138,7 @@ private:
     std::string _path;
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
     util::TimePoint _receive_time_point{0};
-    std::map<std::string, std::string> _headers;
+    std::unordered_map<std::string, std::string> _headers;
     std::string _body;
 };
 

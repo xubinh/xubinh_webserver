@@ -1,7 +1,6 @@
 #ifndef __XUBINH_SERVER_HTTP_RESPONSE
 #define __XUBINH_SERVER_HTTP_RESPONSE
 
-#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -157,7 +156,7 @@ private:
 
     HttpVersionType _version;
     HttpStatusCode _status_code = S_NONE;
-    std::map<std::string, std::string> _headers;
+    std::unordered_map<std::string, std::string> _headers;
     std::string _body;
 };
 
