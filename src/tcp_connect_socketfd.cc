@@ -121,9 +121,9 @@ void TcpConnectSocketfd::shutdown_write() {
         _write_complete_callback(this);
     }
 
-    // empty the output buffer, and after which it is the caller's
-    // responsibility to keep it that way
-    _output_buffer.forward_read_position(_output_buffer.get_readable_size());
+    // empty the output buffer; after which it is the caller's responsibility to
+    // keep it that way
+    _output_buffer.reset();
 }
 
 void TcpConnectSocketfd::abort() {
@@ -215,10 +215,15 @@ void TcpConnectSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     // input buffer <-- R -- user -- W --> output buffer
     _message_callback(this, &_input_buffer, time_stamp);
 
-    // shutdown write if (1) all data is read and processed, (2) the peer closed
-    // its write end first, and (3) no data needs to be sent to the peer
-    if (!_is_reading() && !_is_write_end_shutdown && !_is_writing()) {
-        shutdown_write();
+    if (!_is_reading()) {
+        _input_buffer.reset();
+
+        // shutdown write if (1) all data is read and processed, (2) the peer
+        // closed its write end first, and (3) no data needs to be sent to the
+        // peer
+        if (!_is_write_end_shutdown && !_is_writing()) {
+            shutdown_write();
+        }
     }
 }
 
@@ -258,7 +263,7 @@ void TcpConnectSocketfd::_write_event_callback() {
     }
 
     // might be re-enabled by the outside, so disable it first for it to be
-    // overrided
+    // overwritten
     _pollable_file_descriptor.disable_write_event();
 
     if (_write_complete_callback) {

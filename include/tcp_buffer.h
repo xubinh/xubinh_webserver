@@ -16,6 +16,13 @@ public:
         _volatile_buffer_begin_ptr = const_cast<char *>(_buffer.c_str());
     }
 
+    void reset() noexcept {
+        _buffer = std::string();
+        _volatile_buffer_begin_ptr = const_cast<char *>(_buffer.c_str());
+        _read_offset = 0;
+        _write_offset = 0;
+    }
+
     const char *get_read_position() const {
         return _volatile_buffer_begin_ptr + _read_offset;
     }
