@@ -310,6 +310,7 @@ void TcpConnectSocketfd::_check_and_abort_impl(PredicateType predicate) {
 
 void TcpConnectSocketfd::_receive_all_data() {
     while (true) {
+        // reads into the stack first
         ssize_t bytes_read = ::recv(
             _pollable_file_descriptor.get_fd(),
             recv_buffer,
@@ -321,7 +322,15 @@ void TcpConnectSocketfd::_receive_all_data() {
 
         // have read in some data but maybe not all
         if (bytes_read > 0) {
+            // writes to TCP buffer only after the size is known
             _input_buffer.append(recv_buffer, bytes_read);
+
+            // [NOTE]: here the read-first-and-then-write kind of operation
+            // might seem a little redundant at first, but considering the fact
+            // that making space in-place inside the TCP buffer in the first
+            // place may cause the entire TCP buffer to be reallocated and
+            // copied all over again, a little loss of double-copying a
+            // temporary buffer looks just insignificant right away
 
             continue;
         }
