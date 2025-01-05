@@ -195,18 +195,23 @@ def main():
         print(f"Failed number: {failed_number}")
 
         if failed_number > 0:
-            output_file_name = f"server-crash-report-{i + 1}.txt"
-
-            print(
-                f"Something went wrong, `stdout` and `stderr` are output to file: ./{output_file_name}"
-            )
             assert server_process.stdout and server_process.stderr
 
-            with open(output_file_name, "wb") as file:
-                file.write(b"stdout:\n\n")
-                file.write(server_process.stdout.read())
-                file.write(b"\nstdout:\n\n")
-                file.write(server_process.stderr.read())
+            stdout_data = server_process.stdout.read()
+            stderr_data = server_process.stderr.read()
+
+            if stdout_data or stderr_data:
+                output_file_name = f"server-crash-report-{i + 1}.txt"
+
+                print(
+                    f"Something went wrong, `stdout` and `stderr` are output to file: ./{output_file_name}"
+                )
+
+                with open(output_file_name, "wb") as file:
+                    file.write(b"stdout:\n\n")
+                    file.write(stdout_data or b"<empty>")
+                    file.write(b"\nstdout:\n\n")
+                    file.write(stderr_data or b"<empty>")
 
         test_results.append(succeed_number)
 
