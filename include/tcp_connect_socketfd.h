@@ -88,6 +88,12 @@ public:
     // not thread-safe
     void start();
 
+    // used by external user; identical to the internal one, just for
+    // convenience here
+    bool is_writing() const {
+        return _pollable_file_descriptor.is_writing();
+    }
+
     // close local write-end
     //
     // - can be called by user to start the four-way handshake; after which
@@ -134,6 +140,16 @@ public:
     // used by user
     util::Any context{};
 
+    void reset_context() {
+        context.~Any(); // don't need to check; deleting a nullptr is valid
+
+        ::new (&context) util::Any();
+    }
+
+    void release_context() {
+        context.~Any();
+    }
+
 private:
     // reads in all available data, let the outside process the data, and
     // possibly sends response out
@@ -165,7 +181,7 @@ private:
     void _check_and_abort_impl(PredicateType predicate);
 
     // only start reading when a read event is encountered
-    void _receive_all_data();
+    size_t _receive_all_data();
 
     // always start writing first and only enable write event when necessary
     //

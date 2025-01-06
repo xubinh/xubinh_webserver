@@ -161,8 +161,8 @@ bool HttpRequest::parse_header_line(const char *start, const char *end) {
         }
     }
 
-    _headers[std::string(key_start, key_end)] =
-        std::string(value_start, value_end);
+    _headers[StringType(key_start, key_end)] =
+        StringType(value_start, value_end);
 
     return true;
 }
@@ -203,6 +203,6 @@ bool HttpRequest::_set_version_type(const char *start, const char *end) {
     return _version != UNSUPPORTED_HTTP_VERSION;
 }
 
-const std::string HttpRequest::_empty_string{};
+const HttpRequest::StringType HttpRequest::_empty_string{};
 
 } // namespace xubinh_server

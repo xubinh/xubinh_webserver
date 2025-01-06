@@ -5,12 +5,15 @@
 #include <string>
 #include <unordered_map>
 
+#include "util/slab_allocator.h"
 #include "util/time_point.h"
 
 namespace xubinh_server {
 
 class HttpRequest {
 public:
+    using StringType = util::StringType;
+
     enum HttpMethodType { UNSUPPORTED_HTTP_METHOD, GET, POST };
 
     enum HttpVersionType { UNSUPPORTED_HTTP_VERSION, HTTP_1_0, HTTP_1_1 };
@@ -53,7 +56,7 @@ public:
 
     const char *get_method_type_as_string() const;
 
-    const std::string &get_path() const {
+    const StringType &get_path() const {
         return _path;
     }
 
@@ -74,7 +77,7 @@ public:
     // true = success, false = fail
     bool parse_header_line(const char *start, const char *end);
 
-    const std::string &get_header(const std::string &key) const {
+    const StringType &get_header(const StringType &key) const {
         auto it = _headers.find(key);
 
         if (it != _headers.end()) {
@@ -84,11 +87,16 @@ public:
         return _empty_string;
     }
 
-    bool need_close() const {
-        return get_header("Connection") == "close";
+    // used by parser
+    void set_need_close(bool need_close) {
+        _need_close = need_close;
     }
 
-    const std::unordered_map<std::string, std::string> &get_headers() const {
+    bool get_need_close() const {
+        return _need_close;
+    }
+
+    const std::unordered_map<StringType, StringType> &get_headers() const {
         return _headers;
     }
 
@@ -96,7 +104,7 @@ public:
         _body.assign(start, end);
     }
 
-    const std::string &get_body() const {
+    const StringType &get_body() const {
         return _body;
     }
 
@@ -132,14 +140,15 @@ private:
     // true = success, false = fail
     bool _set_version_type(const char *start, const char *end);
 
-    static const std::string _empty_string;
+    static const StringType _empty_string;
 
     HttpMethodType _method = UNSUPPORTED_HTTP_METHOD;
-    std::string _path;
+    StringType _path;
     HttpVersionType _version = UNSUPPORTED_HTTP_VERSION;
     util::TimePoint _receive_time_point{0};
-    std::unordered_map<std::string, std::string> _headers;
-    std::string _body;
+    std::unordered_map<StringType, StringType> _headers;
+    bool _need_close{false};
+    StringType _body;
 };
 
 } // namespace xubinh_server

@@ -123,7 +123,9 @@ void TcpConnectSocketfd::shutdown_write() {
 
     // empty the output buffer; after which it is the caller's responsibility to
     // keep it that way
-    _output_buffer.reset();
+    _output_buffer.release();
+
+    release_context();
 }
 
 void TcpConnectSocketfd::abort() {
@@ -150,6 +152,11 @@ void TcpConnectSocketfd::abort() {
     if (::close(fd) == -1) {
         LOG_FATAL << "close failed";
     }
+
+    _input_buffer.release();
+    _output_buffer.release();
+
+    release_context();
 
     _is_write_end_shutdown = true;
     _is_abotrted = true;
@@ -206,17 +213,29 @@ uint64_t TcpConnectSocketfd::get_loop_index() const noexcept {
 void TcpConnectSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     LOG_TRACE << "tcp connect socketfd read event encountered, id: " << _id;
 
+    // [NOTE]: read event could be disabled here, but there might still be data
+    // left in the read buffer
+
     // fd -- W --> input buffer
-    _receive_all_data();
+    auto total_bytes_read = _receive_all_data();
 
     // user should call `send()` internally to send the data and possibly start
     // listening the writing event
     //
     // input buffer <-- R -- user -- W --> output buffer
-    _message_callback(this, &_input_buffer, time_stamp);
+    if (total_bytes_read) {
+        _message_callback(this, &_input_buffer, time_stamp);
+    }
+
+    // [NOTE]: the last read event (i.e. EOF) might be encountered after the
+    // outside (an HTTP server, for example) have closed and released the
+    // resources and context needed by the message callback because certain
+    // signals, like a HTTP request with "Connection: close" and an empty body,
+    // could determine the end of the TCP session before EOF does, so here we
+    // need to make sure we don't re-enter the message callback in such cases
 
     if (!_is_reading()) {
-        _input_buffer.reset();
+        _input_buffer.release();
 
         // shutdown write if (1) all data is read and processed, (2) the peer
         // closed its write end first, and (3) no data needs to be sent to the
@@ -313,7 +332,9 @@ void TcpConnectSocketfd::_check_and_abort_impl(PredicateType predicate) {
     }
 }
 
-void TcpConnectSocketfd::_receive_all_data() {
+size_t TcpConnectSocketfd::_receive_all_data() {
+    size_t total_bytes_read = 0;
+
     while (true) {
         // reads into the stack first
         ssize_t bytes_read = ::recv(
@@ -329,6 +350,8 @@ void TcpConnectSocketfd::_receive_all_data() {
         if (bytes_read > 0) {
             // writes to TCP buffer only after the size is known
             _input_buffer.append(recv_buffer, bytes_read);
+
+            total_bytes_read += bytes_read;
 
             // [NOTE]: here the read-first-and-then-write kind of operation
             // might seem a little redundant at first, but considering the fact
@@ -366,6 +389,8 @@ void TcpConnectSocketfd::_receive_all_data() {
             }
         }
     }
+
+    return total_bytes_read;
 }
 
 size_t

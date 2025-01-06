@@ -7,20 +7,42 @@
 #include <string>
 #include <vector>
 
+#include "util/slab_allocator.h"
+
 namespace xubinh_server {
 
 // not thread-safe
 class MutableSizeTcpBuffer {
 public:
+    using StringType = util::StringType;
+
     MutableSizeTcpBuffer() noexcept {
         _volatile_buffer_begin_ptr = const_cast<char *>(_buffer.c_str());
     }
 
     void reset() noexcept {
-        _buffer = std::string();
+        // skip the flushing work if being released already
+        if (_volatile_buffer_begin_ptr) {
+            _buffer.~StringType();
+            ::new (&_buffer) StringType();
+        }
         _volatile_buffer_begin_ptr = const_cast<char *>(_buffer.c_str());
         _read_offset = 0;
         _write_offset = 0;
+    }
+
+    void release() noexcept {
+        if (!_volatile_buffer_begin_ptr) {
+            return;
+        }
+
+        // [WARN]: the malloc'ed memory is still there, and will be double
+        // deallocated by the main thread if not cleaning it up right here
+        _buffer.~StringType();
+        // [WARN]: must do construction once in order to flush
+        // the malloc'ed memory off
+        ::new (&_buffer) StringType();
+        _volatile_buffer_begin_ptr = nullptr;
     }
 
     const char *get_read_position() const {
@@ -49,7 +71,7 @@ public:
         ::memcpy(internal_buffer, external_buffer, external_buffer_size);
     }
 
-    void append(const std::string &external_buffer) {
+    void append(const StringType &external_buffer) {
         append(external_buffer.c_str(), external_buffer.size());
     }
 
@@ -79,8 +101,8 @@ private:
     // - returns `nullptr` if the size passed in is zero
     char *_make_space(size_t size);
 
-    std::string _buffer;
-    char *_volatile_buffer_begin_ptr;
+    StringType _buffer;
+    char *_volatile_buffer_begin_ptr{nullptr};
     size_t _read_offset{0};
     size_t _write_offset{0};
 };

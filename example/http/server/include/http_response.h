@@ -7,11 +7,14 @@
 
 #include "tcp_buffer.h"
 #include "tcp_connect_socketfd.h"
+#include "util/slab_allocator.h"
 
 namespace xubinh_server {
 
 class HttpResponse {
 public:
+    using StringType = util::StringType;
+
     enum HttpVersionType { UNSUPPORTED_HTTP_VERSION, HTTP_1_0, HTTP_1_1 };
 
     enum HttpStatusCode {
@@ -116,35 +119,52 @@ public:
 
     const char *get_status_code_and_description_as_string() const;
 
-    void set_header(const std::string &key, const std::string &value) {
+    void set_header(const StringType &key, const StringType &value) {
         _headers[key] = value;
     }
 
-    void set_header(const std::string &key, std::string &&value) {
+    // [WARN]: always use this single-threadedly
+    void set_header(const StringType &key, StringType &&value) {
         _headers[key] = std::move(value);
     }
 
-    const std::string &get_header(const std::string &key) const;
-
-    // true = found, false = not found
-    bool erase_header(const std::string &key);
-
-    void set_body(const std::string &body) {
-        _body = body;
-
-        set_header("Content-Length", std::to_string(body.size()));
+    // adaptor for accepting `char[N]`
+    template <size_t N>
+    void set_header(const StringType &key, const char value[N]) {
+        _headers[key] = StringType(value, N);
     }
 
-    void set_body(std::string &&body) {
+    // adaptor for accepting `std::string`
+    template <
+        typename AnotherStringType,
+        typename = typename std::enable_if<
+            std::is_same<std::string, AnotherStringType>::value
+            && !std::is_same<StringType, AnotherStringType>::value>::type>
+    void set_header(const StringType &key, const AnotherStringType &value) {
+        _headers[key] = StringType(value.c_str(), value.size());
+    }
+
+    const StringType &get_header(const StringType &key) const;
+
+    // true = found, false = not found
+    bool erase_header(const StringType &key);
+
+    void set_body(const StringType &body) {
+        _body = body;
+
+        set_header("Content-Length", util::to_string<StringType>(body.size()));
+    }
+
+    void set_body(StringType &&body) {
         _body = std::move(body);
 
-        set_header("Content-Length", std::to_string(body.size()));
+        set_header("Content-Length", util::to_string<StringType>(body.size()));
     }
 
     void set_body(const char *start, const char *end) {
         _body.assign(start, end);
 
-        set_header("Content-Length", std::to_string(end - start));
+        set_header("Content-Length", util::to_string<StringType>(end - start));
     }
 
     void dump_to_tcp_buffer(MutableSizeTcpBuffer &buffer);
@@ -152,12 +172,12 @@ public:
     void send_to_tcp_connection(TcpConnectSocketfd *tcp_connect_socketfd_ptr);
 
 private:
-    static const std::string _empty_string;
+    static const StringType _empty_string;
 
     HttpVersionType _version;
     HttpStatusCode _status_code = S_NONE;
-    std::unordered_map<std::string, std::string> _headers;
-    std::string _body;
+    std::unordered_map<StringType, StringType> _headers;
+    StringType _body;
 };
 
 } // namespace xubinh_server

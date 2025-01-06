@@ -14,6 +14,7 @@
 #include "signalfd.h"
 #include "tcp_buffer.h"
 #include "util/datetime.h"
+#include "util/slab_allocator.h"
 
 #include "./include/http_parser.h"
 #include "./include/http_request.h"
@@ -21,9 +22,10 @@
 #include "./include/http_server.h"
 
 #define __XUBINH_BENCHMARKING
-// #define __XUBINH_KEEP_ALIVE
 
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
+
+using StringType = xubinh_server::util::StringType;
 
 // manually release the singleton logger instance
 xubinh_server::LogCollector::CleanUpHelper logger_clean_up_hook;
@@ -74,7 +76,7 @@ void signal_dispatcher(
 const char *slash_dot_dot_slash = "/../";
 constexpr size_t slash_dot_dot_slash_len = sizeof(slash_dot_dot_slash);
 
-bool check_if_is_valid_path(const std::string &path) {
+bool check_if_is_valid_path(const StringType &path) {
     const char *path_str = path.c_str();
 
     size_t path_str_len = path.length();
@@ -97,18 +99,18 @@ bool check_if_is_valid_path(const std::string &path) {
 }
 
 // [TODO]: use stand-alone config file, not hard-coded one
-const std::string root = "./example/http/server";
-const std::string html_404_file_path = root + "/404.html";
+const char *root = "./example/http/server";
+const char *html_404_file_path = "./example/http/server/404.html";
 const char *images_folder = "/static/images/";
 constexpr size_t images_folder_len = sizeof(images_folder);
 
-bool _check_if_path_exists(const std::string &path) {
+bool _check_if_path_exists(const StringType &path) {
     struct stat info;
 
     return stat(path.c_str(), &info) == 0;
 }
 
-bool check_if_path_exists_and_expand_it(std::string &path) {
+bool check_if_path_exists_and_expand_it(StringType &path) {
     if (path == "/") {
         path = root + path;
         path += "index.html";
@@ -146,14 +148,16 @@ std::unordered_map<std::string, std::string> mime_map = {
     {".mp3", "audio/mpeg"},
     {".mp4", "video/mp4"}};
 
-std::string get_mime_type(const std::string &file_path) {
+const std::string default_mime_type = "application/octet-stream";
+
+const std::string &get_mime_type(const StringType &file_path) {
     size_t pos = file_path.rfind('.');
 
     if (pos == std::string::npos) {
-        return "application/octet-stream";
+        return default_mime_type;
     }
 
-    std::string suffix = file_path.substr(pos);
+    std::string suffix(file_path.c_str() + pos, file_path.size() - pos);
 
     auto it = mime_map.find(suffix);
 
@@ -161,13 +165,13 @@ std::string get_mime_type(const std::string &file_path) {
         return it->second;
     }
 
-    return "application/octet-stream";
+    return default_mime_type;
 }
 
 bool read_file_and_send(
     xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     xubinh_server::HttpResponse &response,
-    const std::string &file_path
+    const StringType &file_path
 ) {
     int fd = ::open(file_path.c_str(), O_RDONLY);
 
@@ -189,7 +193,9 @@ bool read_file_and_send(
 
     size_t file_size = st.st_size;
 
-    response.set_header("Content-Length", std::to_string(file_size));
+    response.set_header(
+        "Content-Length", xubinh_server::util::to_string<StringType>(file_size)
+    );
 
     response.send_to_tcp_connection(tcp_connect_socketfd_ptr);
 
@@ -243,7 +249,7 @@ void send_404(
 void send_file(
     xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     bool need_close,
-    const std::string &file_path
+    const StringType &file_path
 ) {
     xubinh_server::HttpResponse response;
 
@@ -281,29 +287,12 @@ void http_request_callback(
     }
 
 #ifdef __XUBINH_BENCHMARKING
-#ifndef __XUBINH_KEEP_ALIVE
-    // WebBench requests close by default
-    tcp_connect_socketfd_ptr->register_write_complete_callback(
-        [](xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
-            tcp_connect_socketfd_ptr->shutdown_write();
-        }
-    );
-#endif
-
     // directly sends the string in memory, bypassing mmap
     tcp_connect_socketfd_ptr->send(
         hello_world_response_content, hello_world_response_content_size
     );
 #else
-    bool need_close = http_request.need_close();
-
-    if (need_close) {
-        tcp_connect_socketfd_ptr->register_write_complete_callback(
-            [](xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
-                tcp_connect_socketfd_ptr->shutdown_write();
-            }
-        );
-    }
+    bool need_close = http_request.get_need_close();
 
     if (http_request.get_method_type() != xubinh_server::HttpRequest::GET) {
         send_404(tcp_connect_socketfd_ptr, need_close);

@@ -217,7 +217,8 @@ const char *HttpResponse::get_status_code_and_description_as_string() const {
     return result;
 }
 
-const std::string &HttpResponse::get_header(const std::string &key) const {
+const HttpResponse::StringType &HttpResponse::get_header(const StringType &key
+) const {
     auto it = _headers.find(key);
 
     if (it != _headers.end()) {
@@ -227,7 +228,7 @@ const std::string &HttpResponse::get_header(const std::string &key) const {
     return _empty_string;
 }
 
-bool HttpResponse::erase_header(const std::string &key) {
+bool HttpResponse::erase_header(const StringType &key) {
     auto it = _headers.find(key);
 
     if (it != _headers.end()) {
@@ -295,6 +296,6 @@ void HttpResponse::send_to_tcp_connection(
     );
 }
 
-const std::string HttpResponse::_empty_string{};
+const HttpResponse::StringType HttpResponse::_empty_string{};
 
 } // namespace xubinh_server

@@ -84,7 +84,23 @@ void HttpServer::_message_callback(
 
         _http_request_callback(tcp_connect_socketfd_ptr, request);
 
-        parser.reset();
+        if (request.get_need_close()) {
+            if (tcp_connect_socketfd_ptr->is_writing()) {
+                tcp_connect_socketfd_ptr->register_write_complete_callback(
+                    [](TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
+                        tcp_connect_socketfd_ptr->shutdown_write();
+                    }
+                );
+            }
+
+            else {
+                tcp_connect_socketfd_ptr->shutdown_write();
+            }
+        }
+
+        else {
+            parser.reset();
+        }
     }
 }
 

@@ -57,13 +57,22 @@ bool HttpParser::parse(
 
                 const auto &headers = _request.get_headers();
 
-                auto it = headers.find("content-length");
+                {
+                    auto it = headers.find("Connection");
 
-                // check if has body (i.e. POST + "content-length" field)
-                bool has_body = _request.get_method_type() == _request.POST
-                                && it != headers.end();
+                    _request.set_need_close(
+                        it != headers.end() && it->second == "close"
+                    );
+                }
 
-                if (!has_body) {
+                auto it = headers.find("Content-Length");
+
+                // check if has body (i.e. POST + content length field)
+                bool maybe_has_body =
+                    _request.get_method_type() == _request.POST
+                    && it != headers.end();
+
+                if (!maybe_has_body) {
                     _request.set_receive_time_point(time_stamp);
 
                     _parsing_state = SUCCESS;
@@ -72,9 +81,30 @@ bool HttpParser::parse(
                 }
 
                 else {
-                    _parsing_state = EXPECT_BODY;
+                    auto begin_ptr = it->second.c_str();
 
-                    _body_length = static_cast<size_t>(std::stoi(it->second));
+                    char *end_ptr;
+
+                    _body_length =
+                        static_cast<size_t>(::strtol(begin_ptr, &end_ptr, 10));
+
+                    // there were no digits at all
+                    if (begin_ptr == end_ptr) {
+                        _parsing_state = FAIL;
+
+                        return false;
+                    }
+
+                    // short-circuits it if the body length is zero
+                    if (_body_length == 0) {
+                        _request.set_receive_time_point(time_stamp);
+
+                        _parsing_state = SUCCESS;
+
+                        return true;
+                    }
+
+                    _parsing_state = EXPECT_BODY;
 
                     goto goto_header_finished;
                 }
@@ -124,6 +154,7 @@ goto_header_finished:
 
     _parsing_state = FAIL;
 
+    // dummy return for suppressing warning
     return false;
 }
 
