@@ -210,8 +210,10 @@ def main():
                 with open(output_file_name, "wb") as file:
                     file.write(b"stdout:\n\n")
                     file.write(stdout_data or b"<empty>")
-                    file.write(b"\nstdout:\n\n")
+                    file.write(b"\n\n")
+                    file.write(b"stderr:\n\n")
                     file.write(stderr_data or b"<empty>")
+                    file.write(b"\n")
 
         test_results.append(succeed_number)
 
