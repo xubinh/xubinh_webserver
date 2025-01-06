@@ -17,7 +17,6 @@ size_t EventPoller::get_max_number_limit_of_file_descriptors_per_process() {
 }
 
 EventPoller::EventPoller() : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
-
     if (_epoll_fd == -1) {
         LOG_SYS_FATAL << "epoll_create1 failed";
     }
@@ -86,14 +85,31 @@ void EventPoller::poll_for_active_events_of_all_fds(
 ) {
     LOG_TRACE << "epoll_wait blocked";
 
-    int current_event_array_size =
-        ::epoll_wait(_epoll_fd, _event_array, _MAX_SIZE_OF_EVENT_ARRAY, -1);
+    int current_event_array_size;
+
+    // epoll_wait might be interrupted by signal handlers, so make a loop for it
+    while (true) {
+        current_event_array_size =
+            ::epoll_wait(_epoll_fd, _event_array, _MAX_SIZE_OF_EVENT_ARRAY, -1);
+
+        if (current_event_array_size == -1) {
+            if (errno == EINTR) {
+                LOG_TRACE << "epoll_wait got interrupted by signal handlers";
+
+                continue;
+            }
+
+            else {
+                LOG_SYS_FATAL << "epoll_wait failed";
+            }
+        }
+
+        else {
+            break;
+        }
+    }
 
     LOG_TRACE << "epoll_wait resume";
-
-    if (current_event_array_size == -1) {
-        LOG_SYS_FATAL << "epoll_wait failed";
-    }
 
     event_dispatchers.clear();
 
