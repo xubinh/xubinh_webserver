@@ -31,8 +31,9 @@ char *StaticSimpleThreadLocalStringSlabAllocator::allocate(size_t n) {
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR__DEBUG
     ::fprintf(
         stderr,
-        "%d | allocating: %p | next: %p\n",
+        "%d | n: %ld | allocating: %p | next: %p\n",
         current_thread::get_tid(),
+        n,
         chosen_slab,
         chosen_slab->next
     );
@@ -57,6 +58,8 @@ void StaticSimpleThreadLocalStringSlabAllocator::deallocate(
 
     if (n > 2048) {
         ::free(slab);
+
+        return;
     }
 
     auto power_of_2 =
@@ -65,8 +68,9 @@ void StaticSimpleThreadLocalStringSlabAllocator::deallocate(
 #ifdef __XUBINH_SERVER_UTIL_ALLOCATOR__DEBUG
     ::fprintf(
         stderr,
-        "%d | current: %p | deallocating: %p | content: %s\n",
+        "%d | n: %ld | current: %p | deallocating: %p | content: %s\n",
         current_thread::get_tid(),
+        n,
         _linked_lists_of_free_slabs[power_of_2],
         slab,
         slab

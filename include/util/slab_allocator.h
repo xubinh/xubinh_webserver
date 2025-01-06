@@ -991,8 +991,8 @@ inline string to_string(unsigned long integer_value) {
 }
 
 // global control
-using StringType = std::string;
-// using StringType = string;
+// using StringType = std::string;
+using StringType = string;
 
 } // namespace util
 
