@@ -3,6 +3,7 @@
 
 #include "log_buffer.h"
 #include "util/format.h"
+#include "util/slab_allocator.h"
 
 namespace xubinh_server {
 
@@ -97,6 +98,10 @@ public:
     }
 
     LogBuilder &operator<<(const std::string &a_string) {
+        return *this << a_string.c_str();
+    }
+
+    LogBuilder &operator<<(const util::string &a_string) {
         return *this << a_string.c_str();
     }
 

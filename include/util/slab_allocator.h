@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstdio>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "util/alignment.h"
@@ -81,7 +82,7 @@ public:
     using propagate_on_container_swap = std::false_type;
 
     SlabType *allocate(size_t n) {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             throw std::bad_alloc();
         }
 
@@ -98,7 +99,7 @@ public:
     }
 
     void deallocate(SlabType *slab, size_t n) noexcept {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             ::fprintf(
                 stderr,
                 "@xubinh_server::util::SimpleSlabAllocator::deallocate: "
@@ -214,7 +215,7 @@ public:
     using propagate_on_container_swap = std::false_type;
 
     SlabType *allocate(size_t n) {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             throw std::bad_alloc();
         }
 
@@ -244,7 +245,7 @@ public:
     }
 
     void deallocate(SlabType *slab, size_t n) noexcept {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             ::fprintf(
                 stderr,
                 "@xubinh_server::util::SemiLockFreeSlabAllocator::deallocate: "
@@ -395,7 +396,7 @@ public:
     ~StaticSimpleSlabAllocator() noexcept = default;
 
     SlabType *allocate(size_t n) {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             throw std::bad_alloc();
         }
 
@@ -412,7 +413,7 @@ public:
     }
 
     void deallocate(SlabType *slab, size_t n) noexcept {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             ::fprintf(
                 stderr,
                 "@xubinh_server::util::StaticSimpleSlabAllocator::deallocate: "
@@ -534,7 +535,7 @@ public:
     ~StaticSemiLockFreeSlabAllocator() noexcept = default;
 
     SlabType *allocate(size_t n) {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             throw std::bad_alloc();
         }
 
@@ -564,7 +565,7 @@ public:
     }
 
     void deallocate(SlabType *slab, size_t n) noexcept {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             ::fprintf(
                 stderr,
                 "@xubinh_server::util::StaticSemiLockFreeSlabAllocator::"
@@ -723,7 +724,7 @@ public:
     }
 
     SlabType *allocate(size_t n) {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             throw std::bad_alloc();
         }
 
@@ -766,7 +767,7 @@ public:
     }
 
     void deallocate(SlabType *slab, size_t n) noexcept {
-        if (n != 1) {
+        if (__builtin_expect(n != 1, false)) {
             ::fprintf(
                 stderr,
                 "@xubinh_server::util::StaticThreadLocalSlabAllocator::"
@@ -889,8 +890,136 @@ std::vector<typename StaticThreadLocalSlabAllocator<SlabType>::FreeChunkNode>
 template <typename SlabType>
 std::mutex StaticThreadLocalSlabAllocator<SlabType>::_mutex;
 
+// static thread-local simple single-threaded allocator tailored for small
+// string buffer
+class StaticSimpleThreadLocalStringSlabAllocator {
+private:
+    static_assert(sizeof(char) == 1);
+
+    struct LinkedListNode {
+        LinkedListNode *next;
+    };
+
+    struct ChunkManager {
+        ChunkManager() noexcept = default;
+
+        ChunkManager(const ChunkManager &) = delete;
+        ChunkManager &operator=(const ChunkManager &) = delete;
+
+        ~ChunkManager() noexcept {
+            for (auto chunk : _allocated_chunks) {
+                ::free(chunk);
+            }
+        }
+
+        void push_back(void *chunk) {
+            _allocated_chunks.push_back(chunk);
+        }
+
+        std::vector<void *> _allocated_chunks;
+    };
+
+public:
+    using value_type = char;
+
+    // SFINAE
+    template <
+        typename U,
+        typename = typename std::enable_if<std::is_same<U, char>::value>::type>
+    struct rebind {
+        using other = StaticSimpleThreadLocalStringSlabAllocator;
+    };
+
+    constexpr StaticSimpleThreadLocalStringSlabAllocator() noexcept = default;
+
+    // do nothing; each instance is independent
+    constexpr StaticSimpleThreadLocalStringSlabAllocator(const StaticSimpleThreadLocalStringSlabAllocator
+                                                             &) noexcept
+        : StaticSimpleThreadLocalStringSlabAllocator() {
+    }
+
+    ~StaticSimpleThreadLocalStringSlabAllocator() noexcept = default;
+
+    char *allocate(size_t n);
+
+    void deallocate(char *slab, size_t n) noexcept;
+
+    friend bool
+    operator==(const StaticSimpleThreadLocalStringSlabAllocator &, const StaticSimpleThreadLocalStringSlabAllocator &) noexcept {
+        return true;
+    }
+
+    friend bool
+    operator!=(const StaticSimpleThreadLocalStringSlabAllocator &, const StaticSimpleThreadLocalStringSlabAllocator &) noexcept {
+        return false;
+    }
+
+private:
+    LinkedListNode *_allocate_one_chunk(int power_of_2) noexcept;
+
+    static thread_local LinkedListNode
+        *_linked_lists_of_free_slabs[12]; // 2^11 = 2048
+    static thread_local ChunkManager _allocated_chunks;
+};
+
+using string = std::__cxx11::basic_string<
+    char,
+    std::char_traits<char>,
+    StaticSimpleThreadLocalStringSlabAllocator>;
+
+template <typename ReturnStringType>
+inline ReturnStringType to_string(unsigned long integer_value);
+
+// forwarding to the standard one
+template <>
+inline std::string to_string(unsigned long integer_value) {
+    return std::to_string(integer_value);
+}
+
+// imitating `std::to_string`
+template <>
+inline string to_string(unsigned long integer_value) {
+    auto string_size = std::__detail::__to_chars_len(integer_value);
+
+    string temporary_string(string_size, '\0');
+
+    std::__detail::__to_chars_10_impl(
+        const_cast<char *>(temporary_string.c_str()), string_size, integer_value
+    );
+
+    return temporary_string;
+}
+
+// global control
+using StringType = std::string;
+// using StringType = string;
+
 } // namespace util
 
 } // namespace xubinh_server
+
+namespace std {
+
+namespace __cxx11 {
+
+// explicit instantiation
+extern template class basic_string<
+    char,
+    char_traits<char>,
+    xubinh_server::util::StaticSimpleThreadLocalStringSlabAllocator>;
+
+} // namespace __cxx11
+
+// template specialization for using the custom string type with
+// `std::unordered_map`
+template <>
+struct hash<xubinh_server::util::string>
+    : public __hash_base<size_t, xubinh_server::util::string> {
+    size_t operator()(const xubinh_server::util::string &__s) const noexcept {
+        return std::_Hash_impl::hash(__s.data(), __s.length());
+    }
+};
+
+} // namespace std
 
 #endif
