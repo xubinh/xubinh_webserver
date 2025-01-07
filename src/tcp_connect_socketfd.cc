@@ -123,7 +123,7 @@ void TcpConnectSocketfd::shutdown_write() {
     // keep it that way
     _output_buffer.release();
 
-    release_context();
+    clear_context();
 
     _is_write_end_shutdown = true;
 
@@ -158,7 +158,7 @@ void TcpConnectSocketfd::abort() {
     _input_buffer.release();
     _output_buffer.release();
 
-    release_context();
+    clear_context();
 
     _is_write_end_shutdown = true;
     _is_abotrted = true;

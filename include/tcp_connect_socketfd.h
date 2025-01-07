@@ -140,14 +140,8 @@ public:
     // used by user
     util::Any context{};
 
-    void reset_context() {
-        context.~Any(); // don't need to check; deleting a nullptr is valid
-
-        ::new (&context) util::Any();
-    }
-
-    void release_context() {
-        context.~Any();
+    void clear_context() {
+        context.clear();
     }
 
 private:

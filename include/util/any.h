@@ -164,8 +164,6 @@ public:
 
     ~Any() {
         delete _holder_base;
-
-        _holder_base = nullptr;
     }
 
     Any &swap(Any &other) noexcept {
