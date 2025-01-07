@@ -82,7 +82,13 @@ void HttpServer::_message_callback(
     if (parser.is_success()) {
         const HttpRequest &request = parser.get_request();
 
+        // may abort the TCP connection early when `send()` detected an `EPIPE`
         _http_request_callback(tcp_connect_socketfd_ptr, request);
+
+        // so check if aborted first
+        if (tcp_connect_socketfd_ptr->is_write_end_shutdown()) {
+            return;
+        }
 
         if (request.get_need_close()) {
             if (tcp_connect_socketfd_ptr->is_writing()) {

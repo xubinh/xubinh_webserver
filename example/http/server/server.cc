@@ -329,8 +329,8 @@ int main(int argc, char *argv[]) {
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
 #else
-    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
 #endif
 
     // signal config

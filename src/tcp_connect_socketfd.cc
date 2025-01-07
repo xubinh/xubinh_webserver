@@ -90,8 +90,6 @@ void TcpConnectSocketfd::shutdown_write() {
         return;
     }
 
-    _is_write_end_shutdown = true;
-
     if (::shutdown(_pollable_file_descriptor.get_fd(), SHUT_WR) == -1) {
         switch (errno) {
         case ENOTCONN:
@@ -126,6 +124,10 @@ void TcpConnectSocketfd::shutdown_write() {
     _output_buffer.release();
 
     release_context();
+
+    _is_write_end_shutdown = true;
+
+    LOG_TRACE << "TCP shutdown write, id: " << _id;
 }
 
 void TcpConnectSocketfd::abort() {
@@ -160,6 +162,8 @@ void TcpConnectSocketfd::abort() {
 
     _is_write_end_shutdown = true;
     _is_abotrted = true;
+
+    LOG_TRACE << "TCP connection aborted, id: " << _id;
 }
 
 void TcpConnectSocketfd::check_and_abort(PredicateType predicate) {
