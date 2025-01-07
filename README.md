@@ -2,20 +2,20 @@
 
 ## 目录
 
+- [目录](#%E7%9B%AE%E5%BD%95)
 - [部署本项目](#%E9%83%A8%E7%BD%B2%E6%9C%AC%E9%A1%B9%E7%9B%AE)
 - [基准测试](#%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
   - [结果展示](#%E7%BB%93%E6%9E%9C%E5%B1%95%E7%A4%BA)
   - [与其他项目的横向比较](#%E4%B8%8E%E5%85%B6%E4%BB%96%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
   - [测试机硬件参数](#%E6%B5%8B%E8%AF%95%E6%9C%BA%E7%A1%AC%E4%BB%B6%E5%8F%82%E6%95%B0)
-- [待办](#%E5%BE%85%E5%8A%9E)
 - [其他](#%E5%85%B6%E4%BB%96)
   - [WebBench](#webbench)
     - [安装](#%E5%AE%89%E8%A3%85)
     - [使用示例](#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B)
     - [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
-  - [perf](#perf)
   - [muduo 项目中所采用的抽象](#muduo-%E9%A1%B9%E7%9B%AE%E4%B8%AD%E6%89%80%E9%87%87%E7%94%A8%E7%9A%84%E6%8A%BD%E8%B1%A1)
-- [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
+    - [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
+- [待办](#%E5%BE%85%E5%8A%9E)
 
 ## 部署本项目
 
@@ -78,6 +78,94 @@ H/W path    Device    Class      Description
 /0/7/0.0.1  /dev/sdb  volume     4GiB Virtual Disk
 /0/7/0.0.2  /dev/sdc  volume     256GiB Virtual Disk
 ```
+
+## 其他
+
+### WebBench
+
+#### 安装
+
+```bash
+git clone https://github.com/EZLippi/WebBench.git
+cd WebBench
+sudo apt-get install rpcbind libtirpc-dev # 此为依赖项
+sudo apt-get install exuberant-ctags # 此为依赖项
+# make # 执行前请先查看下方提示
+# sudo make install PREFIX=your_path_to_webbench # 可选
+```
+
+> [!IMPORTANT]
+>
+> - 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 中添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 中添加链接选项 `-ltirpc`.
+> - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 的 stdout 默认为 block-buffered, 导致在 fork 时缓冲区中还留存有一定数据并在此后被复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);` 清空缓冲区.
+
+#### 使用示例
+
+```bash
+# 短连接 (默认)
+./webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/ # 持续测试 60 秒, 使用 1000 个并发客户端进程, 使用 HTTP/1.1 协议, 使用 GET 请求, 目标 URL 为 http://127.0.0.1:8080/
+
+# 长连接
+./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 请参考 [linyacool/WebBench](https://github.com/linyacool/WebBench)
+```
+
+> [!TIP]
+>
+> - 经测试, 上述 60 秒的测试时间过长, 非常容易受到操作系统临时 CPU 占用的影响. 一种更好的方案是 "短时多测", 例如 "单次测试 10 秒, 连续测试 10 次, 并以最大值作为结果".
+
+#### 参考资料
+
+- [linyacool/WebServer](https://github.com/linyacool/WebServer)
+- [linyacool/WebBench](https://github.com/linyacool/WebBench)
+- [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
+- [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
+
+### muduo 项目中所采用的抽象
+
+> - **由于下列类型是通过与 ChatGPT 的问答生成的, 因此可能并不与实际在 muduo 中使用的类型的名称完全一致**.
+> - **以下内容仅为个人理解**.
+
+1. `MutexLock`: 对互斥锁的抽象. C++11 下的等价设施: `std::mutex`
+1. `MutexLockGuard`: 对互斥锁的 RAII 机制的抽象. C++11 下的等价设施: `std::lock_guard<std::mutex>`
+1. `Condition`: 对信号量机制的抽象. C++11 下的等价设施: `std::condition_variable`
+1. `Atomic`: 对原子操作的抽象 (但是并不提供内存顺序控制). C++11 下的等价设施: `std::atomic<T>`
+1. `BlockingQueue`: 对 (无大小限制的) 阻塞队列的抽象.
+1. `BoundedBlockingQueue`: 对 (固定大小的) 阻塞队列的抽象.
+1. `AppendFile`: [TODO]
+1. `LogFile`: [TODO]
+1. `AsyncLogging`: [TODO]
+1. `LogStream`: [TODO]
+1. `SourceFile`: [TODO]
+1. `Impl`: [TODO]
+1. `Logger`: [TODO]
+1. `StringPiece`: [TODO]
+1. `Buffer`: 管理动态缓冲区, 用于存储 I/O 操作期间 (例如读取客户端发送过来的 HTTP 请求时) 的数据, 优化读写性能.
+1. `Socket`: [TODO]
+1. `Channel`: 对 socket 文件描述符的抽象, 其中包含事件到来时需要执行的回调函数 (由外部的 Acceptor 或 TcpConnection 类进行注册) 等等.
+1. `Acceptor`: 对 listen socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
+1. `Connector`: [TODO]
+1. `TcpConnection`: 对 connect socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
+1. `Poller`: 对 epoll 机制的抽象.
+1. `Timestamp`: 对时间戳的抽象, 内部使用一个 `int64_t` 类型的变量表示自 epoch 以来的毫秒数 (一年约有 $2^{44.84}$ 毫秒).
+1. `TimerQueue`: 对计时器容器的抽象.
+1. `Timer`: 对单个计时器元素的抽象.
+1. `EventLoop`: 对事件循环的抽象. 每个循环中不仅需要处理 epoll 事件的监听, 还要处理定时器和外部注册到当前线程中的任务等等.
+1. `ThreadLocal`: 帮手类, 用于实现 C++11 以前的线程局部存储 (TLS) 机制. C++11 下的等价设施: `thread_local` 关键字
+1. `CurrentThread`: 使用 `__thread` 关键字存储一些线程独立的信息, 包括对 TID, TID 的字符串形式, TID 字符串的长度, 以及线程名称字符串的缓存. 同时提供了一些 API 用于初始化以及获取这些信息.
+1. `ThreadData`: 帮手类, 用于在启动 `Thread` 对象时在启动 `Thread` 对象的线程 (主线程) 和该对象底层所封装的线程 (工作线程) 之间关于 `Thread` 对象的各个状态成员建立同步关系. 由于状态的改变需要在工作线程中进行, 因此还需要对 `Thread` 对象传进来的可调用对象进一步进行封装, 也就是说封装后的可调用对象会先改变状态, 然后调用内部所封装的原始的可调用对象. `ThreadData` 就是可调用对象的类, 它的成员函数 `runInThread` 和全局作用域中的函数 `startThread` 共同构成了可调用对象的调用运算符.
+1. `Thread`: 对线程的抽象, 内部封装了 POSIX pthread API, 并提供一系列额外的简单的 API 用于对底层封装的线程执行各种操作, 包括但不限于 `start`, `stop`, `get_tid` 等等. 使用 `Thread` 最重要的原因是它将底层封装的线程的状态映射到 `Thread` 对象的各个相应成员上, 然后通过一系列 API 方便简洁地获取这些状态信息, 更重要的一点是使用 `Thread` 对象还能够控制线程的生命周期, 实现惰性启动 (如果直接使用 `std::thread` 那么在创建对象的那一刻起底层的线程就已经启动了).
+1. `EventLoopThread`: 对线程 (实际上主要是对工作线程) 的抽象. 是 `EventLoop` 类的一个包装类. 初始化时自动启动一个 `EventLoop`.
+1. `EventLoopThreadPool`: 对线程池的抽象. 是 `EventLoopThread` 类的一个包装类.
+1. `InetAddress`: 对套接字地址 (IP + port) 的抽象.
+1. `TcpServer`: 对服务器的抽象.
+1. `TcpClient`: [TODO]
+1. `HttpRequest`: 对 HTTP 请求报文的抽象.
+1. `HttpResponse`: 对 HTTP 响应报文的抽象.
+1. `HttpContext`: 对 HTTP 请求解析过程的抽象.
+
+#### 参考资料
+
+- [chenshuo/muduo](https://github.com/chenshuo/muduo)
 
 ## 待办
 
@@ -308,100 +396,4 @@ H/W path    Device    Class      Description
 - [x] 在长连接场景下使用 WebBench 对框架进行一次测试.
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
-- [ ] 优化服务器, 提高 QPS:
-  - 考虑使用协程.
-- [ ] 实现一个 RPC 框架.
-
-## 其他
-
-### WebBench
-
-#### 安装
-
-```bash
-git clone https://github.com/EZLippi/WebBench.git
-cd WebBench
-sudo apt-get install rpcbind libtirpc-dev # 此为依赖项
-sudo apt-get install exuberant-ctags # 此为依赖项
-# make # 执行前请先查看下方提示
-# sudo make install PREFIX=your_path_to_webbench # 可选
-```
-
-> [!IMPORTANT]
->
-> - 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 中添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 中添加链接选项 `-ltirpc`.
-> - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 的 stdout 默认为 block-buffered, 导致在 fork 时缓冲区中还留存有一定数据并在此后被复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);` 清空缓冲区.
-
-#### 使用示例
-
-```bash
-# 短连接 (默认)
-./webbench -t 60 -c 1000 -2 --get http://127.0.0.1:8080/ # 持续测试 60 秒, 使用 1000 个并发客户端进程, 使用 HTTP/1.1 协议, 使用 GET 请求, 目标 URL 为 http://127.0.0.1:8080/
-
-# 长连接
-./webbench -t 60 -c 1000 -k -2 --get http://127.0.0.1:8080/ # 请参考 [linyacool/WebBench](https://github.com/linyacool/WebBench)
-```
-
-> [!TIP]
->
-> - 经测试, 上述 60 秒的测试时间过长, 非常容易受到操作系统临时 CPU 占用的影响. 一种更好的方案是 "短时多测", 例如 "单次测试 10 秒, 连续测试 10 次, 并以最大值作为结果".
-
-#### 参考资料
-
-- [linyacool/WebServer](https://github.com/linyacool/WebServer)
-- [linyacool/WebBench](https://github.com/linyacool/WebBench)
-- [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
-- [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
-
-### perf
-
-[TODO]
-
-### muduo 项目中所采用的抽象
-
-> - **由于下列类型是通过与 ChatGPT 的问答生成的, 因此可能并不与实际在 muduo 中使用的类型的名称完全一致**.
-> - **以下内容仅为个人理解**.
-
-1. `MutexLock`: 对互斥锁的抽象. C++11 下的等价设施: `std::mutex`
-1. `MutexLockGuard`: 对互斥锁的 RAII 机制的抽象. C++11 下的等价设施: `std::lock_guard<std::mutex>`
-1. `Condition`: 对信号量机制的抽象. C++11 下的等价设施: `std::condition_variable`
-1. `Atomic`: 对原子操作的抽象 (但是并不提供内存顺序控制). C++11 下的等价设施: `std::atomic<T>`
-1. `BlockingQueue`: 对 (无大小限制的) 阻塞队列的抽象.
-1. `BoundedBlockingQueue`: 对 (固定大小的) 阻塞队列的抽象.
-1. `AppendFile`: [TODO]
-1. `LogFile`: [TODO]
-1. `AsyncLogging`: [TODO]
-1. `LogStream`: [TODO]
-1. `SourceFile`: [TODO]
-1. `Impl`: [TODO]
-1. `Logger`: [TODO]
-1. `StringPiece`: [TODO]
-1. `Buffer`: 管理动态缓冲区, 用于存储 I/O 操作期间 (例如读取客户端发送过来的 HTTP 请求时) 的数据, 优化读写性能.
-1. `Socket`: [TODO]
-1. `Channel`: 对 socket 文件描述符的抽象, 其中包含事件到来时需要执行的回调函数 (由外部的 Acceptor 或 TcpConnection 类进行注册) 等等.
-1. `Acceptor`: 对 listen socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
-1. `Connector`: [TODO]
-1. `TcpConnection`: 对 connect socket 文件描述符的抽象. 是 `Channel` 类的一个包装类.
-1. `Poller`: 对 epoll 机制的抽象.
-1. `Timestamp`: 对时间戳的抽象, 内部使用一个 `int64_t` 类型的变量表示自 epoch 以来的毫秒数 (一年约有 $2^{44.84}$ 毫秒).
-1. `TimerQueue`: 对计时器容器的抽象.
-1. `Timer`: 对单个计时器元素的抽象.
-1. `EventLoop`: 对事件循环的抽象. 每个循环中不仅需要处理 epoll 事件的监听, 还要处理定时器和外部注册到当前线程中的任务等等.
-1. `ThreadLocal`: 帮手类, 用于实现 C++11 以前的线程局部存储 (TLS) 机制. C++11 下的等价设施: `thread_local` 关键字
-1. `CurrentThread`: 使用 `__thread` 关键字存储一些线程独立的信息, 包括对 TID, TID 的字符串形式, TID 字符串的长度, 以及线程名称字符串的缓存. 同时提供了一些 API 用于初始化以及获取这些信息.
-1. `ThreadData`: 帮手类, 用于在启动 `Thread` 对象时在启动 `Thread` 对象的线程 (主线程) 和该对象底层所封装的线程 (工作线程) 之间关于 `Thread` 对象的各个状态成员建立同步关系. 由于状态的改变需要在工作线程中进行, 因此还需要对 `Thread` 对象传进来的可调用对象进一步进行封装, 也就是说封装后的可调用对象会先改变状态, 然后调用内部所封装的原始的可调用对象. `ThreadData` 就是可调用对象的类, 它的成员函数 `runInThread` 和全局作用域中的函数 `startThread` 共同构成了可调用对象的调用运算符.
-1. `Thread`: 对线程的抽象, 内部封装了 POSIX pthread API, 并提供一系列额外的简单的 API 用于对底层封装的线程执行各种操作, 包括但不限于 `start`, `stop`, `get_tid` 等等. 使用 `Thread` 最重要的原因是它将底层封装的线程的状态映射到 `Thread` 对象的各个相应成员上, 然后通过一系列 API 方便简洁地获取这些状态信息, 更重要的一点是使用 `Thread` 对象还能够控制线程的生命周期, 实现惰性启动 (如果直接使用 `std::thread` 那么在创建对象的那一刻起底层的线程就已经启动了).
-1. `EventLoopThread`: 对线程 (实际上主要是对工作线程) 的抽象. 是 `EventLoop` 类的一个包装类. 初始化时自动启动一个 `EventLoop`.
-1. `EventLoopThreadPool`: 对线程池的抽象. 是 `EventLoopThread` 类的一个包装类.
-1. `InetAddress`: 对套接字地址 (IP + port) 的抽象.
-1. `TcpServer`: 对服务器的抽象.
-1. `TcpClient`: [TODO]
-1. `HttpRequest`: 对 HTTP 请求报文的抽象.
-1. `HttpResponse`: 对 HTTP 响应报文的抽象.
-1. `HttpContext`: 对 HTTP 请求解析过程的抽象.
-
-## 参考资料
-
-- [chenshuo/muduo](https://github.com/chenshuo/muduo)
-- [qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer)
-- [linyacool/WebServer](https://github.com/linyacool/WebServer)
+- [x] 优化服务器, 提高 QPS.
