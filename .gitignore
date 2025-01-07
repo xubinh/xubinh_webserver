@@ -1,8 +1,9 @@
 # cmake
 build/
 
-# local example only for development
+# local, development-only folders
 _example/
+_test/
 
 # WebBench compiled binary
 bin/
