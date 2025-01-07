@@ -38,6 +38,7 @@ cp -t bin/ WebBench/webbench
 
 | 项目改进描述                                                                                                                                                                                  | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
+| 实现字符串缓冲区的内存分配器, 并将其应用至 TCP 连接与 HTTP 服务器中                                                                                                                           | 45,589     | -          | [`9c797f6`](https://github.com/xubinh/xubinh_webserver/commit/9c797f6ed348811936dcc555dc6ff3fe8e7c116b) |
 | 重构所有 static slab allocator, 放弃 "对 non-static allocator 进行包装" 的方案并直接对内存池进行管理以避免函数调用所引入的额外开销                                                            | 48,362     | -          | [`a5003b6`](https://github.com/xubinh/xubinh_webserver/commit/a5003b61fd9f4876991ceac37934b390233df218) |
 | 使用 thread local allocator 方案替代前一版本中 ``std::shared_ptr` 所使用的 lock-free allocator 方案                                                                                           | 49,004     | -          | [`c587c90`](https://github.com/xubinh/xubinh_webserver/commit/c587c90d7b956b78da2334155f40f85734dbb028) |
 | 使用 `std::map` 作为 TCP 连接对象的容器, 并使用手写的 slab allocator 替代 `std::map` 与 `std::shared_ptr` 默认所使用的 `std::allocator`                                                       | 49,232     | -          | [`74b1617`](https://github.com/xubinh/xubinh_webserver/commit/74b161727979f6db904aa8a24dacf813427b34ee) |
@@ -308,18 +309,8 @@ H/W path    Device    Class      Description
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [ ] 优化服务器, 提高 QPS:
-  - 优化内存分配:
-    - 在 `TcpConnectSocketfd` 的成员 `MutableSizeTcpBuffer` 中的 `std::vector<char>` 成员的内存分配与初始化.
-    - 在 `HttpRequest` 中的 `std::map<std::string, std::string>` 成员和 `std::vector<char>` 成员的内存分配.
-    - 在 `TcpConnectSocketfd` 及其成员 `PollableFileDescriptor` 中的 `std::function` 成员的内存分配.
-  - 考虑更好的 lock-free 队列实现.
   - 考虑使用协程.
-- [ ] 其他:
-  - 检查是否存在内存泄漏.
-  - 尽可能将指针形式的形参更换为引用形式.
-  - 尽可能添加 `const` 和 `noexcept` 修饰词.
 - [ ] 实现一个 RPC 框架.
-- [ ] 添加英文版 `README.md`.
 
 ## 其他
 
