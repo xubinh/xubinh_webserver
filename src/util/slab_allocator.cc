@@ -1,5 +1,3 @@
-// #define __XUBINH_SERVER_UTIL_ALLOCATOR__DEBUG
-
 #include "util/slab_allocator.h"
 #include "util/current_thread.h"
 
@@ -13,8 +11,7 @@ char *StaticSimpleThreadLocalStringSlabAllocator::allocate(size_t n) {
     }
 
     if (n > 2048) {
-        // return reinterpret_cast<char *>(alignment::aalloc(4096, n));
-        return reinterpret_cast<char *>(::malloc(n));
+        return reinterpret_cast<char *>(::malloc(n)); // no alignment
     }
 
     auto power_of_2 =
@@ -27,17 +24,6 @@ char *StaticSimpleThreadLocalStringSlabAllocator::allocate(size_t n) {
     }
 
     _linked_lists_of_free_slabs[power_of_2] = chosen_slab->next;
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR__DEBUG
-    ::fprintf(
-        stderr,
-        "%d | n: %ld | allocating: %p | next: %p\n",
-        current_thread::get_tid(),
-        n,
-        chosen_slab,
-        chosen_slab->next
-    );
-#endif
 
     return reinterpret_cast<char *>(chosen_slab);
 }
@@ -65,18 +51,6 @@ void StaticSimpleThreadLocalStringSlabAllocator::deallocate(
     auto power_of_2 =
         alignment::get_next_power_of_2(std::max(n, static_cast<size_t>(32)));
 
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR__DEBUG
-    ::fprintf(
-        stderr,
-        "%d | n: %ld | current: %p | deallocating: %p | content: %s\n",
-        current_thread::get_tid(),
-        n,
-        _linked_lists_of_free_slabs[power_of_2],
-        slab,
-        slab
-    );
-#endif
-
     reinterpret_cast<LinkedListNode *>(slab)->next =
         _linked_lists_of_free_slabs[power_of_2];
 
@@ -93,17 +67,6 @@ StaticSimpleThreadLocalStringSlabAllocator::_allocate_one_chunk(int power_of_2
     size_t number_of_slabs = (0x00001000 >> power_of_2);
 
     void *new_chunk = alignment::aalloc(4096, 4096);
-
-#ifdef __XUBINH_SERVER_UTIL_ALLOCATOR__DEBUG
-    ::fprintf(
-        stderr,
-        "%d | creating: %p | slab size: %ld, number of slabs: %ld\n",
-        current_thread::get_tid(),
-        new_chunk,
-        slab_size,
-        number_of_slabs
-    );
-#endif
 
     _allocated_chunks.push_back(new_chunk);
 
