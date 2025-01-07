@@ -63,7 +63,8 @@ StaticSimpleThreadLocalStringSlabAllocator::_allocate_one_chunk(int power_of_2
 ) noexcept {
     size_t slab_size = (1 << power_of_2);
 
-    // (power_of_2, number_of_slabs) ~ (5, 2^(12-5)), ..., (11, 2^(12-11))
+    // (power_of_2, number_of_slabs) ~ (5, 2^(12-5)), ..., (11, 2^(12-11)) ==>
+    // number_of_slabs = 2^(12-power_of_2)
     size_t number_of_slabs = (0x00001000 >> power_of_2);
 
     void *new_chunk = alignment::aalloc(4096, 4096);
