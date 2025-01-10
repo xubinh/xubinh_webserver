@@ -19,16 +19,33 @@
 
 ## 部署本项目
 
+首先克隆项目至本地:
+
 ```bash
 git clone https://github.com/xubinh/xubinh_webserver.git
+```
+
+进入项目目录, 克隆 WebBench 仓库至本地:
+
+```bash
 cd xubinh_webserver
 git clone https://github.com/xubinh/WebBench.git
+```
+
+编译 WebBench 得到可执行文件:
+
+```bash
 cd WebBench
 sudo apt-get install rpcbind libtirpc-dev exuberant-ctags
 make
 cd ..
 mkdir bin
 cp -t bin/ WebBench/webbench
+```
+
+最后运行测试:
+
+```bash
 ./script/http/webbench.py
 ```
 
