@@ -2,6 +2,7 @@
 
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -54,11 +55,11 @@ def run_build_script() -> int:
     return result.returncode
 
 
-def run_server(test_name: str) -> subprocess.Popen:
+def run_server(test_name: str, print_to_terminal: bool = False) -> subprocess.Popen:
     server_process = subprocess.Popen(
         [SERVER_EXECUTABLE_PATH, test_name],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=None if print_to_terminal else subprocess.PIPE,
+        stderr=None if print_to_terminal else subprocess.PIPE,
     )
 
     return server_process
@@ -140,7 +141,7 @@ def get_input_arguments() -> tuple[int, int]:
     return test_duration, repeat_times
 
 
-def main():
+def main(print_to_terminal: bool = False):
     test_duration, repeat_times = get_input_arguments()
 
     clear()
@@ -162,7 +163,7 @@ def main():
 
         test_name = f"server-test-{i + 1}"
 
-        server_process = run_server(test_name)
+        server_process = run_server(test_name, print_to_terminal)
 
         print(f"Server started, pid: {server_process.pid}")
 
@@ -180,7 +181,7 @@ def main():
 
         print("WebBench finished, killing server...")
 
-        server_process.terminate()
+        server_process.send_signal(signal.SIGINT)
         server_process.wait()
 
         print(
@@ -194,7 +195,7 @@ def main():
         print(f"Succeed number: {succeed_number}")
         print(f"Failed number: {failed_number}")
 
-        if failed_number > 0:
+        if failed_number > 0 and not print_to_terminal:
             assert server_process.stdout and server_process.stderr
 
             stdout_data = server_process.stdout.read()
@@ -231,4 +232,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    print_to_terminal = False
+    # print_to_terminal = True
+    main(print_to_terminal)
