@@ -323,15 +323,13 @@ int main(int argc, char *argv[]) {
         ::exit(1);
     }
 
-    std::string log_file_base_name = (argc == 2 ? std::string(argv[1]) : "");
-
-    xubinh_server::LogCollector::set_base_name(log_file_base_name);
-
     // fd limit config
     xubinh_server::EventPoller::
         set_limit_of_max_number_of_opened_file_descriptors_per_process(60000);
 
     // logging config
+    std::string log_file_base_name = (argc == 2 ? std::string(argv[1]) : "");
+    xubinh_server::LogCollector::set_base_name(log_file_base_name);
 #ifdef __XUBINH_BENCHMARKING
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
@@ -352,7 +350,8 @@ int main(int argc, char *argv[]) {
     size_t thread_pool_capacity = 4;
 
     // create loop
-    xubinh_server::EventLoop loop(0, thread_pool_capacity);
+    size_t number_of_functor_blocking_queues = thread_pool_capacity;
+    xubinh_server::EventLoop loop(0, number_of_functor_blocking_queues);
 
     // create server
     xubinh_server::InetAddress server_address(
@@ -370,6 +369,7 @@ int main(int argc, char *argv[]) {
     signalfd_ptr->start();
 
     // server config
+    server.set_thread_pool_capacity(thread_pool_capacity);
     server.register_http_request_callback(http_request_callback);
     server.register_connect_success_callback([](const TcpConnectSocketfdPtr
                                                     &tcp_connect_socketfd_ptr) {
@@ -381,8 +381,6 @@ int main(int argc, char *argv[]) {
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-    server.set_thread_pool_capacity(thread_pool_capacity);
-
 #ifdef __XUBINH_BENCHMARKING
     server.set_connection_timeout_interval(
         xubinh_server::util::TimeInterval::FOREVER
@@ -392,11 +390,8 @@ int main(int argc, char *argv[]) {
         static_cast<int64_t>(15 * 1000) * 1000 * 1000
     ); // 15 sec
 #endif
-
     server.start();
-
     LOG_INFO << "server started listening on " + server_address.to_string();
-
     xubinh_server::LogCollector::flush();
 
     loop.loop();
