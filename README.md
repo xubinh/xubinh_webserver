@@ -57,7 +57,9 @@ cp -t bin/ WebBench/webbench
 
 | 项目改进描述                                                                                                                                                                                  | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| 实现字符串缓冲区的内存分配器, 并将其应用至 TCP 连接与 HTTP 服务器中                                                                                                                           | 45,589     | -          | [`9c797f6`](https://github.com/xubinh/xubinh_webserver/commit/9c797f6ed348811936dcc555dc6ff3fe8e7c116b) |
+| 将 TCP 连接对象的析构工作从主线程转移至单独的工作线程                                                                                                                                         | 51,082     | -          | [`be36b79`](https://github.com/xubinh/xubinh_webserver/commit/be36b790209f679ff0f875d299e49904badb663b) |
+| 实现字符串缓冲区的内存分配器, 并将其应用至 TCP 连接与 HTTP 服务器中                                                                                                                           | 53,298     | -          | [`9c797f6`](https://github.com/xubinh/xubinh_webserver/commit/9c797f6ed348811936dcc555dc6ff3fe8e7c116b) |
+| (注: 以上为 `-O3` 优化后的测试结果)                                                                                                                                                           |            |            |                                                                                                         |
 | 重构所有 static slab allocator, 放弃 "对 non-static allocator 进行包装" 的方案并直接对内存池进行管理以避免函数调用所引入的额外开销                                                            | 48,362     | -          | [`a5003b6`](https://github.com/xubinh/xubinh_webserver/commit/a5003b61fd9f4876991ceac37934b390233df218) |
 | 使用 thread local allocator 方案替代前一版本中 ``std::shared_ptr` 所使用的 lock-free allocator 方案                                                                                           | 49,004     | -          | [`c587c90`](https://github.com/xubinh/xubinh_webserver/commit/c587c90d7b956b78da2334155f40f85734dbb028) |
 | 使用 `std::map` 作为 TCP 连接对象的容器, 并使用手写的 slab allocator 替代 `std::map` 与 `std::shared_ptr` 默认所使用的 `std::allocator`                                                       | 49,232     | -          | [`74b1617`](https://github.com/xubinh/xubinh_webserver/commit/74b161727979f6db904aa8a24dacf813427b34ee) |
@@ -82,7 +84,7 @@ cp -t bin/ WebBench/webbench
 
 | 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                           |
 | ---------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------ |
-| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 37,814     | 75,945     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
+| [linyacool/WebServer](https://github.com/xubinh/WebServer) | 36,062     | 86,438     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
 
 ### 测试机硬件参数
 
