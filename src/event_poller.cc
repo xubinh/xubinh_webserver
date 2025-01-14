@@ -6,7 +6,8 @@
 
 namespace xubinh_server {
 
-size_t EventPoller::get_max_number_limit_of_file_descriptors_per_process() {
+size_t
+EventPoller::get_limit_of_max_number_of_opened_file_descriptors_per_process() {
     struct rlimit limit;
 
     if (::getrlimit(RLIMIT_NOFILE, &limit) == -1) {
@@ -14,6 +15,29 @@ size_t EventPoller::get_max_number_limit_of_file_descriptors_per_process() {
     }
 
     return static_cast<size_t>(limit.rlim_cur);
+}
+
+void EventPoller::
+    set_limit_of_max_number_of_opened_file_descriptors_per_process(
+        int max_limit_of_open_fd
+    ) {
+
+    struct rlimit limit;
+
+    if (::getrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        LOG_SYS_FATAL << "getrlimit failed";
+    }
+
+    // [NOTE]: consider the value carefully; a value no greater than the hard
+    // limit might still crash the system if being close to it
+    limit.rlim_cur =
+        std::min(static_cast<rlim_t>(max_limit_of_open_fd), limit.rlim_max);
+
+    // [NOTE]: this will set both the soft limit and the hard limit to the
+    // specified value, according to the man page
+    if (::setrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        LOG_SYS_FATAL << "setrlimit failed";
+    }
 }
 
 EventPoller::EventPoller() : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
@@ -126,6 +150,6 @@ void EventPoller::poll_for_active_events_of_all_fds(
 }
 
 const size_t EventPoller::_MAX_SIZE_OF_EVENT_ARRAY =
-    get_max_number_limit_of_file_descriptors_per_process();
+    get_limit_of_max_number_of_opened_file_descriptors_per_process();
 
 } // namespace xubinh_server

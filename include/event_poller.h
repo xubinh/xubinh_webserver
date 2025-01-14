@@ -30,7 +30,12 @@ public:
         EVENT_TYPE_ALL = EVENT_TYPE_READ | EVENT_TYPE_WRITE
     };
 
-    static size_t get_max_number_limit_of_file_descriptors_per_process();
+    static size_t
+    get_limit_of_max_number_of_opened_file_descriptors_per_process();
+
+    static void set_limit_of_max_number_of_opened_file_descriptors_per_process(
+        int max_limit_of_open_fd
+    );
 
     EventPoller();
 

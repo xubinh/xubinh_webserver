@@ -324,6 +324,10 @@ int main(int argc, char *argv[]) {
 
     xubinh_server::LogCollector::set_base_name(log_file_base_name);
 
+    // fd limit config
+    xubinh_server::EventPoller::
+        set_limit_of_max_number_of_opened_file_descriptors_per_process(60000);
+
     // logging config
 #ifdef __XUBINH_BENCHMARKING
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
