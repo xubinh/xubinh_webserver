@@ -41,8 +41,8 @@ void ListenSocketfd::listen(int socketfd) {
     }
 }
 
-ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop, bool prefer_et)
-    : _pollable_file_descriptor(fd, event_loop, prefer_et, prefer_et) {
+ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
+    : _pollable_file_descriptor(fd, event_loop, false, true) {
 }
 
 ListenSocketfd::~ListenSocketfd() {
@@ -131,7 +131,11 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
 }
 
 void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
-    while (true) {
+    LOG_TRACE << "entering ListenSocketfd::_read_event_callback";
+
+    for (int i = 0; i < _max_number_of_new_connections_at_a_time; i++) {
+        LOG_TRACE << "accepting next connection...";
+
         std::unique_ptr<InetAddress> peer_address_ptr;
 
         auto connect_socketfd = ListenSocketfd::_accept_new_connection(
@@ -140,6 +144,8 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
 
         // success
         if (connect_socketfd >= 0) {
+            LOG_TRACE << "connection OK";
+
             _new_connection_callback(
                 connect_socketfd, *peer_address_ptr, time_stamp
             );
@@ -147,13 +153,19 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
 
         // error
         else {
+            LOG_TRACE << "connection error";
+
             // non-blocking listen socketfd with ET mode
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                LOG_TRACE << "error: EAGAIN; breaking loop";
+
                 break;
             }
 
             // the connection was aborted by the peer; nothing needs to be done
             else if (errno == ECONNABORTED) {
+                LOG_TRACE << "error: ECONNABORTED; continue looping";
+
                 continue;
             }
 
@@ -163,6 +175,8 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
                 // _drop_connection_using_spare_fd();
 
                 // continue;
+
+                LOG_TRACE << "error: EMFILE/ENFILE; breaking loop";
 
                 // just heads for eventfd and closes all the pending connections
                 break;
@@ -180,5 +194,7 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
         }
     }
 }
+
+size_t ListenSocketfd::_max_number_of_new_connections_at_a_time = 1000;
 
 } // namespace xubinh_server

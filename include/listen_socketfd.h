@@ -10,6 +10,7 @@
 
 namespace xubinh_server {
 
+// level-triggered non-blocking listen socketfd
 class ListenSocketfd : public Socketfd {
 public:
     using NewConnectionCallbackType = std::function<void(
@@ -24,7 +25,14 @@ public:
 
     static void listen(int socketfd);
 
-    ListenSocketfd(int fd, EventLoop *event_loop, bool prefer_et = true);
+    static void set_max_number_of_new_connections_at_a_time(
+        size_t max_number_of_new_connections_at_a_time
+    ) {
+        _max_number_of_new_connections_at_a_time =
+            max_number_of_new_connections_at_a_time;
+    }
+
+    ListenSocketfd(int fd, EventLoop *event_loop);
 
     ~ListenSocketfd();
 
@@ -34,13 +42,6 @@ public:
     ) {
         _new_connection_callback = std::move(new_connection_callback);
     }
-
-    // void set_max_number_of_new_connections_at_a_time(
-    //     size_t max_number_of_new_connections_at_a_time
-    // ) {
-    //     _max_number_of_new_connections_at_a_time =
-    //         max_number_of_new_connections_at_a_time;
-    // }
 
     void start();
 
@@ -62,9 +63,9 @@ private:
 
     void _read_event_callback(util::TimePoint time_stamp);
 
-    int _spare_fd = -1;
+    static size_t _max_number_of_new_connections_at_a_time;
 
-    // size_t _max_number_of_new_connections_at_a_time = 64;
+    int _spare_fd = -1;
 
     // TCP socketfds are always at ET mode
     const int _accept_flags{SOCK_NONBLOCK | SOCK_CLOEXEC};
