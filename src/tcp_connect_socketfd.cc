@@ -34,15 +34,16 @@ TcpConnectSocketfd::~TcpConnectSocketfd() {
         // might occur when the connection is sent to be registered by the
         // current loop but the worker loop exit before actually registering it
         // (and detaching it)
-        LOG_WARN << "tcp connect socketfd object (id: " << get_id()
-                 << ") destroyed before the connection is closed";
+        LOG_WARN << "tcp connect socketfd object destroyed before the "
+                    "connection is closed, id: "
+                 << get_id();
     }
 
     if (!_is_abotrted) {
         _pollable_file_descriptor.close_fd();
     }
 
-    // LOG_TRACE << "TCP connection closed, id: " << _id;
+    LOG_TRACE << "TCP connection destroyed, id: " << _id;
 }
 
 void TcpConnectSocketfd::start() {

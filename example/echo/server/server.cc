@@ -127,9 +127,10 @@ int main() {
     server.register_connect_success_callback([](const TcpConnectSocketfdPtr
                                                     &tcp_connect_socketfd_ptr) {
         LOG_TRACE
-            << "established TCP connection (id: "
+            << "TCP connection established, id: "
             << tcp_connect_socketfd_ptr->get_id()
-            << "): " + tcp_connect_socketfd_ptr->get_local_address().to_string()
+            << ", path: "
+                   + tcp_connect_socketfd_ptr->get_local_address().to_string()
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
