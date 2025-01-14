@@ -33,6 +33,10 @@ else()
     endif()
 endif()
 
+if(USE_SHARED_PTR_DESTRUCTION_TRANSFERING)
+    add_compile_definitions(__USE_SHARED_PTR_DESTRUCTION_TRANSFERING)
+endif()
+
 # Subdirectories
 add_subdirectory(src)
 add_subdirectory(example)

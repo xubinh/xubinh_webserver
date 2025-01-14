@@ -57,6 +57,9 @@ void signal_dispatcher(
     case SIGTERM:
         LOG_INFO << "user interrupt, terminating server...";
 
+        // [NOTE]: must unregister signalfd first for the loop to be able to
+        // stop, since signalfd is not counted into the resident fd's of the
+        // event loop
         signalfd_ptr->stop();
 
         server->stop();

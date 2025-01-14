@@ -99,6 +99,8 @@ private:
 
     void _wake_up_this_loop(uint64_t functor_blocking_queue_index);
 
+    void _invoke_all_functors();
+
     void _set_alarm_at_time_point(TimePoint time_point) {
         _timerfd.set_alarm_at_time_point(time_point);
     }

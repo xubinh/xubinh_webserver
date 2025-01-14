@@ -72,12 +72,22 @@ void EventLoop::loop() {
         // only when the polling list is logically empty (which really is not
         // since each event loop always got two fixed fd's being listened on,
         // i.e. a timerfd and an eventfd)
-        if (_need_stop.load(std::memory_order_relaxed)
-            && _event_poller.size() == 1 + _number_of_functor_blocking_queues) {
+        if (_need_stop.load(std::memory_order_relaxed)) {
 
-            LOG_INFO << "event loop exits, target TID: " << _owner_thread_tid;
+            if (_event_poller.size()
+                == 1 + _number_of_functor_blocking_queues) {
+                LOG_INFO << "event loop exits, target TID: "
+                         << _owner_thread_tid;
 
-            break;
+                break;
+            }
+
+            else {
+                LOG_INFO << "non-empty event poller, size: "
+                         << _event_poller.size()
+                         << ", event loop can not exit now, target TID: "
+                         << _owner_thread_tid;
+            }
         }
 
         _event_poller.poll_for_active_events_of_all_fds(event_dispatchers);
@@ -104,42 +114,7 @@ void EventLoop::loop() {
         if (_eventfd_triggered) {
             LOG_TRACE << "eventfd triggered";
 
-            for (auto &_functor_blocking_queue_ptr : _functor_blocking_queues) {
-#ifdef __USE_LOCK_FREE_QUEUE
-#ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
-                FunctorType *functor_ptr;
-
-                while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
-                    (*functor_ptr)();
-                    delete functor_ptr;
-                }
-#else
-                std::shared_ptr<FunctorType> functor_ptr;
-
-                while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
-                    (*functor_ptr)();
-                }
-#endif
-#else
-#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
-                const auto &queued_functors =
-                    _functor_blocking_queue_ptr->pop_all();
-
-                for (auto &functor : queued_functors) {
-                    (*functor)();
-
-                    delete functor;
-                }
-#else
-                const auto &queued_functors =
-                    _functor_blocking_queue_ptr->pop_all();
-
-                for (auto &functor : queued_functors) {
-                    functor();
-                }
-#endif
-#endif
-            }
+            _invoke_all_functors();
 
             _eventfd_triggered = false;
         }
@@ -167,7 +142,8 @@ void EventLoop::loop() {
         LOG_TRACE << "current size of poller: " << _event_poller.size();
     }
 
-    // clean up is done inside destructor
+    // clean up the functors before exiting
+    _invoke_all_functors();
 }
 
 void EventLoop::register_event_for_fd(int fd, const epoll_event *event) {
@@ -273,8 +249,9 @@ void EventLoop::_leave_to_owner_thread(
         std::move(functor)
     );
 
-    LOG_TRACE << "leave to owner thread, functor queue index: "
-              << (functor_blocking_queue_index);
+    LOG_TRACE << "leave to owner thread (TID: " << _owner_thread_tid
+              << "), functor queue index: " << (functor_blocking_queue_index)
+              << ", current thread TID: " << util::current_thread::get_tid();
 
     _wake_up_this_loop(functor_blocking_queue_index);
 }
@@ -289,6 +266,43 @@ void EventLoop::_wake_up_this_loop(uint64_t functor_blocking_queue_index) {
             )) {
 
         _eventfds[functor_blocking_queue_index]->increment_by_value(1);
+    }
+}
+
+void EventLoop::_invoke_all_functors() {
+    for (auto &_functor_blocking_queue_ptr : _functor_blocking_queues) {
+#ifdef __USE_LOCK_FREE_QUEUE
+#ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
+        FunctorType *functor_ptr;
+
+        while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
+            (*functor_ptr)();
+            delete functor_ptr;
+        }
+#else
+        std::shared_ptr<FunctorType> functor_ptr;
+
+        while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
+            (*functor_ptr)();
+        }
+#endif
+#else
+#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
+        const auto &queued_functors = _functor_blocking_queue_ptr->pop_all();
+
+        for (auto &functor : queued_functors) {
+            (*functor)();
+
+            delete functor;
+        }
+#else
+        const auto &queued_functors = _functor_blocking_queue_ptr->pop_all();
+
+        for (auto &functor : queued_functors) {
+            functor();
+        }
+#endif
+#endif
     }
 }
 

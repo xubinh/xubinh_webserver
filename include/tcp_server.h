@@ -92,6 +92,14 @@ private:
         uint64_t functor_blocking_queue_index
     );
 
+    void _transfer_tcp_connections_to_background_thread();
+
+#ifdef __USE_SHARED_PTR_DESTRUCTION_TRANSFERING
+    static constexpr const size_t
+        _MAX_SIZE_OF_CURRENT_VECTOR_OF_TCP_CONNECT_SOCKETFDS_TO_BE_DESTROYED =
+            512;
+#endif
+
     bool _is_started = false;
     bool _is_stopped = false;
 
@@ -114,6 +122,16 @@ private:
         util::SimpleSlabAllocator<
             std::pair<const uint64_t, TcpConnectSocketfdPtr>>>
         _tcp_connect_socketfds;
+
+#ifdef __USE_SHARED_PTR_DESTRUCTION_TRANSFERING
+    std::vector<std::vector<std::shared_ptr<void>>>
+        _vectors_of_tcp_connect_socketfds_to_be_destroyed;
+    std::vector<std::shared_ptr<void>>
+        _current_vector_of_tcp_connect_socketfds_to_be_destroyed;
+    std::mutex _mutex_for_vectors_of_tcp_connect_socketfds_to_be_destroyed;
+    std::unique_ptr<EventLoopThread>
+        _tcp_connect_socketfd_destroying_thread_ptr;
+#endif
 
     std::atomic<uint64_t> _tcp_connection_id_counter{0};
 
