@@ -74,8 +74,7 @@ private:
     static constexpr std::chrono::seconds::rep
         _COLLECT_LOOP_TIMEOUT_IN_SECONDS = 3;
 
-    static constexpr decltype(BufferVector().size()
-    ) _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
+    static constexpr size_t _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
 
     static LogCollector *_log_collector_singleton_instance;
 

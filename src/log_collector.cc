@@ -53,7 +53,7 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     }
 
     {
-        std::lock_guard<decltype(_mutex)> lock(_mutex);
+        std::lock_guard<std::mutex> lock(_mutex);
 
         // throw away if the entire buffer couldn't hold this single log
         if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
@@ -112,36 +112,36 @@ void LogCollector::_background_io_thread_worker_functor() {
     ChunkBufferPtr spare_chunk_buffer_for_spare_chunk_buffer(new LogChunkBuffer
     );
 
-    BufferVector chunk_buffers_to_be_written;
+    BufferVector fulled_chunk_buffers_to_be_written;
 
     LogFile log_file(LogCollector::_base_name);
 
-    std::unique_lock<decltype(_mutex)> lock_hook;
-
     while (true) {
         {
-            std::unique_lock<decltype(_mutex)> lock(_mutex);
+            std::unique_lock<std::mutex> lock(_mutex);
 
-            // waits for a few seconds if no fulled buffers come in
             if (_fulled_chunk_buffers.empty()) {
-                // spurious wakeup doesn't matter here
+                // spurious wakeup is OK; we have the outer while loop applied
                 _cond.wait_for(
                     lock, std::chrono::seconds(_COLLECT_LOOP_TIMEOUT_IN_SECONDS)
                 );
             }
 
-            // if still no fulled buffers
             if (_fulled_chunk_buffers.empty()) {
-                // exits if it's because the outside is telling us to stop
                 if (_need_stop.load(std::memory_order_relaxed)) {
-                    lock_hook = std::move(lock);
+                    if (_current_chunk_buffer_ptr->length()) {
+                        log_file.write_to_user_space_memory(
+                            _current_chunk_buffer_ptr
+                                ->get_start_address_of_buffer(),
+                            _current_chunk_buffer_ptr->length()
+                        );
+                    }
 
-                    break;
+                    return;
                 }
 
                 bool expected = true;
 
-                // continue waiting if no flags are set
                 if (!_need_flush.compare_exchange_strong(
                         expected, false, std::memory_order_relaxed
                     )) {
@@ -149,11 +149,11 @@ void LogCollector::_background_io_thread_worker_functor() {
                     continue;
                 }
 
-                // otherwise creates a dummy fulled-buffer in order to flush the
-                // non-fulled one, if the outside asked explicitly (which may
-                // happen when the process is about to finish yet blocked due to
-                // some bug which in turn requires the log stucking in here to
-                // get debugged)
+                // for flushing: creates a dummy fulled-buffer in order to flush
+                // the non-fulled one, if the outside asked explicitly (which
+                // may happen when the process is about to finish yet blocked
+                // due to some bug which in turn requires the log stucking in
+                // here to get debugged)
                 _spare_chunk_buffer_ptr->append("flush\n", 6);
                 _fulled_chunk_buffers.push_back(
                     std::move(_spare_chunk_buffer_ptr)
@@ -163,7 +163,7 @@ void LogCollector::_background_io_thread_worker_functor() {
             _fulled_chunk_buffers.push_back(std::move(_current_chunk_buffer_ptr)
             );
 
-            _fulled_chunk_buffers.swap(chunk_buffers_to_be_written);
+            _fulled_chunk_buffers.swap(fulled_chunk_buffers_to_be_written);
 
             _current_chunk_buffer_ptr =
                 std::move(spare_chunk_buffer_for_current_chunk_buffer);
@@ -174,10 +174,11 @@ void LogCollector::_background_io_thread_worker_functor() {
             }
         }
 
-        if (chunk_buffers_to_be_written.size()
+        if (fulled_chunk_buffers_to_be_written.size()
             > _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN) {
+
             auto number_of_dropped_buffers = static_cast<int>(
-                chunk_buffers_to_be_written.size()
+                fulled_chunk_buffers_to_be_written.size()
                 - _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
             );
 
@@ -191,45 +192,39 @@ void LogCollector::_background_io_thread_worker_functor() {
 
             log_file.write_to_user_space_memory(msg.c_str(), msg.length());
 
-            chunk_buffers_to_be_written.resize(
+            fulled_chunk_buffers_to_be_written.resize(
                 _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN
             );
         }
 
-        for (const auto &chunk_buffer_ptr : chunk_buffers_to_be_written) {
+        for (const auto &chunk_buffer_ptr :
+             fulled_chunk_buffers_to_be_written) {
             log_file.write_to_user_space_memory(
                 chunk_buffer_ptr->get_start_address_of_buffer(),
                 chunk_buffer_ptr->length()
             );
         }
 
-        chunk_buffers_to_be_written.resize(2);
+        fulled_chunk_buffers_to_be_written.resize(2);
 
         if (!spare_chunk_buffer_for_current_chunk_buffer) {
             spare_chunk_buffer_for_current_chunk_buffer =
-                std::move(chunk_buffers_to_be_written[0]);
+                std::move(fulled_chunk_buffers_to_be_written[0]);
+
             spare_chunk_buffer_for_current_chunk_buffer->reset();
         }
 
         if (!spare_chunk_buffer_for_spare_chunk_buffer) {
             spare_chunk_buffer_for_spare_chunk_buffer =
-                std::move(chunk_buffers_to_be_written[1]);
+                std::move(fulled_chunk_buffers_to_be_written[1]);
+
             spare_chunk_buffer_for_spare_chunk_buffer->reset();
         }
 
-        chunk_buffers_to_be_written.clear();
+        fulled_chunk_buffers_to_be_written.clear();
 
         log_file.flush_to_disk();
     }
-
-    if (_current_chunk_buffer_ptr->length()) {
-        log_file.write_to_user_space_memory(
-            _current_chunk_buffer_ptr->get_start_address_of_buffer(),
-            _current_chunk_buffer_ptr->length()
-        );
-    }
-
-    return;
 }
 
 void LogCollector::_stop(bool also_need_abort) {
