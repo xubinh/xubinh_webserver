@@ -37,13 +37,13 @@ void LogCollector::flush() {
 void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     if (_need_output_directly_to_terminal) {
         ssize_t bytes_written =
-            ::write(STDOUT_FILENO, entry_address, entry_size);
+            ::write(STDERR_FILENO, entry_address, entry_size);
 
         if (bytes_written != entry_size) {
             ::fprintf(
                 stderr,
-                "@xubinh_server::LogCollector::take_this_log: error when try "
-                "to print log into stdout\n"
+                "@xubinh_server::LogCollector::take_this_log: error when "
+                "trying to write log into stderr using `write`\n"
             );
 
             ::abort();
