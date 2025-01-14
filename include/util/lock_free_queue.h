@@ -43,8 +43,6 @@ public:
         template <typename... Args>
         Node(Args &&...args) : _value(new T(std::forward<Args>(args)...)) {
         }
-
-        T *_value{nullptr};
 #else
         Node(const T &value) : _value(std::make_shared<T>(value)) {
         }
@@ -56,10 +54,15 @@ public:
         Node(Args &&...args)
             : _value(std::make_shared<T>(std::forward<Args>(args)...)) {
         }
+#endif
 
+        std::atomic<Node *> _next{nullptr};
+
+#ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
+        T *_value{nullptr};
+#else
         std::shared_ptr<T> _value{nullptr};
 #endif
-        std::atomic<Node *> _next{nullptr};
     };
 
 public:
@@ -109,10 +112,11 @@ public:
             return nullptr;
         }
 
+        T *popped_element = next->_value;
+        next->_value = nullptr;
+
         Node *old_head = _head;
         _head = next;
-
-        T *popped_element = next->_value;
 
         delete old_head;
 
@@ -126,11 +130,11 @@ public:
             return nullptr;
         }
 
-        Node *old_head = _head;
-        _head = next;
-
         std::shared_ptr<T> popped_element = next->_value;
         next->_value.reset();
+
+        Node *old_head = _head;
+        _head = next;
 
         delete old_head;
 
