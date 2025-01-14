@@ -147,6 +147,7 @@ private:
     Timerfd _timerfd;
     TimerContainer _timer_container{};
     bool _timerfd_triggered = false;
+    TimePoint _next_earliest_expiration_time{TimePoint::FOREVER};
 
     pid_t _owner_thread_tid;
 

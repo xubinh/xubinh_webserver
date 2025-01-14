@@ -20,6 +20,14 @@ public:
         return _timers.empty() ? TimePoint::FOREVER : _timers.begin()->first;
     }
 
+    bool empty() const {
+        return _timers.empty();
+    }
+
+    size_t size() const {
+        return _timers.size();
+    }
+
     void insert_one(const Timer *timer_ptr);
 
     void insert_all(const std::vector<const Timer *> &timers);

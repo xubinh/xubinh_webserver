@@ -196,6 +196,8 @@ void EventLoop::run(
     }
 }
 
+// - a `0` of repetition time interval means one-off timer
+// - a `-1` of repetition number means infinite repetition
 TimerIdentifier EventLoop::run_at_time_point(
     TimePoint time_point,
     TimeInterval repetition_time_interval,
@@ -220,6 +222,8 @@ TimerIdentifier EventLoop::run_at_time_point(
     return TimerIdentifier{timer_ptr};
 }
 
+// - a `0` of repetition time interval means one-off timer
+// - a `-1` of repetition number means infinite repetition
 TimerIdentifier EventLoop::run_after_time_interval(
     TimeInterval time_interval,
     TimeInterval repetition_time_interval,
@@ -289,64 +293,122 @@ void EventLoop::_wake_up_this_loop(uint64_t functor_blocking_queue_index) {
 }
 
 void EventLoop::_add_a_timer_and_update_alarm(const Timer *timer_ptr) {
-    TimePoint time_point = timer_ptr->get_expiration_time_point();
-
-    TimePoint earliest_expiration_time_point_before_insertion =
-        _timer_container.get_earliest_expiration_time_point();
+    LOG_TRACE << "entering `_add_a_timer_and_update_alarm`";
 
     _timer_container.insert_one(timer_ptr);
 
+    TimePoint earliest_expiration_time_point_after_insertion =
+        _timer_container.get_earliest_expiration_time_point();
+
+    LOG_TRACE << "earliest_expiration_time_point_after_insertion: "
+              << earliest_expiration_time_point_after_insertion
+                     .to_datetime_string(TimePoint::Purpose::PRINTING);
+
     // newly inserted timer advanced the expiration
-    if (time_point < earliest_expiration_time_point_before_insertion
-                         - util::TimeInterval(_alarm_advancing_threshold)) {
-        _set_alarm_at_time_point(time_point);
+    if (earliest_expiration_time_point_after_insertion
+        < _next_earliest_expiration_time
+              - util::TimeInterval(_alarm_advancing_threshold)) {
+
+        _set_alarm_at_time_point(earliest_expiration_time_point_after_insertion
+        );
+
+        _next_earliest_expiration_time =
+            earliest_expiration_time_point_after_insertion;
+
+        LOG_TRACE << "alarm advanced at: "
+                  << _next_earliest_expiration_time.to_datetime_string(
+                         TimePoint::Purpose::PRINTING
+                     );
     }
+
+    else {
+        LOG_TRACE << "alarm remain the same";
+    }
+
+    LOG_TRACE << "exiting `_add_a_timer_and_update_alarm`";
 }
 
 void EventLoop::_cancel_a_timer_and_update_alarm(const Timer *timer_ptr) {
-    bool timer_expired = !_timer_container.remove_one(timer_ptr);
+    // might be expired already
+    bool flag_timer_not_exist = !_timer_container.remove_one(timer_ptr);
 
-    if (timer_expired) {
+    if (flag_timer_not_exist) {
+        return;
+    }
+
+    // cancel alarm if there were no timers left
+    if (_timer_container.empty()) {
+        _cancel_alarm();
+
+        _next_earliest_expiration_time = TimePoint::FOREVER;
+
         return;
     }
 
     TimePoint earliest_expiration_time_point_after_removal =
         _timer_container.get_earliest_expiration_time_point();
 
-    // expiration delayed after removal
-    if (timer_ptr->get_expiration_time_point()
+    // or reset alarm if expiration time is delayed by the removal
+    if (_next_earliest_expiration_time
         < earliest_expiration_time_point_after_removal) {
 
-        // if there are still timers inside the container
-        if (earliest_expiration_time_point_after_removal < TimePoint::FOREVER) {
-            _set_alarm_at_time_point(
-                earliest_expiration_time_point_after_removal
-            );
-        }
+        _set_alarm_at_time_point(earliest_expiration_time_point_after_removal);
 
-        else {
-            _cancel_alarm();
-        }
+        _next_earliest_expiration_time =
+            earliest_expiration_time_point_after_removal;
     }
 
     delete timer_ptr;
 }
 
 void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
-    // [NOTE] entering this function means the timer, which is always one-shot,
-    // has expired and the event loop is awakened by timerfd to execute this
-    // function, so one can assume the timer is clean right now
+    LOG_TRACE << "entering _expire_and_update_alarm";
 
     std::vector<const Timer *> expired_timers =
         _timer_container.move_out_before_or_at(time_point);
 
-    TimePoint exp_after_moving_out =
-        _timer_container.get_earliest_expiration_time_point();
+    LOG_TRACE << "moved out " << expired_timers.size() << " timers";
+
+    LOG_TRACE << "number of timers left in the container: "
+              << _timer_container.size();
+
+    // update alarm status for the callbacks
+    if (_timer_container.empty()) {
+        _cancel_alarm();
+
+        _next_earliest_expiration_time = TimePoint::FOREVER;
+
+        LOG_TRACE << "no timers left currently; cancelling alarm";
+    }
+    else {
+        TimePoint earliest_expiration_time_point_after_removal =
+            _timer_container.get_earliest_expiration_time_point();
+
+        if (_next_earliest_expiration_time
+            < earliest_expiration_time_point_after_removal) {
+
+            _set_alarm_at_time_point(
+                earliest_expiration_time_point_after_removal
+            );
+
+            _next_earliest_expiration_time =
+                earliest_expiration_time_point_after_removal;
+
+            LOG_TRACE << "alarm delayed at: "
+                      << earliest_expiration_time_point_after_removal
+                             .to_datetime_string(TimePoint::Purpose::PRINTING);
+        }
+
+        else {
+            LOG_TRACE << "alarm remain the same";
+        }
+    }
 
     std::vector<const Timer *> timers_that_are_still_valid;
 
-    // the callbacks themself might also add their new timers and update the
-    // alarm
+    LOG_TRACE << "expiring timers...";
+
+    // the callbacks themselves might also add new timers and update the alarm
     for (const Timer *timer_ptr : expired_timers) {
         auto temp_mutable_timer_ptr = const_cast<Timer *>(timer_ptr);
 
@@ -359,29 +421,50 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
         }
     }
 
+    LOG_TRACE << "finished expiring timers";
+
+    LOG_TRACE << "number of timers left in the container: "
+              << _timer_container.size();
+
     if (timers_that_are_still_valid.empty()) {
+        LOG_TRACE << "no valid timers left";
+        LOG_TRACE << "exiting _expire_and_update_alarm";
+
         return;
     }
 
-    TimePoint exp_after_executing_callbacks =
-        _timer_container.get_earliest_expiration_time_point();
+    LOG_TRACE << "number of valid timers: "
+              << timers_that_are_still_valid.size();
 
-    bool _new_callbacks_have_been_inserted =
-        exp_after_executing_callbacks < exp_after_moving_out;
+    LOG_TRACE << "inserting valid timers...";
 
     _timer_container.insert_all(timers_that_are_still_valid);
 
-    TimePoint exp_after_inserting_all =
+    LOG_TRACE << "number of timers left in the container: "
+              << _timer_container.size();
+
+    TimePoint earliest_expiration_time_point_after_inserting_all =
         _timer_container.get_earliest_expiration_time_point();
 
-    // set the alarm if it is not set inside the callback, or it is set inside
-    // the callback but will be advanced by the insertion here
-    if (!_new_callbacks_have_been_inserted
-        || exp_after_inserting_all
-               < exp_after_executing_callbacks
-                     - util::TimeInterval(_alarm_advancing_threshold)) {
-        _set_alarm_at_time_point(exp_after_inserting_all);
+    // newly inserted timer advanced the expiration
+    if (earliest_expiration_time_point_after_inserting_all
+        < _next_earliest_expiration_time
+              - util::TimeInterval(_alarm_advancing_threshold)) {
+
+        _set_alarm_at_time_point(
+            earliest_expiration_time_point_after_inserting_all
+        );
+
+        _next_earliest_expiration_time =
+            earliest_expiration_time_point_after_inserting_all;
+
+        LOG_TRACE << "alarm advanced at: "
+                  << _next_earliest_expiration_time.to_datetime_string(
+                         TimePoint::Purpose::PRINTING
+                     );
     }
+
+    LOG_TRACE << "exiting _expire_and_update_alarm";
 }
 
 void EventLoop::_release_all_timers() {
