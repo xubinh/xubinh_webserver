@@ -29,7 +29,7 @@ Timer::Timer(
 }
 
 bool Timer::expire_once() {
-    LOG_TRACE << "added a timer, address: " << this
+    LOG_TRACE << "expiring a timer, address: " << this
               << ", expiration time: "
                      + _expiration_time_point.to_datetime_string(
                          TimePoint::Purpose::PRINTING
