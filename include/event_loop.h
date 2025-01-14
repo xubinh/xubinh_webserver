@@ -127,7 +127,9 @@ private:
     // for async-handling of timerfd notifications
     void _timerfd_message_callback(uint64_t value);
 
+#ifndef __USE_LOCK_FREE_QUEUE
     static constexpr int _FUNCTOR_QUEUE_CAPACITY = 1000;
+#endif
 
     // in seconds
     static int64_t _alarm_advancing_threshold;
