@@ -46,7 +46,7 @@ cp -t bin/ WebBench/webbench
 最后运行测试:
 
 ```bash
-./script/http/webbench.py
+./script/webbench.py
 ```
 
 ## 基准测试

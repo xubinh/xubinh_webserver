@@ -91,6 +91,8 @@ void TcpServer::start() {
 #endif
 
     if (_thread_pool_capacity > 0) {
+        LOG_INFO << "starting thread pool...";
+
         _thread_pool_ptr.reset(new EventLoopThreadPool(_thread_pool_capacity));
 
         if (_thread_initialization_callback) {
@@ -100,6 +102,8 @@ void TcpServer::start() {
         }
 
         _thread_pool_ptr->start();
+
+        LOG_INFO << "finished starting thread pool";
     }
 
     _is_started = true;

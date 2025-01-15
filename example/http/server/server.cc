@@ -21,8 +21,6 @@
 #include "./include/http_response.h"
 #include "./include/http_server.h"
 
-#define __XUBINH_BENCHMARKING
-
 using TcpConnectSocketfdPtr = xubinh_server::HttpServer::TcpConnectSocketfdPtr;
 
 using StringType = xubinh_server::util::StringType;
@@ -289,7 +287,7 @@ void http_request_callback(
         return;
     }
 
-#ifdef __XUBINH_BENCHMARKING
+#ifdef __RUN_BENCHMARK
     // directly sends the string in memory, bypassing mmap
     tcp_connect_socketfd_ptr->send(
         hello_world_response_content, hello_world_response_content_size
@@ -330,7 +328,7 @@ int main(int argc, char *argv[]) {
     // logging config
     std::string log_file_base_name = (argc == 2 ? std::string(argv[1]) : "");
     xubinh_server::LogCollector::set_base_name(log_file_base_name);
-#ifdef __XUBINH_BENCHMARKING
+#ifdef __RUN_BENCHMARK
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
 #else
@@ -381,7 +379,7 @@ int main(int argc, char *argv[]) {
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-#ifdef __XUBINH_BENCHMARKING
+#ifdef __RUN_BENCHMARK
     server.set_connection_timeout_interval(
         xubinh_server::util::TimeInterval::FOREVER
     ); // FOREVER = don't start timer for checking inactive connections
