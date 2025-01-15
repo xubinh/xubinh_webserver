@@ -72,8 +72,8 @@ private:
     const std::string _thread_name;
 
     // for initialization of worker thread info
-    util::Mutex _mutex;
-    util::ConditionVariable _cond;
+    Mutex _mutex;
+    ConditionVariable _cond;
 };
 
 } // namespace util

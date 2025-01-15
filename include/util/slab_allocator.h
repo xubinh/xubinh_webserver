@@ -200,7 +200,7 @@ public:
 
     ~SemiLockFreeSlabAllocator() noexcept {
         {
-            util::MutexGuard lock(_mutex);
+            MutexGuard lock(_mutex);
 
             if (_allocated_chunks.empty()) {
                 return;
@@ -296,7 +296,7 @@ private:
         void *new_chunk = alignment::aalloc(_SLAB_ALIGNMENT, chunk_size);
 
         {
-            util::MutexGuard lock(_mutex);
+            MutexGuard lock(_mutex);
 
             _allocated_chunks.push_back(new_chunk);
         }
@@ -352,7 +352,7 @@ private:
     std::atomic<LinkedListNode *> _linked_list_of_free_slabs{nullptr};
 
     std::vector<void *> _allocated_chunks;
-    util::Mutex _mutex;
+    Mutex _mutex;
 };
 
 // static simple single-threaded allocator
@@ -511,14 +511,14 @@ private:
 
         void push_back(void *chunk) {
             {
-                util::MutexGuard lock(_mutex);
+                MutexGuard lock(_mutex);
 
                 _allocated_chunks.push_back(chunk);
             }
         }
 
         std::vector<void *> _allocated_chunks;
-        util::Mutex _mutex;
+        Mutex _mutex;
     };
 
 public:
@@ -735,7 +735,7 @@ public:
 
             // try to get a full chunk from the central pool first
             {
-                util::MutexGuard lock(_mutex);
+                MutexGuard lock(_mutex);
                 if (!_free_chunks.empty()) {
                     free_chunk_node = _free_chunks.back();
                     _free_chunks.pop_back();
@@ -804,7 +804,7 @@ public:
             new_node.chunk_head = chunk_head;
             new_node.chunk_tail = chunk_tail;
             {
-                util::MutexGuard lock(_mutex);
+                MutexGuard lock(_mutex);
                 _free_chunks.push_back(new_node);
             }
 
@@ -867,7 +867,7 @@ private:
 
     // central pool
     static std::vector<FreeChunkNode> _free_chunks;
-    static util::Mutex _mutex;
+    static Mutex _mutex;
 };
 
 // initialization of static members
@@ -889,7 +889,7 @@ template <typename SlabType>
 std::vector<typename StaticThreadLocalSlabAllocator<SlabType>::FreeChunkNode>
     StaticThreadLocalSlabAllocator<SlabType>::_free_chunks;
 template <typename SlabType>
-util::Mutex StaticThreadLocalSlabAllocator<SlabType>::_mutex;
+Mutex StaticThreadLocalSlabAllocator<SlabType>::_mutex;
 
 // static thread-local simple single-threaded allocator tailored for small
 // string buffer

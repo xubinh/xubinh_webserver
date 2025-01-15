@@ -36,7 +36,7 @@ void Thread::start() {
     }
 
     {
-        util::MutexGuard lock(_mutex);
+        MutexGuard lock(_mutex);
 
         if (::pthread_create(
                 &_pthread_id,
@@ -122,7 +122,7 @@ void *Thread::_adaptor_function_for_pthread_create(void *arg) {
 
 void Thread::_wrapper_of_worker_function() {
     {
-        util::MutexGuard lock(_mutex);
+        MutexGuard lock(_mutex);
 
         _tid = this_thread::get_tid();
 

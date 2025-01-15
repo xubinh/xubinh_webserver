@@ -44,9 +44,9 @@ public:
 private:
     ContainerType _queue;
     const size_t _capacity;
-    util::Mutex _mutex;
-    util::ConditionVariable _cond_queue_not_full;
-    util::ConditionVariable _cond_queue_not_empty;
+    Mutex _mutex;
+    ConditionVariable _cond_queue_not_full;
+    ConditionVariable _cond_queue_not_empty;
 };
 
 // declaration
