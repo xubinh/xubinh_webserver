@@ -53,7 +53,7 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     }
 
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         // throw away if the entire buffer couldn't hold this single log
         if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
@@ -118,13 +118,11 @@ void LogCollector::_background_io_thread_worker_functor() {
 
     while (true) {
         {
-            std::unique_lock<std::mutex> lock(_mutex);
+            util::MutexGuard lock(_mutex);
 
             if (_fulled_chunk_buffers.empty()) {
                 // spurious wakeup is OK; we have the outer while loop applied
-                _cond.wait_for(
-                    lock, std::chrono::seconds(_COLLECT_LOOP_TIMEOUT_IN_SECONDS)
-                );
+                _cond.wait_for(lock, _COLLECT_LOOP_TIME_INTERVAL);
             }
 
             if (_fulled_chunk_buffers.empty()) {
@@ -250,8 +248,8 @@ bool LogCollector::_need_output_directly_to_terminal = false;
 
 std::string LogCollector::_base_name = "log_collector";
 
-constexpr std::chrono::seconds::rep
-    LogCollector::_COLLECT_LOOP_TIMEOUT_IN_SECONDS;
+const util::TimeInterval LogCollector::_COLLECT_LOOP_TIME_INTERVAL =
+    static_cast<int64_t>(3 * 1000) * 1000 * 1000;
 
 std::atomic<bool> LogCollector::_is_instantiated{false};
 

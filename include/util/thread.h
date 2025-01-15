@@ -1,12 +1,14 @@
 #ifndef __XUBINH_SERVER_UTIL_THREAD
 #define __XUBINH_SERVER_UTIL_THREAD
 
-#include <condition_variable>
 #include <cstdint>
 #include <functional>
-#include <mutex>
+#include <limits>
 #include <string>
 #include <unistd.h>
+
+#include "util/condition_variable.h"
+#include "util/mutex.h"
 
 namespace xubinh_server {
 
@@ -70,8 +72,8 @@ private:
     const std::string _thread_name;
 
     // for initialization of worker thread info
-    std::mutex _mutex;
-    std::condition_variable _cond;
+    util::Mutex _mutex;
+    util::ConditionVariable _cond;
 };
 
 } // namespace util

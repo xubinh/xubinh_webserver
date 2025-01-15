@@ -1,6 +1,7 @@
 #include "tcp_server.h"
 #include "log_builder.h"
 #include "log_collector.h"
+#include "util/mutex_guard.h"
 
 namespace xubinh_server {
 
@@ -291,7 +292,7 @@ void TcpServer::_close_callback(
 #ifdef __USE_SHARED_PTR_DESTRUCTION_TRANSFERING
 void TcpServer::_transfer_tcp_connections_to_background_thread() {
     {
-        std::lock_guard<std::mutex> lock(
+        util::MutexGuard lock(
             _mutex_for_vectors_of_tcp_connect_socketfds_to_be_destroyed
         );
 
@@ -315,7 +316,7 @@ void TcpServer::_transfer_tcp_connections_to_background_thread() {
             picked_vector_of_tcp_connect_socketfds_to_be_destroyed;
 
         {
-            std::lock_guard<std::mutex> lock(
+            util::MutexGuard lock(
                 _mutex_for_vectors_of_tcp_connect_socketfds_to_be_destroyed
             );
 

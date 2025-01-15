@@ -10,7 +10,7 @@ namespace util {
 template <typename ManagedType>
 BlockingQueue<ManagedType>::~BlockingQueue() {
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         while (!_queue.empty()) {
             delete _queue.front();
@@ -27,7 +27,7 @@ BlockingQueue<ManagedType>::~BlockingQueue() = default;
 template <typename ManagedType>
 void BlockingQueue<ManagedType>::push(ManagedType element) {
     {
-        std::unique_lock<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         if (_queue.size() >= _capacity) {
             // [TODO]: add timeout
@@ -52,7 +52,7 @@ BlockingQueue<ManagedType>::pop() {
     ElementType popped_element;
 
     {
-        std::unique_lock<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         if (_queue.empty()) {
             // [TODO]: add timeout
@@ -81,7 +81,7 @@ BlockingQueue<ManagedType>::pop_all() {
     ContainerType queue;
 
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         queue.swap(_queue);
     }

@@ -6,6 +6,7 @@
 #include "event_loop_thread_pool.h"
 #include "listen_socketfd.h"
 #include "tcp_connect_socketfd.h"
+#include "util/mutex.h"
 #include "util/slab_allocator.h"
 
 namespace xubinh_server {
@@ -128,7 +129,7 @@ private:
         _vectors_of_tcp_connect_socketfds_to_be_destroyed;
     std::vector<std::shared_ptr<void>>
         _current_vector_of_tcp_connect_socketfds_to_be_destroyed;
-    std::mutex _mutex_for_vectors_of_tcp_connect_socketfds_to_be_destroyed;
+    util::Mutex _mutex_for_vectors_of_tcp_connect_socketfds_to_be_destroyed;
     std::unique_ptr<EventLoopThread>
         _tcp_connect_socketfd_destroying_thread_ptr;
 #endif

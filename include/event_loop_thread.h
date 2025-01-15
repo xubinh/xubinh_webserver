@@ -1,10 +1,9 @@
 #ifndef __XUBINH_SERVER_EVENT_LOOP_THREAD
 #define __XUBINH_SERVER_EVENT_LOOP_THREAD
 
-#include <condition_variable>
-#include <mutex>
-
 #include "event_loop.h"
+#include "util/condition_variable.h"
+#include "util/mutex.h"
 #include "util/thread.h"
 
 namespace xubinh_server {
@@ -63,8 +62,8 @@ private:
     Thread _thread;
 
     EventLoop *_loop_ptr = nullptr;
-    std::mutex _mutex;
-    std::condition_variable _cond;
+    util::Mutex _mutex;
+    util::ConditionVariable _cond;
 };
 
 } // namespace xubinh_server

@@ -2,12 +2,11 @@
 #define __XUBINH_SERVER_LOG_COLLECTOR
 
 #include <atomic>
-#include <chrono>
-#include <condition_variable>
-#include <mutex>
 #include <vector>
 
 #include "log_buffer.h"
+#include "util/condition_variable.h"
+#include "util/mutex.h"
 #include "util/thread.h"
 
 namespace xubinh_server {
@@ -71,8 +70,7 @@ private:
 
     static std::string _base_name;
 
-    static constexpr std::chrono::seconds::rep
-        _COLLECT_LOOP_TIMEOUT_IN_SECONDS = 3;
+    static const util::TimeInterval _COLLECT_LOOP_TIME_INTERVAL;
 
     static constexpr size_t _DROP_THRESHOLD_OF_CHUNK_BUFFERS_TO_BE_WRITTEN = 16;
 
@@ -87,8 +85,8 @@ private:
     BufferVector _fulled_chunk_buffers;
 
     // for internal state and data structures
-    std::mutex _mutex;
-    std::condition_variable _cond;
+    util::Mutex _mutex;
+    util::ConditionVariable _cond;
 
     util::Thread _background_thread;
     std::atomic<bool> _need_flush{false};

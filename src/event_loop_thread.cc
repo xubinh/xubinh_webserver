@@ -1,5 +1,6 @@
 #include "event_loop_thread.h"
 #include "log_builder.h"
+#include "util/mutex_guard.h"
 
 namespace xubinh_server {
 
@@ -26,7 +27,7 @@ EventLoopThread::~EventLoopThread() {
 
 void EventLoopThread::start() {
     {
-        std::unique_lock<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         _thread.start();
 
@@ -40,7 +41,7 @@ void EventLoopThread::_worker_function(uint64_t loop_index) {
     EventLoop loop(loop_index);
 
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        util::MutexGuard lock(_mutex);
 
         _loop_ptr = &loop;
     }

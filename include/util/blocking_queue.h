@@ -1,10 +1,11 @@
 #ifndef __XUBINH_SERVER_UTIL_BLOCKING_QUEUE
 #define __XUBINH_SERVER_UTIL_BLOCKING_QUEUE
 
-#include <condition_variable>
 #include <deque>
 #include <functional>
-#include <mutex>
+
+#include "util/condition_variable.h"
+#include "util/mutex.h"
 
 namespace xubinh_server {
 
@@ -43,9 +44,9 @@ public:
 private:
     ContainerType _queue;
     const size_t _capacity;
-    std::mutex _mutex;
-    std::condition_variable _cond_queue_not_full;
-    std::condition_variable _cond_queue_not_empty;
+    util::Mutex _mutex;
+    util::ConditionVariable _cond_queue_not_full;
+    util::ConditionVariable _cond_queue_not_empty;
 };
 
 // declaration
