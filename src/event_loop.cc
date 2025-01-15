@@ -9,7 +9,7 @@ EventLoop::EventLoop(
 )
     : _loop_index(loop_index),
       _number_of_functor_blocking_queues(
-          std::max(number_of_functor_blocking_queues, static_cast<uint64_t>(1))
+          std::max(number_of_functor_blocking_queues, static_cast<size_t>(1))
       ),
       _functor_blocking_queues(_number_of_functor_blocking_queues),
       _eventfds(_number_of_functor_blocking_queues),
@@ -46,7 +46,7 @@ EventLoop::EventLoop(
     _timerfd.start();
 
     // for debug purpose; yell to prove the thread is not dead
-    int64_t yell_interval = 3 * 1000 * static_cast<int64_t>(1000 * 1000);
+    int64_t yell_interval = 3 * TimeInterval::SECOND;
     run_after_time_interval(yell_interval, yell_interval, -1, []() {
         LOG_DEBUG << "I'm not dead";
     });

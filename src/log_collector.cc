@@ -249,7 +249,7 @@ bool LogCollector::_need_output_directly_to_terminal = false;
 std::string LogCollector::_base_name = "log_collector";
 
 const util::TimeInterval LogCollector::_COLLECT_LOOP_TIME_INTERVAL =
-    static_cast<int64_t>(3 * 1000) * 1000 * 1000;
+    3 * util::TimeInterval::SECOND;
 
 std::atomic<bool> LogCollector::_is_instantiated{false};
 

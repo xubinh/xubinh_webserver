@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
     ); // FOREVER = don't start timer for checking inactive connections
 #else
     server.set_connection_timeout_interval(
-        static_cast<int64_t>(15 * 1000) * 1000 * 1000
+        15 * xubinh_server::util::TimeInterval::SECOND
     ); // 15 sec
 #endif
     server.start();

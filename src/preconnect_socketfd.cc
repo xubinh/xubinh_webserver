@@ -233,11 +233,10 @@ void PreconnectSocketfd::_try_once() {
     }
 }
 
-const util::TimeInterval PreconnectSocketfd::_INITIAL_RETRY_TIME_INTERVAL{
-    static_cast<int64_t>(500 * 1000 * 1000)}; // 0.5 sec
+const util::TimeInterval PreconnectSocketfd::_INITIAL_RETRY_TIME_INTERVAL =
+    util::TimeInterval::SECOND / 2; // 0.5 sec
 
-const util::TimeInterval PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL{
-    static_cast<int64_t>(30 * 1000 * 1000)
-    * static_cast<int64_t>(1000)}; // 30 sec
+const util::TimeInterval PreconnectSocketfd::_MAX_RETRY_TIME_INTERVAL =
+    30 * util::TimeInterval::SECOND; // 30 sec
 
 } // namespace xubinh_server

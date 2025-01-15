@@ -16,7 +16,7 @@ int64_t TimePoint::get_nanoseconds_from_epoch() noexcept {
         LOG_SYS_FATAL << "unknown error when calling clock_gettime";
     }
 
-    return static_cast<int64_t>(ts.tv_sec) * 1000 * 1000 * 1000
+    return static_cast<int64_t>(ts.tv_sec) * TimeInterval::SECOND
            + static_cast<int64_t>(ts.tv_nsec);
 }
 

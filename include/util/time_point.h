@@ -76,6 +76,8 @@ struct TimeInterval {
 
     static constexpr int64_t FOREVER = 0x7fffffffffffffff;
 
+    static constexpr int64_t SECOND = static_cast<int64_t>(1000 * 1000 * 1000);
+
     int64_t nanoseconds = 0;
 };
 
@@ -87,17 +89,16 @@ struct TimePoint {
     static void get_timespec(
         int64_t nanoseconds_from_epoch, timespec *time_specification
     ) noexcept {
-        time_specification->tv_sec =
-            static_cast<decltype(time_specification->tv_sec)>(
-                nanoseconds_from_epoch
-                / static_cast<int64_t>(1000 * 1000 * 1000)
-            );
+        using tv_sec_t = decltype(time_specification->tv_sec);
+        using tv_nsec_t = decltype(time_specification->tv_nsec);
 
-        time_specification->tv_nsec =
-            static_cast<decltype(time_specification->tv_nsec)>(
-                nanoseconds_from_epoch
-                % static_cast<int64_t>(1000 * 1000 * 1000)
-            );
+        time_specification->tv_sec = static_cast<tv_sec_t>(
+            nanoseconds_from_epoch / TimeInterval::SECOND
+        );
+
+        time_specification->tv_nsec = static_cast<tv_nsec_t>(
+            nanoseconds_from_epoch % TimeInterval::SECOND
+        );
     }
 
     static std::string get_datetime_string(

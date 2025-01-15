@@ -103,8 +103,7 @@ private:
 
     TimePoint _current_time_point{};
 
-    TimeInterval _connection_timeout_interval{
-        static_cast<int64_t>(60 * 1000) * 1000 * 1000}; // 1 min
+    TimeInterval _connection_timeout_interval{60 * TimeInterval::SECOND};
 
     ConnectSuccessCallbackType _connect_success_callback;
 
