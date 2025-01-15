@@ -20,20 +20,6 @@ int64_t TimePoint::get_nanoseconds_from_epoch() noexcept {
            + static_cast<int64_t>(ts.tv_nsec);
 }
 
-void TimePoint::get_timespec(
-    int64_t nanoseconds_from_epoch, timespec *time_specification
-) noexcept {
-    time_specification->tv_sec =
-        static_cast<decltype(time_specification->tv_sec)>(
-            nanoseconds_from_epoch / static_cast<int64_t>(1000 * 1000 * 1000)
-        );
-
-    time_specification->tv_nsec =
-        static_cast<decltype(time_specification->tv_nsec)>(
-            nanoseconds_from_epoch % static_cast<int64_t>(1000 * 1000 * 1000)
-        );
-}
-
 std::string TimePoint::get_datetime_string(
     int64_t nanoseconds_from_epoch, Purpose purpose
 ) noexcept {
