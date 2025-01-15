@@ -17,7 +17,7 @@ void *aalloc(size_t alignment, size_t size) {
         stderr, "@xubinh_server::util::alignment::aalloc: not supported\n"
     );
 
-    ::exit(1);
+    ::abort();
 #else
     void *ptr = ::aligned_alloc(alignment, size);
 
@@ -29,7 +29,7 @@ void *aalloc(size_t alignment, size_t size) {
             errno
         );
 
-        ::exit(1);
+        ::abort();
     }
 
     return ptr;
@@ -44,7 +44,7 @@ size_t get_level_1_data_cache_line_size() {
         "not supported\n"
     );
 
-    ::exit(1);
+    ::abort();
 #else
     errno = 0;
 
@@ -58,7 +58,7 @@ size_t get_level_1_data_cache_line_size() {
                 "size: the limit is indeterminate\n"
             );
 
-            ::exit(1);
+            ::abort();
         }
 
         else {
@@ -86,7 +86,7 @@ size_t get_page_size() {
         "not supported\n"
     );
 
-    ::exit(1);
+    ::abort();
 #else
     errno = 0;
 
@@ -100,7 +100,7 @@ size_t get_page_size() {
                 "size: the limit is indeterminate\n"
             );
 
-            ::exit(1);
+            ::abort();
         }
 
         else {
