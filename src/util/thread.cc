@@ -1,5 +1,5 @@
 #include "util/thread.h"
-#include "util/current_thread.h"
+#include "util/this_thread.h"
 
 namespace xubinh_server {
 
@@ -7,38 +7,14 @@ namespace util {
 
 namespace {
 
-// initializar for main thread's TID and thread name
-struct _MainThreadInitializer {
-    // make sure child process's main thread is initialized, too
-    static void execute_in_child_after_fork() {
-        current_thread::reset_tid();
-        current_thread::get_tid();
+// static initializar for main thread's TID and thread name
+struct MainThreadInitializer {
+    MainThreadInitializer() {
+        this_thread::get_tid();
 
-        current_thread::set_thread_name(MAIN_THREAD_NAME);
+        this_thread::set_thread_name("main-thread");
     }
-
-    // put initialization code inside the constructor of a static life-time
-    // object for it to be executed before anything starts and to be executed
-    // only once
-    _MainThreadInitializer() {
-        current_thread::get_tid();
-
-        current_thread::set_thread_name(MAIN_THREAD_NAME);
-
-        pthread_atfork(
-            nullptr,
-            nullptr,
-            _MainThreadInitializer::execute_in_child_after_fork
-        );
-    }
-
-    static const char *MAIN_THREAD_NAME;
-};
-
-const char *_MainThreadInitializer::MAIN_THREAD_NAME = "main-thread";
-
-// define a static life-time object
-_MainThreadInitializer _thread_name_initializer;
+} main_thread_initializer;
 
 } // namespace
 
@@ -148,9 +124,9 @@ void Thread::_wrapper_of_worker_function() {
     {
         util::MutexGuard lock(_mutex);
 
-        _tid = current_thread::get_tid();
+        _tid = this_thread::get_tid();
 
-        current_thread::set_thread_name(_thread_name.c_str());
+        this_thread::set_thread_name(_thread_name.c_str());
     }
 
     _cond.notify_all();

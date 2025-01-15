@@ -12,7 +12,7 @@
 #include "timer_identifier.h"
 #include "timerfd.h"
 #include "util/blocking_queue.h"
-#include "util/current_thread.h"
+#include "util/this_thread.h"
 #ifdef __USE_LOCK_FREE_QUEUE
 #include "util/lock_free_queue.h"
 #else
@@ -56,7 +56,7 @@ public:
     }
 
     bool is_in_owner_thread() {
-        return util::current_thread::get_tid() == _owner_thread_tid;
+        return util::this_thread::get_tid() == _owner_thread_tid;
     }
 
     void loop();

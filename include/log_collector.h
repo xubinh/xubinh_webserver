@@ -2,6 +2,7 @@
 #define __XUBINH_SERVER_LOG_COLLECTOR
 
 #include <atomic>
+#include <memory>
 #include <vector>
 
 #include "log_buffer.h"

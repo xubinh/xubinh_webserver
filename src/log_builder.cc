@@ -1,8 +1,8 @@
 #include "log_builder.h"
 #include "log_collector.h"
-#include "util/current_thread.h"
 #include "util/errno.h"
 #include "util/format.h"
+#include "util/this_thread.h"
 #include "util/time_point.h"
 
 namespace {
@@ -144,8 +144,8 @@ LogBuilder::LogBuilder(
     _entry_buffer.append(" | ", 3);
 
     _entry_buffer.append(
-        util::current_thread::get_tid_string(),
-        util::current_thread::get_tid_string_length()
+        util::this_thread::get_tid_string(),
+        util::this_thread::get_tid_string_length()
     );
 
     _entry_buffer.append(" | ", 3);

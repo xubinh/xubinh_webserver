@@ -1,6 +1,6 @@
 #include "event_loop.h"
 #include "log_builder.h"
-#include "util/current_thread.h"
+#include "util/this_thread.h"
 
 namespace xubinh_server {
 
@@ -15,7 +15,7 @@ EventLoop::EventLoop(
       _eventfds(_number_of_functor_blocking_queues),
       _eventfd_pilot_lamps(_number_of_functor_blocking_queues),
       _timerfd(Timerfd::create_timerfd(0), this),
-      _owner_thread_tid(util::current_thread::get_tid()) {
+      _owner_thread_tid(util::this_thread::get_tid()) {
 
     for (int i = 0; i < _number_of_functor_blocking_queues; i++) {
 #ifdef __USE_LOCK_FREE_QUEUE
@@ -251,7 +251,7 @@ void EventLoop::_leave_to_owner_thread(
 
     LOG_TRACE << "leave to owner thread (TID: " << _owner_thread_tid
               << "), functor queue index: " << (functor_blocking_queue_index)
-              << ", current thread TID: " << util::current_thread::get_tid();
+              << ", current thread TID: " << util::this_thread::get_tid();
 
     _wake_up_this_loop(functor_blocking_queue_index);
 }

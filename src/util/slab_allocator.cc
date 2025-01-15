@@ -1,5 +1,4 @@
 #include "util/slab_allocator.h"
-#include "util/current_thread.h"
 
 namespace xubinh_server {
 
