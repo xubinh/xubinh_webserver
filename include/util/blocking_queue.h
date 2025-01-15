@@ -3,22 +3,23 @@
 
 #include <condition_variable>
 #include <deque>
+#include <functional>
 #include <mutex>
-#include <stdexcept>
 
 namespace xubinh_server {
 
 namespace util {
 
 // fixed size with no timeout
-template <typename T>
+template <typename ManagedType>
 class BlockingQueue {
 public:
 #ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
-    using ContainerType = std::deque<T *>;
+    using ElementType = ManagedType *;
 #else
-    using ContainerType = std::deque<T>;
+    using ElementType = ManagedType;
 #endif
+    using ContainerType = std::deque<ElementType>;
 
     explicit BlockingQueue(int capacity) : _capacity(capacity) {
     }
@@ -31,19 +32,11 @@ public:
     BlockingQueue(BlockingQueue &&) = delete;
     BlockingQueue &operator=(BlockingQueue &&) = delete;
 
-#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
     ~BlockingQueue();
-#else
-    ~BlockingQueue() = default;
-#endif
 
-    void push(T element);
+    void push(ManagedType element);
 
-#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
-    T *pop();
-#else
-    T pop();
-#endif
+    ElementType pop();
 
     ContainerType pop_all();
 

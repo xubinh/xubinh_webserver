@@ -7,8 +7,8 @@ namespace xubinh_server {
 namespace util {
 
 #ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
-template <typename T>
-BlockingQueue<T>::~BlockingQueue() {
+template <typename ManagedType>
+BlockingQueue<ManagedType>::~BlockingQueue() {
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -19,10 +19,13 @@ BlockingQueue<T>::~BlockingQueue() {
         }
     }
 }
+#else
+template <typename ManagedType>
+BlockingQueue<ManagedType>::~BlockingQueue() = default;
 #endif
 
-template <typename T>
-void BlockingQueue<T>::push(T element) {
+template <typename ManagedType>
+void BlockingQueue<ManagedType>::push(ManagedType element) {
     {
         std::unique_lock<std::mutex> lock(_mutex);
 
@@ -34,7 +37,7 @@ void BlockingQueue<T>::push(T element) {
         }
 
 #ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
-        _queue.push_back(new T(std::move(element)));
+        _queue.push_back(new ManagedType(std::move(element)));
 #else
         _queue.push_back(std::move(element));
 #endif
@@ -43,14 +46,10 @@ void BlockingQueue<T>::push(T element) {
     _cond_queue_not_empty.notify_one();
 }
 
-template <typename T>
-#ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
-T *BlockingQueue<T>::pop() {
-    T *popped_element;
-#else
-T BlockingQueue<T>::pop() {
-    T popped_element;
-#endif
+template <typename ManagedType>
+typename BlockingQueue<ManagedType>::ElementType
+BlockingQueue<ManagedType>::pop() {
+    ElementType popped_element;
 
     {
         std::unique_lock<std::mutex> lock(_mutex);
@@ -76,8 +75,9 @@ T BlockingQueue<T>::pop() {
     return popped_element;
 }
 
-template <typename T>
-typename BlockingQueue<T>::ContainerType BlockingQueue<T>::pop_all() {
+template <typename ManagedType>
+typename BlockingQueue<ManagedType>::ContainerType
+BlockingQueue<ManagedType>::pop_all() {
     ContainerType queue;
 
     {
