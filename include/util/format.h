@@ -110,11 +110,11 @@ public:
         return _get_base_name_of_path(path, length);
     }
 
+    // [NOTE]: the argument must be a reference type in order to disable the
+    // implicit `const char []` -> `const char *` conversion
     template <size_t N>
     static constexpr const char *get_base_name_of_path(const char (&path)[N]) {
-        // the argument must be reference to disable the implicit`const char []`
-        // -> `const char *` conversion
-        return _get_base_name_of_path(path, N);
+        return _get_base_name_of_path(path, N - 1); // minus 1 for the `\0`
     }
 
 private:
@@ -124,18 +124,16 @@ private:
 
     template <typename T, typename = enable_for_integer_types<T>>
     static constexpr int _log10_floor(T integer_value) {
-        return (integer_value < 10) ? 0 : 1 + _log10_floor(integer_value / 10);
+        return integer_value < 10 ? 0 : (1 + _log10_floor(integer_value / 10));
     }
 
-    static constexpr const char *_get_base_name_of_path(
-        const char *path, size_t reverse_traversal_position
-    ) {
-        return (reverse_traversal_position <= 0) ? path
-               : (path[reverse_traversal_position - 1] == '/')
-                   ? path + reverse_traversal_position
-                   : _get_base_name_of_path(
-                       path, reverse_traversal_position - 1
-                   );
+    static constexpr const char *
+    _get_base_name_of_path(const char *path, size_t current_offset) {
+        return current_offset <= 0
+                   ? path
+                   : (path[current_offset - 1] == '/'
+                          ? path + current_offset
+                          : _get_base_name_of_path(path, current_offset - 1));
     }
 };
 
