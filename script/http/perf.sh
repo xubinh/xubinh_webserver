@@ -4,7 +4,8 @@ APP_NAME="http"
 SERVER_EXECUTABLE_PATH="./build/example/$APP_NAME/server/$APP_NAME""_server"
 SLEEP_SECONDS=1
 
-BUILD_SCRIPT_PATH="CMAKE_BUILD_TYPE=Debug ENABLE_TEST=off RUN_BENCHMARK=on ./script/build.sh"
+BUILD_SCRIPT_PATH="./script/build.sh"
+BUILD_COMMAND="CMAKE_BUILD_TYPE=Debug ENABLE_TEST=off RUN_BENCHMARK=on $BUILD_SCRIPT_PATH"
 
 WEBBENCH_EXECUTABLE_PATH="./bin/webbench"
 NUMBER_OF_SECONDS_TO_TEST=60
@@ -18,7 +19,7 @@ clear
 
 echo "Building..."
 
-if ! "$BUILD_SCRIPT_PATH"; then
+if ! eval "$BUILD_COMMAND"; then
     echo "Building failed ❌"
 
     exit 1
