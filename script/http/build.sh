@@ -3,15 +3,15 @@
 BUILD_DIR=build
 
 # general configuration for the library
-CMAKE_BUILD_TYPE="Release" # Debug / Release / RelWithDebInfo / MinSizeRel
-ENABLE_TEST=${ENABLE_TEST:-on}
-USE_LOCK_FREE_QUEUE=off
-USE_BLOCKING_QUEUE_WITH_RAW_POINTER=off
-USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER=on
-USE_SHARED_PTR_DESTRUCTION_TRANSFERING=on
+CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-"Release"} # Debug / Release / RelWithDebInfo / MinSizeRel
+ENABLE_TEST=${ENABLE_TEST:-"on"}
+USE_LOCK_FREE_QUEUE="on"
+USE_BLOCKING_QUEUE_WITH_RAW_POINTER="off"
+USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER="on"
+USE_SHARED_PTR_DESTRUCTION_TRANSFERING="on"
 
 # configuration specifically for http server example
-RUN_BENCHMARK=${RUN_BENCHMARK:-on}
+RUN_BENCHMARK=${RUN_BENCHMARK:-"on"}
 
 # Exit immediately if any command fails
 set -e
