@@ -117,6 +117,8 @@ void LogCollector::_background_io_thread_worker_functor() {
                         );
                     }
 
+                    log_file.flush_to_disk();
+
                     return;
                 }
 
