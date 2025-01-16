@@ -74,7 +74,7 @@ void HttpServer::_message_callback(
     if (!is_success) {
         LOG_ERROR << "failed to parse HTTP request; connection abort";
 
-        tcp_connect_socketfd_ptr->abort();
+        tcp_connect_socketfd_ptr->abort_from_event_loop();
 
         return;
     }
@@ -142,7 +142,7 @@ void HttpServer::_check_and_remove_inactive_connection(
         auto current_time_point = _current_time_point;
         auto connection_timeout_interval = _connection_timeout_interval;
 
-        tcp_connect_socketfd_ptr->check_and_abort(
+        tcp_connect_socketfd_ptr->check_and_abort_from_event_loop(
             // double check if the connection is still inactive in the
             // worker loop and actually abort it
             [current_time_point,

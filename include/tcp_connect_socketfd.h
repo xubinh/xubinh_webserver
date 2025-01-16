@@ -108,19 +108,25 @@ public:
 
     // abruptly reset the entire connection
     //
-    // - can be called by user to reset the connection; after which
-    // it is the user's responsibility to ensure there will be no data sent to
-    // the output buffer
-    // - must be called in the worker loop
-    void abort();
+    // - must be called when detached off the worker thread's event loop
+    void reset_connection();
 
-    // abruptly reset the entire connection when certain condition is met
+    // abruptly reset the entire connection and detach
     //
     // - can be called by user to reset the connection; after which
     // it is the user's responsibility to ensure there will be no data sent to
     // the output buffer
-    // - can be called either in main loop or in worker loop
-    void check_and_abort(PredicateType predicate);
+    // - must be called when attached on the worker thread's event loop
+    void abort_from_event_loop();
+
+    // abruptly reset the entire connection and detach only when predicate is
+    // true
+    //
+    // - can be called by user to reset the connection; after which
+    // it is the user's responsibility to ensure there will be no data sent to
+    // the output buffer
+    // - must be called when attached on the worker thread's event loop
+    void check_and_abort_from_event_loop(PredicateType predicate);
 
     // should only be called inside a worker loop
     void send(const char *data, size_t data_size);

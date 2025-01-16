@@ -101,7 +101,7 @@ void TcpConnectSocketfd::shutdown_write() {
 
             // the peer does not care what we send to him, so we won't care
             // what he sends to us either
-            abort();
+            abort_from_event_loop();
 
             return;
 
@@ -134,12 +134,10 @@ void TcpConnectSocketfd::shutdown_write() {
     LOG_TRACE << "TCP shutdown write, id: " << _id;
 }
 
-void TcpConnectSocketfd::abort() {
-    if (_is_abotrted) {
-        return;
+void TcpConnectSocketfd::reset_connection() {
+    if (_close_callback) {
+        _close_callback(this);
     }
-
-    _close_event_callback();
 
     auto fd = _pollable_file_descriptor.get_fd();
 
@@ -165,12 +163,24 @@ void TcpConnectSocketfd::abort() {
     clear_context();
 
     _is_write_end_shutdown = true;
+}
+
+void TcpConnectSocketfd::abort_from_event_loop() {
+    if (_is_abotrted) {
+        return;
+    }
+
+    _pollable_file_descriptor.detach_from_poller();
+
+    reset_connection();
+
     _is_abotrted = true;
 
     LOG_TRACE << "TCP connection aborted, id: " << _id;
 }
 
-void TcpConnectSocketfd::check_and_abort(PredicateType predicate) {
+void TcpConnectSocketfd::check_and_abort_from_event_loop(PredicateType predicate
+) {
     LOG_TRACE << "register event -> worker: _check_and_abort_impl";
 
     // must use std::bind since move capture lambda is not supported in C++11
@@ -336,7 +346,7 @@ void TcpConnectSocketfd::_check_and_abort_impl(PredicateType predicate) {
     LOG_TRACE << "enter event: _check_and_abort_impl";
 
     if (predicate()) {
-        abort();
+        abort_from_event_loop();
     }
 }
 
@@ -434,7 +444,7 @@ TcpConnectSocketfd::_send_as_many_data(const char *data, size_t data_size) {
 
                 // the peer does not care what we send to him, so we won't care
                 // what he sends to us either
-                abort();
+                abort_from_event_loop();
 
                 return data_size; // fake
             }

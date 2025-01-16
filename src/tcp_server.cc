@@ -24,7 +24,7 @@ TcpServer::~TcpServer() {
         for (auto &pair : _tcp_connect_socketfds) {
             auto &tcp_connect_socketfd_ptr = pair.second;
 
-            tcp_connect_socketfd_ptr->abort();
+            tcp_connect_socketfd_ptr->reset_connection();
         }
     }
 
