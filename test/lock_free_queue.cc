@@ -21,7 +21,7 @@ TEST(LockFreeQueueTest, PushAndPop) {
 }
 
 int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
+    testing::InitGoogleTest(&argc, argv);
 
     // Disable output capturing
     testing::FLAGS_gtest_catch_exceptions = false;
