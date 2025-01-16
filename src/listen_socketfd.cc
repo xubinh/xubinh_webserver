@@ -144,7 +144,8 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
 
         // success
         if (connect_socketfd >= 0) {
-            LOG_TRACE << "connection OK";
+            LOG_TRACE << "connection OK, connect socketfd: "
+                      << connect_socketfd;
 
             _new_connection_callback(
                 connect_socketfd, *peer_address_ptr, time_stamp
@@ -152,7 +153,7 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
         }
 
         // error
-        else {
+        else /* if (connect_socketfd == -1) */ {
             LOG_TRACE << "connection error";
 
             // non-blocking listen socketfd with ET mode
@@ -193,6 +194,8 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
             }
         }
     }
+
+    LOG_TRACE << "exiting ListenSocketfd::_read_event_callback";
 }
 
 int ListenSocketfd::_max_number_of_new_connections_at_a_time = 1000;

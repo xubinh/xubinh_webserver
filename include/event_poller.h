@@ -34,7 +34,7 @@ public:
     get_limit_of_max_number_of_opened_file_descriptors_per_process();
 
     static void set_limit_of_max_number_of_opened_file_descriptors_per_process(
-        int max_limit_of_open_fd
+        size_t max_limit_of_open_fd
     );
 
     EventPoller();
@@ -66,11 +66,10 @@ private:
     // - only used by `epoll_create1` (added to the kernel in version 2.6.27)
     static constexpr int _EPOLL_CREATE1_FLAGS = EPOLL_CLOEXEC;
 
-    static const size_t _MAX_SIZE_OF_EVENT_ARRAY;
-
     int _epoll_fd;
-    epoll_event *_event_array{new epoll_event[_MAX_SIZE_OF_EVENT_ARRAY]};
-    bool *_fds_that_are_listening_on{new bool[_MAX_SIZE_OF_EVENT_ARRAY]{false}};
+    size_t _max_size_of_event_array;
+    epoll_event *_event_array;
+    bool *_fds_that_are_listening_on;
     size_t _number_of_fds_that_are_listening_on{0};
 };
 

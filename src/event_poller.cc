@@ -19,8 +19,11 @@ EventPoller::get_limit_of_max_number_of_opened_file_descriptors_per_process() {
 
 void EventPoller::
     set_limit_of_max_number_of_opened_file_descriptors_per_process(
-        int max_limit_of_open_fd
+        size_t max_limit_of_open_fd
     ) {
+
+    LOG_INFO
+        << "setting limit of max number of opened file descriptors per process";
 
     struct rlimit limit;
 
@@ -28,23 +31,43 @@ void EventPoller::
         LOG_SYS_FATAL << "getrlimit failed";
     }
 
+    LOG_INFO << "current limit: " << limit.rlim_cur << " (rlim_cur), "
+             << limit.rlim_max << " (rlim_max)";
+
     // [NOTE]: consider the value carefully; a value no greater than the hard
     // limit might still crash the system if being close to it
     limit.rlim_cur =
         std::min(static_cast<rlim_t>(max_limit_of_open_fd), limit.rlim_max);
+
+    LOG_INFO << "new limit: " << limit.rlim_cur << " (rlim_cur), "
+             << limit.rlim_max << " (rlim_max)";
 
     // [NOTE]: this will set both the soft limit and the hard limit to the
     // specified value, according to the man page
     if (::setrlimit(RLIMIT_NOFILE, &limit) == -1) {
         LOG_SYS_FATAL << "setrlimit failed";
     }
+
+    if (::getrlimit(RLIMIT_NOFILE, &limit) == -1) {
+        LOG_SYS_FATAL << "getrlimit failed";
+    }
+
+    LOG_INFO << "setrlimit succeeded, current limit: " << limit.rlim_cur
+             << " (rlim_cur), " << limit.rlim_max << " (rlim_max)";
 }
 
 EventPoller::EventPoller()
     : _epoll_fd(epoll_create1(_EPOLL_CREATE1_FLAGS)) {
+
     if (_epoll_fd == -1) {
         LOG_SYS_FATAL << "epoll_create1 failed";
     }
+
+    _max_size_of_event_array =
+        get_limit_of_max_number_of_opened_file_descriptors_per_process();
+
+    _event_array = new epoll_event[_max_size_of_event_array];
+    _fds_that_are_listening_on = new bool[_max_size_of_event_array]{false};
 }
 
 EventPoller::~EventPoller() {
@@ -54,8 +77,8 @@ EventPoller::~EventPoller() {
 
     ::close(_epoll_fd);
 
-    delete[] _event_array;
     delete[] _fds_that_are_listening_on;
+    delete[] _event_array;
 }
 
 void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
@@ -72,7 +95,7 @@ void EventPoller::register_event_for_fd(int fd, const epoll_event *event) {
         )
         == -1) {
 
-        LOG_SYS_FATAL << "epoll_ctl failed";
+        LOG_SYS_FATAL << "epoll_ctl failed, fd: " << fd;
     }
 
     if (!is_attached) {
@@ -98,7 +121,7 @@ void EventPoller::detach_fd(int fd) {
         )
         == -1) {
 
-        LOG_SYS_FATAL << "epoll_ctl failed";
+        LOG_SYS_FATAL << "epoll_ctl failed, fd: " << fd;
     }
 
     _fds_that_are_listening_on[fd] = false;
@@ -117,7 +140,7 @@ void EventPoller::poll_for_active_events_of_all_fds(
         current_event_array_size = ::epoll_wait(
             _epoll_fd,
             _event_array,
-            static_cast<int>(_MAX_SIZE_OF_EVENT_ARRAY),
+            static_cast<int>(_max_size_of_event_array),
             -1
         );
 
@@ -153,8 +176,5 @@ void EventPoller::poll_for_active_events_of_all_fds(
 
     return;
 }
-
-const size_t EventPoller::_MAX_SIZE_OF_EVENT_ARRAY =
-    get_limit_of_max_number_of_opened_file_descriptors_per_process();
 
 } // namespace xubinh_server
