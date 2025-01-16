@@ -11,6 +11,9 @@
 
 using TcpConnectSocketfdPtr = xubinh_server::TcpServer::TcpConnectSocketfdPtr;
 
+// manually release the singleton logger instance
+xubinh_server::LogCollector::CleanUpHelper logger_clean_up_hook;
+
 std::unique_ptr<xubinh_server::Signalfd>
     signalfd_ptr; // for lazy initialization
 
@@ -92,10 +95,6 @@ void message_callback(
 }
 
 int main() {
-    // logging config
-    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
-
     // signal config
     xubinh_server::SignalSet signal_set;
     signal_set.add_signal(SIGHUP);
@@ -104,6 +103,14 @@ int main() {
     signal_set.add_signal(SIGTERM);
     signal_set.add_signal(SIGTSTP);
     xubinh_server::Signalfd::block_signals(signal_set);
+    // [NOTE]: always block signals first so that worker threads can be spawn
+    // without worries
+
+    // logging config
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+    // [NOTE]: logging settings should also be configured as soon as possible so
+    // that others can emit logs out without worries
 
     // create loop
     xubinh_server::EventLoop loop;

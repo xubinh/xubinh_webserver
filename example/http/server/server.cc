@@ -325,9 +325,16 @@ int main(int argc, char *argv[]) {
         ::exit(1);
     }
 
-    // fd limit config
-    xubinh_server::EventPoller::
-        set_limit_of_max_number_of_opened_file_descriptors_per_process(60000);
+    // signal config
+    xubinh_server::SignalSet signal_set;
+    signal_set.add_signal(SIGHUP);
+    signal_set.add_signal(SIGINT);
+    signal_set.add_signal(SIGQUIT);
+    signal_set.add_signal(SIGTERM);
+    signal_set.add_signal(SIGTSTP);
+    xubinh_server::Signalfd::block_signals(signal_set);
+    // [NOTE]: always block signals first so that worker threads can be spawn
+    // without worries
 
     // logging config
     std::string log_file_base_name = (argc == 2 ? std::string(argv[1]) : "");
@@ -339,15 +346,14 @@ int main(int argc, char *argv[]) {
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
 #endif
+    // [NOTE]: logging settings should also be configured as soon as possible so
+    // that others can emit logs out without worries
 
-    // signal config
-    xubinh_server::SignalSet signal_set;
-    signal_set.add_signal(SIGHUP);
-    signal_set.add_signal(SIGINT);
-    signal_set.add_signal(SIGQUIT);
-    signal_set.add_signal(SIGTERM);
-    signal_set.add_signal(SIGTSTP);
-    xubinh_server::Signalfd::block_signals(signal_set);
+    // fd limit config
+    xubinh_server::EventPoller::
+        set_limit_of_max_number_of_opened_file_descriptors_per_process(
+            static_cast<size_t>(60000)
+        );
 
     size_t thread_pool_capacity = 4;
 
