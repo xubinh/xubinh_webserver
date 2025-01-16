@@ -16,7 +16,7 @@ pid_t get_tid();
 
 const char *get_tid_string();
 
-int get_tid_string_length();
+size_t get_tid_string_length();
 
 // [WARN]: the array passed in does not require static storage; it is the
 // caller's responsibility to not access it after being destroyed

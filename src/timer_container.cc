@@ -21,9 +21,9 @@ bool TimerContainer::remove_one(const Timer *timer_ptr) {
     TimePoint expiration_time_point = timer_ptr->get_expiration_time_point();
 
     const int &number_of_removed_timers =
-        _timers.erase({expiration_time_point, timer_ptr});
+        static_cast<int>(_timers.erase({expiration_time_point, timer_ptr}));
 
-    return number_of_removed_timers;
+    return static_cast<bool>(number_of_removed_timers);
 }
 
 std::vector<const Timer *>

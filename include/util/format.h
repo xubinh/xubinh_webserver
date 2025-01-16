@@ -68,7 +68,7 @@ public:
         char *buffer_ptr = output_buffer;
 
         do {
-            *buffer_ptr++ = '0' + (input_value % 10);
+            *buffer_ptr++ = static_cast<char>('0' + (input_value % 10));
             input_value /= 10;
         } while (input_value > 0);
 

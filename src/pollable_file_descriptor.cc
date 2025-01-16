@@ -44,8 +44,11 @@ void PollableFileDescriptor::set_fd_as_nonblocking(int fd) {
 PollableFileDescriptor::PollableFileDescriptor(
     int fd, EventLoop *event_loop, bool prefer_et, bool need_set_non_blocking
 )
-    : _fd(fd), _event_loop(event_loop),
-      _initial_epoll_event(prefer_et ? EPOLLET : 0) {
+    : _fd(fd)
+    , _event_loop(event_loop)
+    , _initial_epoll_event(
+          prefer_et ? EPOLLET : static_cast<decltype(EPOLLET)>(0)
+      ) {
 
     if (_fd < 0) {
         LOG_SYS_FATAL << "invalid file descriptor (must be non-negative)";

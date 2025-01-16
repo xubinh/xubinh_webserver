@@ -45,7 +45,8 @@ private:
     // must be zero before (and including) Linux v2.6.26
     static constexpr int _DEFAULT_EVENTFD_FLAGS = EFD_CLOEXEC | EFD_NONBLOCK;
 
-    void _read_event_callback(util::TimePoint time_stamp) {
+    void _read_event_callback(__attribute__((unused)) util::TimePoint time_stamp
+    ) {
         _message_callback(_retrieve_the_sum());
     }
 

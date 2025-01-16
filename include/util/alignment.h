@@ -23,7 +23,7 @@ inline size_t get_next_power_of_2(size_t n) {
     //     throw std::invalid_argument("power of 2 is undefined for zero");
     // }
 
-    return 32 - __builtin_clz(n - 1);
+    return 32 - __builtin_clzll(n - 1);
 }
 
 } // namespace alignment

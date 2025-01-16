@@ -104,7 +104,7 @@ uint64_t Timerfd::_retrieve_the_number_of_expirations() {
     }
 
     // [TODO]: delete this branch
-    else if (bytes_read < sizeof(number_of_expirations)) {
+    else if (bytes_read < static_cast<ssize_t>(sizeof(number_of_expirations))) {
         LOG_WARN << "incomplete timerfd read operation";
 
         return 0;

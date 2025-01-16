@@ -195,6 +195,6 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     }
 }
 
-size_t ListenSocketfd::_max_number_of_new_connections_at_a_time = 1000;
+int ListenSocketfd::_max_number_of_new_connections_at_a_time = 1000;
 
 } // namespace xubinh_server

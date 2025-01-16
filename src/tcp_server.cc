@@ -165,13 +165,14 @@ void TcpServer::run_for_each_connection(
 ) {
     LOG_TRACE << "register event -> main: run_for_each_connection";
 
-    auto callback_wrapper = [this](RunForEachConnectionCallbackType &callback) {
-        LOG_TRACE << "enter event: run_for_each_connection";
+    auto callback_wrapper =
+        [this](RunForEachConnectionCallbackType &this_callback) {
+            LOG_TRACE << "enter event: run_for_each_connection";
 
-        for (const auto &pair : _tcp_connect_socketfds) {
-            callback(pair.second);
-        }
-    };
+            for (const auto &pair : _tcp_connect_socketfds) {
+                this_callback(pair.second);
+            }
+        };
 
     _loop->run(std::bind(std::move(callback_wrapper), std::move(callback)));
 }

@@ -26,7 +26,7 @@ public:
     static void listen(int socketfd);
 
     static void set_max_number_of_new_connections_at_a_time(
-        size_t max_number_of_new_connections_at_a_time
+        int max_number_of_new_connections_at_a_time
     ) {
         _max_number_of_new_connections_at_a_time =
             max_number_of_new_connections_at_a_time;
@@ -63,7 +63,7 @@ private:
 
     void _read_event_callback(util::TimePoint time_stamp);
 
-    static size_t _max_number_of_new_connections_at_a_time;
+    static int _max_number_of_new_connections_at_a_time;
 
     int _spare_fd = -1;
 

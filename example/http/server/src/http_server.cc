@@ -93,8 +93,8 @@ void HttpServer::_message_callback(
         if (request.get_need_close()) {
             if (tcp_connect_socketfd_ptr->is_writing()) {
                 tcp_connect_socketfd_ptr->register_write_complete_callback(
-                    [](TcpConnectSocketfd *tcp_connect_socketfd_ptr) {
-                        tcp_connect_socketfd_ptr->shutdown_write();
+                    [](TcpConnectSocketfd *this_tcp_connect_socketfd_ptr) {
+                        this_tcp_connect_socketfd_ptr->shutdown_write();
                     }
                 );
             }

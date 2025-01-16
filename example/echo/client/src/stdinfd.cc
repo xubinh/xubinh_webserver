@@ -22,8 +22,8 @@ Stdinfd::Stdinfd(
     xubinh_server::EventLoop *loop,
     const TcpConnectSocketfdPtr &tcp_connect_socketfd_ptr
 )
-    : _tcp_connect_socketfd_weak_ptr(tcp_connect_socketfd_ptr),
-      _pollable_file_descriptor(STDIN_FILENO, loop) {
+    : _tcp_connect_socketfd_weak_ptr(tcp_connect_socketfd_ptr)
+    , _pollable_file_descriptor(STDIN_FILENO, loop) {
 }
 
 Stdinfd::~Stdinfd() {
@@ -34,7 +34,8 @@ Stdinfd::~Stdinfd() {
     _pollable_file_descriptor.close_fd();
 }
 
-void Stdinfd::_read_event_callback(xubinh_server::util::TimePoint time_stamp) {
+void Stdinfd::_read_event_callback(__attribute__((unused))
+                                   xubinh_server::util::TimePoint time_stamp) {
     LOG_TRACE << "stdin read event encountered";
 
     auto _tcp_connect_socketfd_ptr = _tcp_connect_socketfd_weak_ptr.lock();

@@ -9,13 +9,12 @@ EventLoopThread::EventLoopThread(
     ThreadInitializationCallbackType thread_initialization_callback,
     uint64_t loop_index
 )
-    : _thread(
-        [this, loop_index]() {
-            _worker_function(loop_index);
-        },
-        thread_name
-    ),
-      _thread_initialization_callback(std::move(thread_initialization_callback)
+    : _thread_initialization_callback(std::move(thread_initialization_callback))
+    , _thread(
+          [this, loop_index]() {
+              _worker_function(loop_index);
+          },
+          thread_name
       ) {
 }
 

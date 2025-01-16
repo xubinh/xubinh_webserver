@@ -32,7 +32,8 @@ std::unique_ptr<xubinh_server::Signalfd>
     signalfd_ptr; // for lazy initialization
 
 // placeholder
-void reload_server_config(xubinh_server::HttpServer *server) {
+void reload_server_config(__attribute__((unused))
+                          xubinh_server::HttpServer *server) {
 }
 
 void signal_dispatcher(
@@ -281,6 +282,9 @@ constexpr size_t hello_world_response_content_size =
 
 void http_request_callback(
     xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
+#ifdef __RUN_BENCHMARK
+    __attribute__((unused))
+#endif
     const xubinh_server::HttpRequest &http_request
 ) {
     if (tcp_connect_socketfd_ptr->is_write_end_shutdown()) {

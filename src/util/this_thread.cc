@@ -54,7 +54,7 @@ const char *get_tid_string() {
     return _tid_string;
 }
 
-int get_tid_string_length() {
+size_t get_tid_string_length() {
     if (__builtin_expect(_tid == 0, false)) {
         _cache_tid();
     }

@@ -15,7 +15,8 @@ std::unique_ptr<xubinh_server::Signalfd>
     signalfd_ptr; // for lazy initialization
 
 // placeholder
-void reload_server_config(xubinh_server::TcpServer *server) {
+void reload_server_config(__attribute__((unused))
+                          xubinh_server::TcpServer *server) {
 }
 
 void signal_dispatcher(

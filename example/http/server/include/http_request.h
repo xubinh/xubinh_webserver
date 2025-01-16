@@ -28,10 +28,12 @@ public:
 
     // implement this anyway just for sense of security
     HttpRequest(HttpRequest &&other)
-        : _method(other._method), _path(std::move(other._path)),
-          _version(other._version),
-          _receive_time_point(other._receive_time_point),
-          _headers(std::move(other._headers)), _body(std::move(other._body)) {
+        : _method(other._method)
+        , _path(std::move(other._path))
+        , _version(other._version)
+        , _receive_time_point(other._receive_time_point)
+        , _headers(std::move(other._headers))
+        , _body(std::move(other._body)) {
     }
 
     // implement this anyway just for sense of security
@@ -126,7 +128,7 @@ private:
         auto it = start;
 
         while (it != end) {
-            *it = ::tolower(*it);
+            *it = static_cast<char>(::tolower(*it));
         }
     }
 

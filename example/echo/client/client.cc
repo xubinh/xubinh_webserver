@@ -51,9 +51,10 @@ void signal_dispatcher(
 }
 
 void message_callback(
+    __attribute__((unused))
     xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     xubinh_server::MutableSizeTcpBuffer *input_buffer,
-    xubinh_server::util::TimePoint time_point
+    __attribute__((unused)) xubinh_server::util::TimePoint time_point
 ) {
     while (true) {
         auto newline_position = input_buffer->get_next_newline_position();

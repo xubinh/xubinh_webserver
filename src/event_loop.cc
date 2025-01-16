@@ -7,17 +7,18 @@ namespace xubinh_server {
 EventLoop::EventLoop(
     uint64_t loop_index, size_t number_of_functor_blocking_queues
 )
-    : _loop_index(loop_index),
-      _number_of_functor_blocking_queues(
+    : _loop_index(loop_index)
+    , _number_of_functor_blocking_queues(
           std::max(number_of_functor_blocking_queues, static_cast<size_t>(1))
-      ),
-      _functor_blocking_queues(_number_of_functor_blocking_queues),
-      _eventfds(_number_of_functor_blocking_queues),
-      _eventfd_pilot_lamps(_number_of_functor_blocking_queues),
-      _timerfd(Timerfd::create_timerfd(0), this),
-      _owner_thread_tid(util::this_thread::get_tid()) {
+      )
+    , _functor_blocking_queues(_number_of_functor_blocking_queues)
+    , _eventfds(_number_of_functor_blocking_queues)
+    , _eventfd_pilot_lamps(_number_of_functor_blocking_queues)
+    , _timerfd(Timerfd::create_timerfd(0), this)
+    , _owner_thread_tid(util::this_thread::get_tid()) {
 
-    for (int i = 0; i < _number_of_functor_blocking_queues; i++) {
+    for (int i = 0; i < static_cast<int>(_number_of_functor_blocking_queues);
+         i++) {
 #ifdef __USE_LOCK_FREE_QUEUE
         _functor_blocking_queues[i] = new FunctorQueue;
 #else
@@ -275,14 +276,14 @@ void EventLoop::_invoke_all_functors() {
 #ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
         FunctorType *functor_ptr;
 
-        while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
+        while ((functor_ptr = _functor_blocking_queue_ptr->pop())) {
             (*functor_ptr)();
             delete functor_ptr;
         }
 #else
         std::shared_ptr<FunctorType> functor_ptr;
 
-        while (functor_ptr = _functor_blocking_queue_ptr->pop()) {
+        while ((functor_ptr = _functor_blocking_queue_ptr->pop())) {
             (*functor_ptr)();
         }
 #endif
@@ -490,11 +491,13 @@ void EventLoop::_release_all_timers() {
     }
 }
 
-void EventLoop::_eventfd_message_callback(uint64_t value) {
+void EventLoop::_eventfd_message_callback(__attribute__((unused)) uint64_t value
+) {
     _eventfd_triggered = true;
 }
 
-void EventLoop::_timerfd_message_callback(uint64_t value) {
+void EventLoop::_timerfd_message_callback(__attribute__((unused)) uint64_t value
+) {
     _timerfd_triggered = true;
 }
 

@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 #include "util/slab_allocator.h"
 
 namespace xubinh_server {
@@ -58,7 +61,8 @@ void StaticSimpleThreadLocalStringSlabAllocator::deallocate(
 }
 
 StaticSimpleThreadLocalStringSlabAllocator::LinkedListNode *
-StaticSimpleThreadLocalStringSlabAllocator::_allocate_one_chunk(int power_of_2
+StaticSimpleThreadLocalStringSlabAllocator::_allocate_one_chunk(
+    size_t power_of_2
 ) noexcept {
     size_t slab_size = (1 << power_of_2);
 
@@ -110,3 +114,5 @@ template class basic_string<
 } // namespace __cxx11
 
 } // namespace std
+
+#pragma GCC diagnostic pop

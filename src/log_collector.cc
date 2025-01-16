@@ -26,7 +26,7 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
         ssize_t bytes_written =
             ::write(STDERR_FILENO, entry_address, entry_size);
 
-        if (bytes_written != entry_size) {
+        if (bytes_written != static_cast<ssize_t>(entry_size)) {
             ::fprintf(
                 stderr,
                 "@xubinh_server::LogCollector::take_this_log: error when "

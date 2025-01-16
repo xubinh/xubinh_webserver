@@ -70,7 +70,8 @@ void Signalfd::start() {
     _pollable_file_descriptor.enable_read_event();
 }
 
-void Signalfd::_read_event_callback(util::TimePoint time_stamp) {
+void Signalfd::_read_event_callback(__attribute__((unused))
+                                    util::TimePoint time_stamp) {
     struct signalfd_siginfo signal_info;
 
     // one signal at a time

@@ -31,7 +31,7 @@ void EventLoopThreadPool::start() {
         return;
     }
 
-    for (int i = 0; i < _thread_pool_capasity; i++) {
+    for (int i = 0; i < static_cast<int>(_thread_pool_capasity); i++) {
         std::string thread_name = "worker-thread-" + std::to_string(i);
 
         size_t loop_index = i;

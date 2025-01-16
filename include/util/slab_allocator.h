@@ -791,7 +791,9 @@ public:
 
             // chunk tail needs to be located manually
             LinkedListNode *chunk_tail = chunk_head;
-            for (int i = 0; i < _NUMBER_OF_SLABS_PER_CHUNK - 1; i++) {
+            for (int i = 0;
+                 i < static_cast<int>(_NUMBER_OF_SLABS_PER_CHUNK) - 1;
+                 i++) {
                 chunk_tail = chunk_tail->next;
             }
 
@@ -956,7 +958,7 @@ public:
     }
 
 private:
-    LinkedListNode *_allocate_one_chunk(int power_of_2) noexcept;
+    LinkedListNode *_allocate_one_chunk(size_t power_of_2) noexcept;
 
     static thread_local LinkedListNode
         *_linked_lists_of_free_slabs[12]; // 2^11 = 2048
