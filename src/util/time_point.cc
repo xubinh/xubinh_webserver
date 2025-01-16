@@ -27,35 +27,71 @@ std::string TimePoint::get_datetime_string(
 
     get_timespec(nanoseconds_from_epoch, &time_specification);
 
-    tm tm_info;
+    if (_seconds_from_epoch_cache != time_specification.tv_sec) {
+        _seconds_from_epoch_cache = time_specification.tv_sec;
 
-    ::localtime_r(&time_specification.tv_sec, &tm_info);
+        tm tm_info;
 
-    char buffer[32];
+        ::localtime_r(&time_specification.tv_sec, &tm_info);
 
-    size_t actual_bytes_written;
+        // for renaming physical files (e.g. `2024_01_01_13_00_23`):
+        _length_of_datetime_string_for_renaming_cache = ::strftime(
+            _datetime_string_for_renaming_cache,
+            sizeof(_datetime_string_for_renaming_cache),
+            "%Y_%m_%d_%H_%M_%S",
+            &tm_info
+        );
 
-    // for renaming physical files (e.g. `2024_01_01_13_00_23`):
+        // for printing out into terminal or as log (e.g. `2024-01-01
+        // 13:00:23`):
+        _length_of_datetime_string_for_printing_cache = ::strftime(
+            _datetime_string_for_printing_cache,
+            sizeof(_datetime_string_for_printing_cache),
+            "%Y-%m-%d %H:%M:%S",
+            &tm_info
+        );
+    }
+
+    char *actual_datetime_string;
+    size_t actual_datetime_string_length;
+
     if (purpose == Purpose::RENAMING) {
-        actual_bytes_written =
-            ::strftime(buffer, sizeof(buffer), "%Y_%m_%d_%H_%M_%S", &tm_info);
+        actual_datetime_string = _datetime_string_for_renaming_cache;
+        actual_datetime_string_length =
+            _length_of_datetime_string_for_renaming_cache;
+
+        actual_datetime_string_length += ::snprintf(
+            _datetime_string_for_renaming_cache
+                + _length_of_datetime_string_for_renaming_cache,
+            sizeof(_datetime_string_for_renaming_cache),
+            ".%09ld",
+            time_specification.tv_nsec
+        );
     }
 
-    // for printing out into terminal or as log (e.g. `2024-01-01 13:00:23`):
     else {
-        actual_bytes_written =
-            ::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
+        actual_datetime_string = _datetime_string_for_printing_cache;
+        actual_datetime_string_length =
+            _length_of_datetime_string_for_printing_cache;
+
+        actual_datetime_string_length += ::snprintf(
+            _datetime_string_for_printing_cache
+                + _length_of_datetime_string_for_printing_cache,
+            sizeof(_datetime_string_for_printing_cache),
+            ".%09ld",
+            time_specification.tv_nsec
+        );
     }
 
-    actual_bytes_written += ::snprintf(
-        buffer + actual_bytes_written,
-        sizeof(buffer),
-        ".%09ld",
-        time_specification.tv_nsec
-    );
-
-    return {buffer, actual_bytes_written};
+    return {actual_datetime_string, actual_datetime_string_length};
 }
+
+thread_local decltype(timespec().tv_sec
+) TimePoint::_seconds_from_epoch_cache{0};
+thread_local char TimePoint::_datetime_string_for_renaming_cache[32]{};
+thread_local size_t TimePoint::_length_of_datetime_string_for_renaming_cache{0};
+thread_local char TimePoint::_datetime_string_for_printing_cache[32]{};
+thread_local size_t TimePoint::_length_of_datetime_string_for_printing_cache{0};
 
 } // namespace util
 

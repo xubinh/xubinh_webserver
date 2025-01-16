@@ -25,11 +25,11 @@ LogBuilder::~LogBuilder() {
         _entry_buffer.append(
             _source_file_base_name, _source_file_base_name_length
         );
+
+        _entry_buffer.append(":", 1);
+
+        *this << _line_number;
     }
-
-    _entry_buffer.append(" | ", 3);
-
-    *this << _line_number;
 
     if (_function_name) {
         _entry_buffer.append(" | ", 3);
@@ -118,28 +118,25 @@ const char *LogBuilder::_LOG_LEVEL_STRINGS[static_cast<size_t>(
 LogBuilder::LogBuilder(
     LogLevel log_level,
     const char *source_file_base_name,
+    size_t source_file_base_name_length,
     int line_number,
     const char *function_name,
+    size_t function_name_length,
     int saved_errno
 )
-    : _log_level(log_level), _source_file_base_name(source_file_base_name),
-      _line_number(line_number), _function_name(function_name),
-      _saved_errno(saved_errno) {
+    : _log_level(log_level)
+    , _source_file_base_name(source_file_base_name)
+    , _source_file_base_name_length(source_file_base_name_length)
+    , _line_number(line_number)
+    , _function_name(function_name)
+    , _function_name_length(function_name_length)
+    , _saved_errno(saved_errno) {
 
-    if (source_file_base_name) {
-        _source_file_base_name_length = strlen(source_file_base_name);
-    }
+    std::string datetime_string =
+        util::TimePoint::get_datetime_string(util::TimePoint::Purpose::PRINTING
+        );
 
-    if (function_name) {
-        _function_name_length = strlen(function_name);
-    }
-
-    _entry_buffer.append(
-        util::TimePoint::get_datetime_string(util::TimePoint::Purpose::PRINTING)
-            .c_str(),
-        util::TimePoint::TIME_POINT_STRING_LENGTHES
-            [static_cast<size_t>(util::TimePoint::Purpose::PRINTING)]
-    );
+    _entry_buffer.append(datetime_string.c_str(), datetime_string.size());
 
     _entry_buffer.append(" | ", 3);
 

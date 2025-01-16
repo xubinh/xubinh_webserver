@@ -117,6 +117,24 @@ public:
         return _get_base_name_of_path(path, N - 1); // minus 1 for the `\0`
     }
 
+    static constexpr size_t
+    get_base_name_length_of_path(const char *path, size_t length) {
+        return _get_base_name_length_of_path(path, length, length);
+    }
+
+    template <size_t N>
+    static constexpr size_t get_base_name_length_of_path(const char (&path)[N]
+    ) {
+        return _get_base_name_length_of_path(path, N - 1, N - 1);
+    }
+
+    template <size_t N>
+    static constexpr size_t
+    get_length_of_constexpr_char_array(__attribute__((unused))
+                                       const char (&path)[N]) {
+        return N - 1;
+    }
+
 private:
     static const char _HEX_ALPHABET_TABLE[];
     static constexpr size_t _NUMBER_OF_LETTERS_OF_POINTER_IN_HEX =
@@ -134,6 +152,18 @@ private:
                    : (path[current_offset - 1] == '/'
                           ? path + current_offset
                           : _get_base_name_of_path(path, current_offset - 1));
+    }
+
+    static constexpr size_t _get_base_name_length_of_path(
+        const char *path, size_t current_offset, const size_t total_length
+    ) {
+        return current_offset <= 0
+                   ? total_length
+                   : (path[current_offset - 1] == '/'
+                          ? total_length - current_offset
+                          : _get_base_name_length_of_path(
+                              path, current_offset - 1, total_length
+                          ));
     }
 };
 

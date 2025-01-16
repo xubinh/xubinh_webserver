@@ -35,20 +35,37 @@ public:
     LogBuilder(
         LogLevel log_level,
         const char *source_file_base_name,
+        size_t source_file_base_name_length,
         int line_number,
-        const char *function_name
+        const char *function_name,
+        size_t function_name_length
     )
         : LogBuilder(
-            log_level, source_file_base_name, line_number, function_name, 0
+            log_level,
+            source_file_base_name,
+            source_file_base_name_length,
+            line_number,
+            function_name,
+            function_name_length,
+            0
         ) {
     }
 
     // INFO | WARN | ERROR | FATAL
     LogBuilder(
-        LogLevel log_level, const char *source_file_base_name, int line_number
+        LogLevel log_level,
+        const char *source_file_base_name,
+        size_t source_file_base_name_length,
+        int line_number
     )
         : LogBuilder(
-            log_level, source_file_base_name, line_number, nullptr, 0
+            log_level,
+            source_file_base_name,
+            source_file_base_name_length,
+            line_number,
+            nullptr,
+            0,
+            0
         ) {
     }
 
@@ -56,11 +73,18 @@ public:
     LogBuilder(
         LogLevel log_level,
         const char *source_file_base_name,
+        size_t source_file_base_name_length,
         int line_number,
         int saved_errno
     )
         : LogBuilder(
-            log_level, source_file_base_name, line_number, nullptr, saved_errno
+            log_level,
+            source_file_base_name,
+            source_file_base_name_length,
+            line_number,
+            nullptr,
+            0,
+            saved_errno
         ) {
     }
 
@@ -116,8 +140,10 @@ private:
     LogBuilder(
         LogLevel log_level,
         const char *source_file_base_name,
+        size_t source_file_base_name_length,
         int line_number,
         const char *function_name,
+        size_t function_name_length,
         int saved_errno
     );
 
@@ -152,6 +178,16 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 #define __BASE_NAME                                                            \
     (xubinh_server::util::Format::get_base_name_of_path(__FILE__))
 
+#define __BASE_NAME_LENGTH                                                     \
+    (xubinh_server::util::Format::get_base_name_length_of_path(__FILE__))
+
+#define __FUNCTION_NAME (__FUNCTION__)
+
+#define __FUNCTION_NAME_LENGTH                                                 \
+    (xubinh_server::util::Format::get_length_of_constexpr_char_array(          \
+        __FUNCTION__                                                           \
+    ))
+
 #define __ENABLE_TRACE                                                         \
     (xubinh_server::LogLevel::TRACE                                            \
      >= xubinh_server::LogBuilder::get_log_level())
@@ -171,40 +207,70 @@ extern template LogBuilder &LogBuilder::operator<<(unsigned long long integer);
 #define LOG_TRACE                                                              \
     if (__ENABLE_TRACE)                                                        \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::TRACE, __BASE_NAME, __LINE__, __FUNCTION__    \
+        xubinh_server::LogLevel::TRACE,                                        \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__,                                                              \
+        __FUNCTION_NAME,                                                       \
+        __FUNCTION_NAME_LENGTH                                                 \
     )
 #define LOG_DEBUG                                                              \
     if (__ENABLE_DEBUG)                                                        \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::DEBUG, __BASE_NAME, __LINE__, __FUNCTION__    \
+        xubinh_server::LogLevel::DEBUG,                                        \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__,                                                              \
+        __FUNCTION_NAME,                                                       \
+        __FUNCTION_NAME_LENGTH                                                 \
     )
 #define LOG_INFO                                                               \
     if (__ENABLE_INFO)                                                         \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::INFO, __BASE_NAME, __LINE__                   \
+        xubinh_server::LogLevel::INFO,                                         \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__                                                               \
     )
 #define LOG_WARN                                                               \
     if (__ENABLE_WARN)                                                         \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::WARN, __BASE_NAME, __LINE__                   \
+        xubinh_server::LogLevel::WARN,                                         \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__                                                               \
     )
 #define LOG_ERROR                                                              \
     if (__ENABLE_ERROR)                                                        \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::ERROR, __BASE_NAME, __LINE__                  \
+        xubinh_server::LogLevel::ERROR,                                        \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__                                                               \
     )
 #define LOG_FATAL                                                              \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::FATAL, __BASE_NAME, __LINE__                  \
+        xubinh_server::LogLevel::FATAL,                                        \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__                                                               \
     )
 #define LOG_SYS_ERROR                                                          \
     if (__ENABLE_ERROR)                                                        \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::ERROR, __BASE_NAME, __LINE__, errno           \
+        xubinh_server::LogLevel::ERROR,                                        \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__,                                                              \
+        errno                                                                  \
     )
 #define LOG_SYS_FATAL                                                          \
     xubinh_server::LogBuilder(                                                 \
-        xubinh_server::LogLevel::FATAL, __BASE_NAME, __LINE__, errno           \
+        xubinh_server::LogLevel::FATAL,                                        \
+        __BASE_NAME,                                                           \
+        __BASE_NAME_LENGTH,                                                    \
+        __LINE__,                                                              \
+        errno                                                                  \
     )
 
 #endif

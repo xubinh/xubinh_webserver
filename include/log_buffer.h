@@ -79,7 +79,7 @@ public:
             return;
         }
 
-        memcpy(_start_address_of_spare, data, data_size);
+        __builtin_memcpy(_start_address_of_spare, data, data_size);
 
         _start_address_of_spare += data_size;
     }

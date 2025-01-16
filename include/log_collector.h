@@ -36,7 +36,18 @@ public:
         _need_output_directly_to_terminal = yes_or_no;
     }
 
-    static LogCollector &get_instance();
+    static LogCollector &get_instance() {
+        static LogCollector *instance = []() -> LogCollector * {
+            // released by CleanUpHelper instance
+            _log_collector_singleton_instance = new LogCollector;
+
+            _is_instantiated.store(true, std::memory_order_relaxed);
+
+            return _log_collector_singleton_instance;
+        }();
+
+        return *instance;
+    }
 
     static void flush();
 

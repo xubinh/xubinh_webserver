@@ -185,15 +185,19 @@ struct TimePoint {
         return nanoseconds_from_epoch != other_nanoseconds_from_epoch;
     }
 
-    static constexpr size_t TIME_POINT_STRING_LENGTHES[static_cast<size_t>(
-        Purpose::NUMBER_OF_ALL_PURPOSES
-    )]{29, 29};
-
     static constexpr int64_t FOREVER =
         0x7ffffffffffffffe; // leave one second of room for implementing the
                             // semantics of "longer-than-forever"
 
     int64_t nanoseconds_from_epoch;
+
+private:
+    // for logging
+    static thread_local decltype(timespec().tv_sec) _seconds_from_epoch_cache;
+    static thread_local char _datetime_string_for_renaming_cache[32];
+    static thread_local size_t _length_of_datetime_string_for_renaming_cache;
+    static thread_local char _datetime_string_for_printing_cache[32];
+    static thread_local size_t _length_of_datetime_string_for_printing_cache;
 };
 
 } // namespace util

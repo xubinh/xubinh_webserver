@@ -14,19 +14,6 @@ void LogCollector::set_base_name(const std::string &path) {
         util::Format::get_base_name_of_path(path.c_str(), path.length());
 }
 
-LogCollector &LogCollector::get_instance() {
-    static LogCollector *instance = []() -> LogCollector * {
-        // released by CleanUpHelper instance
-        _log_collector_singleton_instance = new LogCollector;
-
-        _is_instantiated.store(true, std::memory_order_relaxed);
-
-        return _log_collector_singleton_instance;
-    }();
-
-    return *instance;
-}
-
 void LogCollector::flush() {
     if (_is_instantiated.load(std::memory_order_relaxed)) {
         // no need to CAS; multiple flush requests could be merged into one
@@ -54,11 +41,6 @@ void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
 
     {
         util::MutexGuard lock(_mutex);
-
-        // throw away if the entire buffer couldn't hold this single log
-        if (entry_size >= _current_chunk_buffer_ptr->capacity()) {
-            return;
-        }
 
         // no buffer replacement if the current buffer has enough space
         if (entry_size < _current_chunk_buffer_ptr->length_of_spare()) {
