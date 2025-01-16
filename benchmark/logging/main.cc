@@ -46,7 +46,7 @@ double run_xubinh_log_builder(int number_of_messages) {
 }
 
 int main() {
-    int number_of_messages = 100000;
+    int number_of_messages = 1000000;
     double elapsed_time_interval;
     int average_logs_per_second;
 
