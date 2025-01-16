@@ -30,7 +30,8 @@ public:
         TcpServer::RunForEachConnectionCallbackType;
 
     HttpServer(EventLoop *loop, const InetAddress &local_address)
-        : _loop(loop), _tcp_server(loop, local_address) {
+        : _loop(loop)
+        , _tcp_server(loop, local_address) {
     }
 
     ~HttpServer() = default;

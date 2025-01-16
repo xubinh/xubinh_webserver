@@ -9,7 +9,8 @@ namespace util {
 
 class MutexGuard {
 public:
-    explicit MutexGuard(Mutex &mutex) noexcept : _mutex(mutex) {
+    explicit MutexGuard(Mutex &mutex) noexcept
+        : _mutex(mutex) {
         _mutex.lock();
     }
 

@@ -22,7 +22,8 @@ public:
 #endif
     using ContainerType = std::deque<ElementType>;
 
-    explicit BlockingQueue(int capacity) : _capacity(capacity) {
+    explicit BlockingQueue(int capacity)
+        : _capacity(capacity) {
     }
 
     // no copy

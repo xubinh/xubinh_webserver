@@ -5,7 +5,8 @@
 
 namespace xubinh_server {
 
-LogFile::LogFile(const std::string &base_name) : _base_name(base_name) {
+LogFile::LogFile(const std::string &base_name)
+    : _base_name(base_name) {
     // slashes could cause folders to be created and should be avoided for
     // security reason
     if (base_name.find('/') != std::string::npos) {

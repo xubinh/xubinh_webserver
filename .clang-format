@@ -32,3 +32,5 @@ AllowShortLoopsOnASingleLine: false
 BreakBeforeBinaryOperators: NonAssignment
 
 AlignConsecutiveAssignments: false
+
+BreakConstructorInitializers: BeforeComma

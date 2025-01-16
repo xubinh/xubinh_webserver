@@ -17,9 +17,12 @@ TcpConnectSocketfd::TcpConnectSocketfd(
     const InetAddress &remote_address,
     util::TimePoint time_stamp
 )
-    : _id(id), _local_address(local_address), _remote_address(remote_address),
-      _loop(loop), _time_stamp(time_stamp),
-      _pollable_file_descriptor(
+    : _id(id)
+    , _local_address(local_address)
+    , _remote_address(remote_address)
+    , _loop(loop)
+    , _time_stamp(time_stamp)
+    , _pollable_file_descriptor(
           fd, loop, true, false
       ) /* non-blocking or not is always decided by the outside */ {
 

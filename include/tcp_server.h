@@ -32,7 +32,8 @@ public:
         )>;
 
     TcpServer(EventLoop *loop, const InetAddress &local_address)
-        : _loop(loop), _local_address(local_address) {
+        : _loop(loop)
+        , _local_address(local_address) {
     }
 
     ~TcpServer();

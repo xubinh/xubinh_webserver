@@ -29,7 +29,8 @@ public:
     ;
 
     TcpClient(EventLoop *loop, const InetAddress &server_address)
-        : _loop(loop), _server_address(server_address) {
+        : _loop(loop)
+        , _server_address(server_address) {
     }
 
     ~TcpClient();

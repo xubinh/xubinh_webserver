@@ -34,20 +34,25 @@ public:
         Node() = default;
 
 #ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
-        Node(const T &value) : _value(new T(value)) {
+        Node(const T &value)
+            : _value(new T(value)) {
         }
 
-        Node(T &&value) : _value(new T(std::move(value))) {
+        Node(T &&value)
+            : _value(new T(std::move(value))) {
         }
 
         template <typename... Args>
-        Node(Args &&...args) : _value(new T(std::forward<Args>(args)...)) {
+        Node(Args &&...args)
+            : _value(new T(std::forward<Args>(args)...)) {
         }
 #else
-        Node(const T &value) : _value(std::make_shared<T>(value)) {
+        Node(const T &value)
+            : _value(std::make_shared<T>(value)) {
         }
 
-        Node(T &&value) : _value(std::make_shared<T>(std::move(value))) {
+        Node(T &&value)
+            : _value(std::make_shared<T>(std::move(value))) {
         }
 
         template <typename... Args>
@@ -66,7 +71,9 @@ public:
     };
 
 public:
-    SpscLockFreeQueue() : _head(new Node), _tail(_head) {
+    SpscLockFreeQueue()
+        : _head(new Node)
+        , _tail(_head) {
     }
 
     // not thread-safe

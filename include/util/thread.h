@@ -26,8 +26,8 @@ public:
     using WorkerFunctionType = std::function<void()>;
 
     Thread(WorkerFunctionType worker_function, const std::string &thread_name)
-        : _worker_function(std::move(worker_function)),
-          _thread_name(thread_name) {
+        : _worker_function(std::move(worker_function))
+        , _thread_name(thread_name) {
     }
 
     // no copy

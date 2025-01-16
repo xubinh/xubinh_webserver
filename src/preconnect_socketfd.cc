@@ -12,9 +12,10 @@ PreconnectSocketfd::PreconnectSocketfd(
     const InetAddress &server_address,
     int max_number_of_retries
 )
-    : _event_loop(event_loop), _MAX_NUMBER_OF_RETRIES(max_number_of_retries),
-      _server_address(server_address),
-      _pollable_file_descriptor(Socketfd::create_socketfd(), event_loop) {
+    : _event_loop(event_loop)
+    , _MAX_NUMBER_OF_RETRIES(max_number_of_retries)
+    , _server_address(server_address)
+    , _pollable_file_descriptor(Socketfd::create_socketfd(), event_loop) {
 }
 
 PreconnectSocketfd::~PreconnectSocketfd() {

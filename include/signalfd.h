@@ -39,7 +39,8 @@ public:
 
     static int create_signalfd(SignalSet initial_listening_set, int flags);
 
-    Signalfd(int fd, EventLoop *loop) : _pollable_file_descriptor(fd, loop) {
+    Signalfd(int fd, EventLoop *loop)
+        : _pollable_file_descriptor(fd, loop) {
     }
 
     ~Signalfd();

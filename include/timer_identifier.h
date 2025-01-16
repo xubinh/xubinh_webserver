@@ -9,7 +9,8 @@ namespace xubinh_server {
 // user of `EventLoop`
 class TimerIdentifier {
 public:
-    explicit TimerIdentifier(const Timer *timer_ptr) : _timer_ptr(timer_ptr) {
+    explicit TimerIdentifier(const Timer *timer_ptr)
+        : _timer_ptr(timer_ptr) {
     }
 
     friend class EventLoop;
