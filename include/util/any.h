@@ -52,6 +52,30 @@ struct __is_not_non_const_lvalue_reference_impl<T, true> : std::false_type {};
 template <typename T>
 struct is_not_non_const_lvalue_reference
     : __is_not_non_const_lvalue_reference_impl<T> {};
+
+template <typename T>
+struct _add_const_to_underlying_value_type {
+    using type = add_const_t<T>;
+};
+
+template <typename T>
+struct _add_const_to_underlying_value_type<T &> {
+    using type = add_const_t<T> &;
+};
+
+template <typename T>
+struct _add_const_to_underlying_value_type<T &&> {
+    using type = add_const_t<T> &&;
+};
+
+template <typename T>
+struct add_const_to_underlying_value_type {
+    using type = typename _add_const_to_underlying_value_type<T>::type;
+};
+
+template <typename T>
+using add_const_to_underlying_value_type_t =
+    typename add_const_to_underlying_value_type<T>::type;
 //
 //////////////////////////////
 
@@ -78,14 +102,17 @@ private:
     template <typename DecayedValueType>
     class Holder final : public HolderBase {
     public:
-        Holder(const DecayedValueType &value) : _value(value) {
+        Holder(const DecayedValueType &value)
+            : _value(value) {
         }
 
-        Holder(DecayedValueType &&value) : _value(std::move(value)) {
+        Holder(DecayedValueType &&value)
+            : _value(std::move(value)) {
         }
 
         template <typename... Args>
-        Holder(Args &&...args) : _value(std::forward<Args>(args)...) {
+        Holder(Args &&...args)
+            : _value(std::forward<Args>(args)...) {
         }
 
         // no copy (use clone instead)
@@ -116,11 +143,13 @@ private:
 
 public:
     // default
-    Any() noexcept : _holder_base(nullptr) {
+    Any() noexcept
+        : _holder_base(nullptr) {
     }
 
     // copy
-    Any(const Any &other) : _holder_base(other._holder_base->clone()) {
+    Any(const Any &other)
+        : _holder_base(other._holder_base->clone()) {
     }
 
     // copy
@@ -131,7 +160,8 @@ public:
     }
 
     // move
-    Any(Any &&other) noexcept : _holder_base(other._holder_base) {
+    Any(Any &&other) noexcept
+        : _holder_base(other._holder_base) {
         other._holder_base = nullptr;
     }
 
@@ -217,7 +247,7 @@ template <typename PointerType>
 inline PointerType any_cast(const Any *source) noexcept {
     using DecayedValueType = remove_cv_t<remove_pointer_t<PointerType>>;
 
-    // generates compile-time error if `PointerType` is non-const
+    // generates compile-time error when returning if `PointerType` is non-const
     using ConstPointerType = const DecayedValueType *;
 
     return any_cast<ConstPointerType>(const_cast<Any *>(source));
@@ -257,11 +287,10 @@ template <
     typename ValueOrReferenceType,
     typename = disable_if_is_pointer_type_t<ValueOrReferenceType>>
 inline ValueOrReferenceType any_cast(const Any &source) {
-    using NonReferenceValueType = remove_reference_t<ValueOrReferenceType>;
-
-    // generates compile-time error if `ValueOrReferenceType` is non-const
-    // reference type
-    using ConstValueOrReferenceType = add_const_t<ValueOrReferenceType>;
+    // generates compile-time error when returning if `ValueOrReferenceType` is
+    // non-const reference type
+    using ConstValueOrReferenceType =
+        add_const_to_underlying_value_type_t<ValueOrReferenceType>;
 
     // for preventing the unnecessary copy when static_cast to a
     // non-reference type, e.g. the copying `std::string(*value_ptr)` when doing
