@@ -12,6 +12,7 @@ ROOT: str = os.getcwd()
 # build script path
 SCRIPT_DIR_PATH: str = f"{ROOT}/script"
 BUILD_SCRIPT_PATH: str = f"{SCRIPT_DIR_PATH}/build.sh"
+BUILD_COMMAND: str = f"ENABLE_TEST=off RUN_BENCHMARK=on {BUILD_SCRIPT_PATH}"
 
 # server executable path
 BUILD_DIR_PATH: str = f"{ROOT}/build"
@@ -48,7 +49,7 @@ def exit(exit_code: int = 0) -> None:
 
 
 def run_build_script() -> int:
-    command = BUILD_SCRIPT_PATH
+    command = BUILD_COMMAND
 
     result = subprocess.run(command, shell=True)
 

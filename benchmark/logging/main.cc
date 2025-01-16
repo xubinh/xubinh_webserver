@@ -9,7 +9,7 @@ xubinh_server::LogCollector::CleanUpHelper logger_clean_up_hook;
 
 double run_spdlog(int number_of_messages) {
     auto logger = spdlog::basic_logger_mt(
-        "benchmark_logging.spdlog", "benchmark_logging.spdlog.txt"
+        "benchmark_logging.spdlog", "benchmark_logging.spdlog.log"
     );
 
     logger->set_level(spdlog::level::trace);

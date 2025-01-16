@@ -11,3 +11,6 @@ bin/
 # perf & flame graph
 /*perf*
 flamegraph.svg
+
+# logs
+*.log
