@@ -12,7 +12,9 @@ ROOT: str = os.getcwd()
 # build script path
 SCRIPT_DIR_PATH: str = f"{ROOT}/script"
 BUILD_SCRIPT_PATH: str = f"{SCRIPT_DIR_PATH}/build.sh"
-BUILD_COMMAND: str = f"ENABLE_TEST=off RUN_BENCHMARK=on {BUILD_SCRIPT_PATH}"
+BUILD_COMMAND: str = (
+    f"CMAKE_BUILD_TYPE=Release ENABLE_TEST=off RUN_BENCHMARK=on {BUILD_SCRIPT_PATH}"
+)
 
 # server executable path
 BUILD_DIR_PATH: str = f"{ROOT}/build"

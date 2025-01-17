@@ -58,7 +58,7 @@ RUN_BENCHMARK=off ./script/http/build.sh && ./script/http/run_server.sh
 测试命令:
 
 ```bash
-./script/http/webbench.py 10 15 # 单次测试持续 10 秒, 连续执行 15 次测试
+./script/http/benchmark.py 10 15 # 单次测试持续 10 秒, 连续执行 15 次测试
 ```
 
 > - 注: 由新到旧降序排序.
