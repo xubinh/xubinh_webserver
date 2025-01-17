@@ -74,21 +74,24 @@ void EventLoop::loop() {
         // since each event loop always got two fixed fd's being listened on,
         // i.e. a timerfd and an eventfd)
         if (_need_stop.load(std::memory_order_relaxed)) {
-
             if (_event_poller.size()
                 == 1 + _number_of_functor_blocking_queues) {
-                LOG_INFO << "event loop exits, target TID: "
-                         << _owner_thread_tid;
 
-                break;
+                LOG_INFO << "exit event loop";
+
+                // clean up the functors before exiting
+                _invoke_all_functors();
+
+                TimePoint current_time_point;
+
+                // expire the timers as many as possible before exiting
+                _expire_timers_and_update_alarm(current_time_point);
+
+                return;
             }
 
-            else {
-                LOG_INFO << "non-empty event poller, size: "
-                         << _event_poller.size()
-                         << ", event loop can not exit now, target TID: "
-                         << _owner_thread_tid;
-            }
+            LOG_INFO << "non-empty event poller, size: " << _event_poller.size()
+                     << ", cannot exit event loop now";
         }
 
         _event_poller.poll_for_active_events_of_all_fds(event_dispatchers);
@@ -131,7 +134,7 @@ void EventLoop::loop() {
 
             TimePoint current_time_point;
 
-            _expire_and_update_alarm(current_time_point);
+            _expire_timers_and_update_alarm(current_time_point);
 
             _timerfd_triggered = false;
         }
@@ -142,9 +145,6 @@ void EventLoop::loop() {
 
         LOG_TRACE << "current size of poller: " << _event_poller.size();
     }
-
-    // clean up the functors before exiting
-    _invoke_all_functors();
 }
 
 void EventLoop::register_event_for_fd(int fd, const epoll_event *event) {
@@ -159,9 +159,7 @@ void EventLoop::detach_fd_from_poller(int fd) {
     _event_poller.detach_fd(fd);
 }
 
-void EventLoop::run(
-    FunctorType functor, uint64_t functor_blocking_queue_index
-) {
+void EventLoop::run(FunctorType functor, size_t functor_blocking_queue_index) {
     if (is_in_owner_thread()) {
         functor();
     }
@@ -180,7 +178,7 @@ TimerIdentifier EventLoop::run_at_time_point(
     TimeInterval repetition_time_interval,
     int number_of_repetitions,
     FunctorType functor,
-    uint64_t functor_blocking_queue_index
+    size_t functor_blocking_queue_index
 ) {
     Timer *timer_ptr = new Timer(
         time_point,
@@ -206,7 +204,7 @@ TimerIdentifier EventLoop::run_after_time_interval(
     TimeInterval repetition_time_interval,
     int number_of_repetitions,
     FunctorType functor,
-    uint64_t functor_blocking_queue_index
+    size_t functor_blocking_queue_index
 ) {
     TimePoint time_point = (TimePoint() += time_interval);
 
@@ -244,7 +242,7 @@ void EventLoop::ask_to_stop() {
 }
 
 void EventLoop::_leave_to_owner_thread(
-    FunctorType functor, uint64_t functor_blocking_queue_index
+    FunctorType functor, size_t functor_blocking_queue_index
 ) {
     _functor_blocking_queues[functor_blocking_queue_index]->push(
         std::move(functor)
@@ -257,7 +255,7 @@ void EventLoop::_leave_to_owner_thread(
     _wake_up_this_loop(functor_blocking_queue_index);
 }
 
-void EventLoop::_wake_up_this_loop(uint64_t functor_blocking_queue_index) {
+void EventLoop::_wake_up_this_loop(size_t functor_blocking_queue_index) {
     bool expected = false;
 
     // send to eventfd only when the pilot lamp is off
@@ -272,22 +270,7 @@ void EventLoop::_wake_up_this_loop(uint64_t functor_blocking_queue_index) {
 
 void EventLoop::_invoke_all_functors() {
     for (auto &_functor_blocking_queue_ptr : _functor_blocking_queues) {
-#ifdef __USE_LOCK_FREE_QUEUE
-#ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
-        FunctorType *functor_ptr;
-
-        while ((functor_ptr = _functor_blocking_queue_ptr->pop())) {
-            (*functor_ptr)();
-            delete functor_ptr;
-        }
-#else
-        std::shared_ptr<FunctorType> functor_ptr;
-
-        while ((functor_ptr = _functor_blocking_queue_ptr->pop())) {
-            (*functor_ptr)();
-        }
-#endif
-#else
+#ifndef __USE_LOCK_FREE_QUEUE
 #ifdef __USE_BLOCKING_QUEUE_WITH_RAW_POINTER
         const auto &queued_functors = _functor_blocking_queue_ptr->pop_all();
 
@@ -301,6 +284,21 @@ void EventLoop::_invoke_all_functors() {
 
         for (auto &functor : queued_functors) {
             functor();
+        }
+#endif
+#else
+#ifdef __USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER
+        FunctorType *functor_ptr;
+
+        while ((functor_ptr = _functor_blocking_queue_ptr->pop())) {
+            (*functor_ptr)();
+            delete functor_ptr;
+        }
+#else
+        std::shared_ptr<FunctorType> functor_ptr;
+
+        while ((functor_ptr = _functor_blocking_queue_ptr->pop())) {
+            (*functor_ptr)();
         }
 #endif
 #endif
@@ -376,8 +374,8 @@ void EventLoop::_cancel_a_timer_and_update_alarm(const Timer *timer_ptr) {
     delete timer_ptr;
 }
 
-void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
-    LOG_TRACE << "entering _expire_and_update_alarm";
+void EventLoop::_expire_timers_and_update_alarm(TimePoint time_point) {
+    LOG_TRACE << "entering _expire_timers_and_update_alarm";
 
     std::vector<const Timer *> expired_timers =
         _timer_container.move_out_before_or_at(time_point);
@@ -443,7 +441,7 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
 
     if (timers_that_are_still_valid.empty()) {
         LOG_TRACE << "no valid timers left";
-        LOG_TRACE << "exiting _expire_and_update_alarm";
+        LOG_TRACE << "_exiting expire_timers_and_update_alarm";
 
         return;
     }
@@ -479,7 +477,7 @@ void EventLoop::_expire_and_update_alarm(TimePoint time_point) {
                      );
     }
 
-    LOG_TRACE << "exiting _expire_and_update_alarm";
+    LOG_TRACE << "_exiting expire_timers_and_update_alarm";
 }
 
 void EventLoop::_release_all_timers() {

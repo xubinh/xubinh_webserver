@@ -1,6 +1,9 @@
 #include <sys/prctl.h>
+#include <time.h>
 
+#include "util/errno.h"
 #include "util/this_thread.h"
+#include "util/time_point.h"
 
 namespace xubinh_server {
 
@@ -70,6 +73,25 @@ void set_thread_name(const char *thread_name) {
 
 const char *get_thread_name() {
     return _thread_name;
+}
+
+void sleep_for(TimeInterval duration) {
+    timespec time_specification;
+
+    duration.to_timespec(&time_specification);
+
+    while (::nanosleep(&time_specification, &time_specification) == -1) {
+        if (errno != EINTR) {
+            ::fprintf(
+                stderr,
+                "@xubinh_server::util::this_thread::sleep_for: %s (errno=%d)\n",
+                strerror_tl(errno).c_str(),
+                errno
+            );
+
+            ::abort();
+        }
+    }
 }
 
 } // namespace this_thread

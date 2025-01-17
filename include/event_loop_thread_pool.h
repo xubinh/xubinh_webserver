@@ -26,9 +26,25 @@ public:
             std::move(thread_initialization_callback);
     }
 
+    // start all the worker threads
     void start();
 
+    // stop all the worker threads
     void stop();
+
+    // poll for whether all the worker threads are joinable
+    bool is_joinable() const {
+        for (auto &thread_ptr : _thread_pool) {
+            if (!thread_ptr->is_joinable()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // join all the worker threads
+    void join();
 
     EventLoop *get_next_loop();
 
@@ -39,6 +55,7 @@ private:
 
     bool _is_started = false;
     bool _is_stopped = false;
+    bool _is_joined = false;
 
     std::vector<std::shared_ptr<EventLoopThread>> _thread_pool;
     std::atomic<int> _next_loop_index_counter{0};

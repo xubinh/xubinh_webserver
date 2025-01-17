@@ -1,6 +1,7 @@
 #ifndef __XUBINH_SERVER_UTIL_THREAD
 #define __XUBINH_SERVER_UTIL_THREAD
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <limits>
@@ -44,6 +45,10 @@ public:
         return _is_started;
     }
 
+    bool is_joinable() const {
+        return _is_joinable.load(std::memory_order_relaxed);
+    }
+
     bool is_joined() const {
         return _is_joined;
     }
@@ -65,6 +70,7 @@ private:
     void _wrapper_of_worker_function();
 
     bool _is_started = false;
+    std::atomic<bool> _is_joinable{false};
     bool _is_joined = false;
     pthread_t _pthread_id = std::numeric_limits<pthread_t>::max();
     pid_t _tid = -1;

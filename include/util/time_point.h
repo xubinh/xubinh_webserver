@@ -10,10 +10,26 @@ namespace xubinh_server {
 namespace util {
 
 struct TimeInterval {
+    static void
+    get_timespec(int64_t nanoseconds, timespec *time_specification) noexcept {
+        using tv_sec_t = decltype(time_specification->tv_sec);
+        using tv_nsec_t = decltype(time_specification->tv_nsec);
+
+        time_specification->tv_sec =
+            static_cast<tv_sec_t>(nanoseconds / TimeInterval::SECOND);
+
+        time_specification->tv_nsec =
+            static_cast<tv_nsec_t>(nanoseconds % TimeInterval::SECOND);
+    }
+
     TimeInterval() noexcept = default;
 
     TimeInterval(int64_t nanoseconds_input) noexcept
         : nanoseconds(nanoseconds_input) {
+    }
+
+    void to_timespec(timespec *time_specification) const noexcept {
+        get_timespec(nanoseconds, time_specification);
     }
 
     operator bool() const noexcept {

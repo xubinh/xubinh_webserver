@@ -69,14 +69,34 @@ public:
 
     void detach_fd_from_poller(int fd);
 
-    void run(FunctorType functor, uint64_t functor_blocking_queue_index = 0);
+    void run(FunctorType functor, size_t functor_blocking_queue_index = 0);
+
+    void invoke_all_functors(size_t functor_blocking_queue_index = 0) {
+        run(
+            [this]() {
+                _invoke_all_functors();
+            },
+            functor_blocking_queue_index
+        );
+    }
+
+    void expire_timers_and_update_alarm(
+        TimePoint time_point, size_t functor_blocking_queue_index = 0
+    ) {
+        run(
+            [this, time_point]() {
+                _expire_timers_and_update_alarm(time_point);
+            },
+            functor_blocking_queue_index
+        );
+    }
 
     TimerIdentifier run_at_time_point(
         TimePoint time_point,
         TimeInterval repetition_time_interval,
         int number_of_repetitions,
         FunctorType functor,
-        uint64_t functor_blocking_queue_index = 0
+        size_t functor_blocking_queue_index = 0
     );
 
     TimerIdentifier run_after_time_interval(
@@ -84,7 +104,7 @@ public:
         TimeInterval repetition_time_interval,
         int number_of_repetitions,
         FunctorType functor,
-        uint64_t functor_blocking_queue_index = 0
+        size_t functor_blocking_queue_index = 0
     );
 
     void cancel_a_timer(TimerIdentifier timer_identifier);
@@ -94,10 +114,10 @@ public:
 
 private:
     void _leave_to_owner_thread(
-        FunctorType functor, uint64_t functor_blocking_queue_index
+        FunctorType functor, size_t functor_blocking_queue_index
     );
 
-    void _wake_up_this_loop(uint64_t functor_blocking_queue_index);
+    void _wake_up_this_loop(size_t functor_blocking_queue_index);
 
     void _invoke_all_functors();
 
@@ -109,16 +129,12 @@ private:
         _timerfd.cancel();
     }
 
-    // may be called by both the user and the loop itself
     void _add_a_timer_and_update_alarm(const Timer *timer_ptr);
 
-    // may be called by both the user and the loop itself
     void _cancel_a_timer_and_update_alarm(const Timer *timer_ptr);
 
     // expire all timers before or at given time point and update alarm
-    //
-    // - only be called by the loop itself
-    void _expire_and_update_alarm(TimePoint time_point);
+    void _expire_timers_and_update_alarm(TimePoint time_point);
 
     // for releasing resources
     void _release_all_timers();

@@ -6,6 +6,8 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "util/time_point.h"
+
 namespace xubinh_server {
 
 namespace util {
@@ -23,6 +25,8 @@ size_t get_tid_string_length();
 void set_thread_name(const char *thread_name);
 
 const char *get_thread_name();
+
+void sleep_for(TimeInterval duration);
 
 } // namespace this_thread
 

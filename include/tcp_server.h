@@ -91,7 +91,7 @@ private:
     // for tcp connect socketfd
     void _close_callback(
         TcpConnectSocketfd *tcp_connect_socketfd_ptr,
-        uint64_t functor_blocking_queue_index
+        size_t functor_blocking_queue_index
     );
 
     void _transfer_tcp_connections_to_background_thread();

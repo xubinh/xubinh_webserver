@@ -2,6 +2,8 @@
 #include "log_builder.h"
 #include "log_collector.h"
 #include "util/mutex_guard.h"
+#include "util/this_thread.h"
+#include "util/time_point.h"
 
 namespace xubinh_server {
 
@@ -134,12 +136,30 @@ void TcpServer::stop() {
 
         _thread_pool_ptr->stop();
 
+        LOG_INFO << "thread pool stopped";
+
+        // join the worker threads first, for stopping generating callbacks
+        // since the main event loop is about to die, too
+        while (true) {
+            util::this_thread::sleep_for(util::TimeInterval::SECOND);
+
+#ifndef __USE_LOCK_FREE_QUEUE
+            // blocking queue has a capacity which would cause deadlock; must
+            // make sure to clean it up before joining the worker threads
+            _loop->invoke_all_functors();
+#endif
+
+            if (_thread_pool_ptr->is_joinable()) {
+                _thread_pool_ptr->join();
+
+                break;
+            }
+        }
+
+        LOG_INFO << "thread pool joined";
+
         LOG_INFO << "finished shutting down thread pool";
     }
-
-    // join the worker threads first, for stopping generating callbacks since
-    // the main event loop is about to die, too
-    _thread_pool_ptr.reset();
 
     _is_stopped = true;
 
@@ -241,7 +261,7 @@ void TcpServer::_new_connection_callback(
 
 void TcpServer::_close_callback(
     TcpConnectSocketfd *tcp_connect_socketfd_ptr,
-    uint64_t functor_blocking_queue_index
+    size_t functor_blocking_queue_index
 ) {
     LOG_TRACE << "register event -> main: _close_callback";
 

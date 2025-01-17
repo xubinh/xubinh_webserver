@@ -15,13 +15,12 @@ EventLoopThreadPool::~EventLoopThreadPool() {
         LOG_FATAL << "tried to destruct a thread pool before stopping it";
     }
 
-    LOG_TRACE << "joining threads...";
+    if (!_is_joined) {
+        LOG_WARN
+            << "thread pool destruction before joining all the worker threads";
 
-    for (auto &thread : _thread_pool) {
-        thread->join();
+        join();
     }
-
-    LOG_TRACE << "all threads are joined";
 
     LOG_INFO << "exit destructor: EventLoopThreadPool";
 }
@@ -55,11 +54,29 @@ void EventLoopThreadPool::stop() {
         LOG_FATAL << "tried to stop a thread pool before starting it";
     }
 
-    for (auto &thread : _thread_pool) {
-        thread->get_loop()->ask_to_stop();
+    for (auto &thread_ptr : _thread_pool) {
+        thread_ptr->get_loop()->ask_to_stop();
     }
 
     _is_stopped = true;
+}
+
+void EventLoopThreadPool::join() {
+    if (_is_joined) {
+        LOG_WARN << "double join";
+
+        return;
+    }
+
+    LOG_TRACE << "joining threads...";
+
+    for (auto &thread_ptr : _thread_pool) {
+        thread_ptr->join();
+    }
+
+    _is_joined = true;
+
+    LOG_TRACE << "all threads are joined";
 }
 
 EventLoop *EventLoopThreadPool::get_next_loop() {

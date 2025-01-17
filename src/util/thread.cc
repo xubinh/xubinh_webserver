@@ -131,7 +131,23 @@ void Thread::_wrapper_of_worker_function() {
 
     _cond.notify_all();
 
+    ::fprintf(
+        stderr,
+        "thread started, name: %s, TID: %d\n",
+        _thread_name.c_str(),
+        _tid
+    );
+
     _worker_function();
+
+    _is_joinable.store(true, std::memory_order_relaxed);
+
+    ::fprintf(
+        stderr,
+        "thread stopped, name: %s, TID: %d\n",
+        _thread_name.c_str(),
+        _tid
+    );
 }
 
 } // namespace util

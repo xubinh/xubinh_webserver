@@ -36,6 +36,10 @@ public:
         return _thread.is_started();
     }
 
+    bool is_joinable() const {
+        return _thread.is_joinable();
+    }
+
     bool is_joined() const {
         return _thread.is_joined();
     }
