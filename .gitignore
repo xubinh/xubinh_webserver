@@ -14,3 +14,6 @@ flamegraph.svg
 
 # logs
 *.log
+
+# gdb
+.gdb*
