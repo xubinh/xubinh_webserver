@@ -215,6 +215,7 @@ private:
     CloseCallbackType _close_callback;
 
     bool _is_write_end_shutdown = false;
+    bool _is_reset = false;
     bool _is_abotrted = false;
 
     PollableFileDescriptor _pollable_file_descriptor;

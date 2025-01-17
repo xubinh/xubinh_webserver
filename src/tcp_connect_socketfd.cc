@@ -42,7 +42,7 @@ TcpConnectSocketfd::~TcpConnectSocketfd() {
                  << get_id();
     }
 
-    if (!_is_abotrted) {
+    if (!_is_reset) {
         _pollable_file_descriptor.close_fd();
     }
 
@@ -135,6 +135,10 @@ void TcpConnectSocketfd::shutdown_write() {
 }
 
 void TcpConnectSocketfd::reset_connection() {
+    if (_is_reset) {
+        LOG_FATAL << "never reaches here";
+    }
+
     if (_close_callback) {
         _close_callback(this);
     }
@@ -163,11 +167,12 @@ void TcpConnectSocketfd::reset_connection() {
     clear_context();
 
     _is_write_end_shutdown = true;
+    _is_reset = true;
 }
 
 void TcpConnectSocketfd::abort_from_event_loop() {
     if (_is_abotrted) {
-        return;
+        LOG_FATAL << "never reaches here";
     }
 
     _pollable_file_descriptor.detach_from_poller();
