@@ -23,37 +23,13 @@
 
 ### HTTP 服务器
 
-首先克隆项目仓库至本地:
-
-```bash
-git clone https://github.com/xubinh/xubinh_webserver.git
-```
-
-进入项目目录, 克隆 WebBench 仓库至本地:
-
-```bash
-cd xubinh_webserver
-git clone https://github.com/xubinh/WebBench.git
-```
-
-编译 WebBench 得到可执行文件:
-
-```bash
-cd WebBench
-sudo apt-get install rpcbind libtirpc-dev exuberant-ctags
-make
-cd ..
-mkdir bin
-cp -t bin/ WebBench/webbench
-```
-
 编译并启动 HTTP 服务器:
 
 ```bash
-HTTP_EXAMPLE_RUN_BENCHMARK=off ./script/build.sh && ./script/http/run_server.sh
+./script/build.sh && ./script/http/run_server.sh
 ```
 
-在浏览器中访问 `http://127.0.0.1:8080/` 即可.
+然后在浏览器中访问 `http://127.0.0.1:8080/` 即可.
 
 ### echo 服务器
 
@@ -63,7 +39,7 @@ HTTP_EXAMPLE_RUN_BENCHMARK=off ./script/build.sh && ./script/http/run_server.sh
 ./script/build.sh && ./script/echo/run_server.sh
 ```
 
-然后在另一窗口中启动客户端即可:
+然后在另一窗口中启动 echo 客户端即可:
 
 ```bash
 ./script/echo/run_client.sh

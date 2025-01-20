@@ -11,7 +11,7 @@ USE_LOCK_FREE_QUEUE_WITH_RAW_POINTER="off"
 USE_SHARED_PTR_DESTRUCTION_TRANSFERING="on"
 
 # configuration specifically for http server example
-HTTP_EXAMPLE_RUN_BENCHMARK=${HTTP_EXAMPLE_RUN_BENCHMARK:-"on"}
+HTTP_EXAMPLE_RUN_BENCHMARK=${HTTP_EXAMPLE_RUN_BENCHMARK:-"off"}
 
 # Exit immediately if any command fails
 set -e
