@@ -56,8 +56,10 @@ void Stdinfd::_read_event_callback(__attribute__((unused))
         if (bytes_read > 0) {
             _tcp_connect_socketfd_ptr->send(buffer, bytes_read);
 
-            LOG_TRACE << "send message: "
-                             + std::string(buffer, buffer + bytes_read - 1);
+            LOG_DEBUG << "send message to server: "
+                      << std::string(
+                             buffer, static_cast<size_t>(bytes_read) - 1
+                         );
 
             continue;
         }

@@ -319,6 +319,7 @@ void http_request_callback(
 }
 
 int main(int argc, char *argv[]) {
+    // this is for benchmarking
     if (argc > 2) {
         ::fprintf(stderr, "Usage: %s [log_file_base_name]\n", argv[0]);
 
@@ -337,7 +338,8 @@ int main(int argc, char *argv[]) {
     // without worries
 
     // logging config
-    std::string log_file_base_name = (argc == 2 ? std::string(argv[1]) : "");
+    std::string log_file_base_name =
+        (argc == 2 ? std::string(argv[1]) : "http-server");
     xubinh_server::LogCollector::set_base_name(log_file_base_name);
 #ifdef __RUN_BENCHMARK
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);

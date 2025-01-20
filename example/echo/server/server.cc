@@ -26,6 +26,9 @@ void signal_dispatcher(
     xubinh_server::TcpServer *server, xubinh_server::EventLoop *loop, int signal
 ) {
     switch (signal) {
+    case SIGTSTP:
+        // go to background like normal; don't do anything
+        return;
 
     case SIGHUP:
         reload_server_config(server);
@@ -35,9 +38,11 @@ void signal_dispatcher(
     case SIGINT:
     case SIGQUIT:
     case SIGTERM:
-    case SIGTSTP:
         LOG_INFO << "user interrupt, terminating server...";
 
+        // [NOTE]: must unregister signalfd first for the loop to be able to
+        // stop, since signalfd is not counted into the resident fd's of the
+        // event loop
         signalfd_ptr->stop();
 
         server->stop();
@@ -57,7 +62,7 @@ void signal_dispatcher(
 void message_callback(
     xubinh_server::TcpConnectSocketfd *tcp_connect_socketfd_ptr,
     xubinh_server::MutableSizeTcpBuffer *input_buffer,
-    xubinh_server::util::TimePoint time_point
+    __attribute__((unused)) xubinh_server::util::TimePoint time_point
 ) {
     while (true) {
         auto newline_position = input_buffer->get_next_newline_position();
@@ -67,30 +72,20 @@ void message_callback(
         }
 
         const char *client_message_end = newline_position + 1;
+        const char *client_message_start = input_buffer->get_read_position();
+        size_t client_message_length =
+            client_message_end - client_message_start;
 
-        const char *client_message_start =
-            const_cast<const char *>(input_buffer->get_read_position());
-
-        std::string client_message =
-            std::string(client_message_start, client_message_end);
-
-        std::string time_stamp = time_point.to_datetime_string(
-            xubinh_server::util::TimePoint::Purpose::PRINTING
+        tcp_connect_socketfd_ptr->send(
+            client_message_start, client_message_length
         );
 
-        // auto msg = "[" + time_stamp + "]: " + client_message;
-        auto msg = client_message;
+        LOG_DEBUG << "send message to client: "
+                  << std::string(
+                         client_message_start, client_message_length - 1
+                     );
 
-        tcp_connect_socketfd_ptr->send(msg.c_str(), msg.length());
-
-        LOG_TRACE << "send message: "
-                         + std::string(
-                             msg.c_str(), msg.c_str() + msg.length() - 1
-                         );
-
-        input_buffer->forward_read_position(
-            client_message_end - client_message_start
-        );
+        input_buffer->forward_read_position(client_message_length);
     }
 }
 
@@ -107,13 +102,17 @@ int main() {
     // without worries
 
     // logging config
-    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(true);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::TRACE);
+    xubinh_server::LogCollector::set_base_name("echo-server");
+    xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
     // [NOTE]: logging settings should also be configured as soon as possible so
     // that others can emit logs out without worries
 
+    size_t thread_pool_capacity = 1;
+
     // create loop
-    xubinh_server::EventLoop loop;
+    size_t number_of_functor_blocking_queues = thread_pool_capacity;
+    xubinh_server::EventLoop loop(0, number_of_functor_blocking_queues);
 
     // create server
     xubinh_server::InetAddress server_address(
@@ -131,6 +130,7 @@ int main() {
     signalfd_ptr->start();
 
     // server config
+    server.set_thread_pool_capacity(thread_pool_capacity);
     server.register_message_callback(message_callback);
     server.register_connect_success_callback([](const TcpConnectSocketfdPtr
                                                     &tcp_connect_socketfd_ptr) {
@@ -142,13 +142,13 @@ int main() {
                    + " -> "
                    + tcp_connect_socketfd_ptr->get_remote_address().to_string();
     });
-    server.set_thread_pool_capacity(1);
-
     server.start();
-
     LOG_INFO << "server started listening on " + server_address.to_string();
+    xubinh_server::LogCollector::flush();
 
     loop.loop();
+
+    LOG_INFO << "test finished";
 
     return 0;
 }
