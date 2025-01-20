@@ -3,9 +3,11 @@
 ## 目录
 
 - [部署本项目](#%E9%83%A8%E7%BD%B2%E6%9C%AC%E9%A1%B9%E7%9B%AE)
+  - [HTTP 服务器](#http-%E6%9C%8D%E5%8A%A1%E5%99%A8)
+  - [echo 服务器](#echo-%E6%9C%8D%E5%8A%A1%E5%99%A8)
 - [基准测试](#%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
   - [HTTP 服务器](#http-%E6%9C%8D%E5%8A%A1%E5%99%A8)
-    - [横向比较](%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
+    - [横向比较](#%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
   - [日志框架](#%E6%97%A5%E5%BF%97%E6%A1%86%E6%9E%B6)
   - [测试机硬件参数](#%E6%B5%8B%E8%AF%95%E6%9C%BA%E7%A1%AC%E4%BB%B6%E5%8F%82%E6%95%B0)
 - [其他](#%E5%85%B6%E4%BB%96)
@@ -18,6 +20,8 @@
 - [待办](#%E5%BE%85%E5%8A%9E)
 
 ## 部署本项目
+
+### HTTP 服务器
 
 首先克隆项目仓库至本地:
 
@@ -43,13 +47,27 @@ mkdir bin
 cp -t bin/ WebBench/webbench
 ```
 
-编译 HTTP 服务器并启动服务器:
+编译并启动 HTTP 服务器:
 
 ```bash
-RUN_BENCHMARK=off ./script/http/build.sh && ./script/http/run_server.sh
+HTTP_EXAMPLE_RUN_BENCHMARK=off ./script/build.sh && ./script/http/run_server.sh
 ```
 
 在浏览器中访问 `http://127.0.0.1:8080/` 即可.
+
+### echo 服务器
+
+编译并启动 echo 服务器:
+
+```bash
+./script/build.sh && ./script/echo/run_server.sh
+```
+
+然后在另一窗口中启动客户端即可:
+
+```bash
+./script/echo/run_client.sh
+```
 
 ## 基准测试
 

@@ -1,7 +1,7 @@
-option(RUN_BENCHMARK "Run benchmark" OFF)
+option(HTTP_EXAMPLE_RUN_BENCHMARK "Enable benchmark version of HTTP server example" OFF)
 
-if(RUN_BENCHMARK)
-    add_compile_definitions(__RUN_BENCHMARK)
+if(HTTP_EXAMPLE_RUN_BENCHMARK)
+    add_compile_definitions(__HTTP_EXAMPLE_RUN_BENCHMARK)
 endif()
 
 add_subdirectory(server)
