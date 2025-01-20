@@ -44,33 +44,20 @@ char *MutableSizeTcpBuffer::_make_space(size_t size) {
     // if extendable at the end directly
     if (size <= directly_extendable_size) {
         _buffer.resize(_write_offset + size);
-
-        auto end_ptr_before_extension =
-            _volatile_buffer_begin_ptr + _write_offset;
-
-        _write_offset += size; // extension
-
-        return end_ptr_before_extension;
     }
 
     // if extendable at the end after compaction
     else if (size <= directly_extendable_size + _read_offset) {
-        auto readable_size = _write_offset - _read_offset;
-
+        // do compaction
         ::memcpy(
             _volatile_buffer_begin_ptr,
             _volatile_buffer_begin_ptr + _read_offset,
-            readable_size
-        ); // compaction
-
+            _write_offset - _read_offset
+        );
+        _write_offset -= _read_offset;
         _read_offset = 0;
 
-        _buffer.resize(readable_size + size); // extension
-
-        auto end_ptr_before_extension =
-            _volatile_buffer_begin_ptr + readable_size;
-
-        return end_ptr_before_extension;
+        _buffer.resize(_write_offset + size);
     }
 
     // otherwise reallocates new memory buffer and skip compaction till the next
@@ -80,14 +67,13 @@ char *MutableSizeTcpBuffer::_make_space(size_t size) {
 
         _volatile_buffer_begin_ptr =
             const_cast<char *>(_buffer.c_str()); // calibration
-
-        auto end_ptr_before_extension =
-            _volatile_buffer_begin_ptr + _write_offset;
-
-        _write_offset += size; // extension
-
-        return end_ptr_before_extension;
     }
+
+    auto end_ptr_before_extension = _volatile_buffer_begin_ptr + _write_offset;
+
+    _write_offset += size; // extension
+
+    return end_ptr_before_extension;
 }
 
 } // namespace xubinh_server

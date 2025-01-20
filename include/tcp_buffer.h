@@ -53,7 +53,6 @@ public:
         return _write_offset - _read_offset;
     }
 
-    // does not check internally; make sure to use it well
     void forward_read_position(size_t number_of_bytes_read) {
         _read_offset =
             std::min(_read_offset + number_of_bytes_read, _write_offset);
