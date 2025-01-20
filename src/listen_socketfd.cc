@@ -76,10 +76,8 @@ int ListenSocketfd::_accept_new_connection(
     std::unique_ptr<InetAddress> &peer_address_ptr,
     int flags
 ) {
-    using sockaddr_unknown_t = InetAddress::sockaddr_unknown_t;
-
-    sockaddr_unknown_t peer_address_temp{};
-    socklen_t peer_address_temp_len = sizeof(sockaddr_unknown_t);
+    sockaddr_storage peer_address_temp{};
+    socklen_t peer_address_temp_len = sizeof(sockaddr_storage);
 
     int connect_socketfd = ::accept4(
         listen_socketfd,

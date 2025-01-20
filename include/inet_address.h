@@ -7,12 +7,24 @@
 namespace xubinh_server {
 
 class InetAddress {
-public:
-    using sockaddr_unknown_t = sockaddr_storage;
+private:
+    using sockaddr_universal_t = sockaddr_storage;
 
+    // [NOTE]: addresses of types `sockaddr_xxx` always store their IPs and
+    // ports by network order
+    union InetAddressUnion {
+        sockaddr_in in_v4;
+        sockaddr_in6 in_v6;
+        sockaddr_universal_t in_universal;
+    };
+
+public:
     enum InetAddressType { IPv4, IPv6 };
 
     enum InetAddressDirection { LOCAL, PEER };
+
+    // ensuring each address object becomes valid after construction
+    InetAddress() = delete;
 
     // for user
     InetAddress(const std::string &ip, int port, InetAddressType type);
@@ -20,15 +32,16 @@ public:
     // for framework
     InetAddress(const sockaddr *address, socklen_t address_length);
 
+    // for framework
     InetAddress(int connect_socketfd, InetAddressDirection direction);
 
     bool is_ipv4() const {
-        return _get_sa_family(&_in_unknown) == AF_INET;
+        return _get_ip_protocol() == AF_INET;
     }
 
     // for framework
     const sockaddr *get_address() const {
-        return reinterpret_cast<const sockaddr *>(&_in_unknown);
+        return reinterpret_cast<const sockaddr *>(&_in_union.in_universal);
     }
 
     // for framework
@@ -41,9 +54,9 @@ public:
 
     // for user
     int get_port() const {
-        return static_cast<int>(
-            ::ntohs(is_ipv4() ? _in.sin_port : _in6.sin6_port)
-        );
+        return static_cast<int>(::ntohs(
+            is_ipv4() ? _in_union.in_v4.sin_port : _in_union.in_v6.sin6_port
+        ));
     }
 
     std::string to_string() const {
@@ -51,18 +64,13 @@ public:
     }
 
 private:
-    static sa_family_t _get_sa_family(const void *address) {
-        return *reinterpret_cast<const sa_family_t *>(address);
+    sa_family_t _get_ip_protocol() const {
+        return _in_union.in_universal.ss_family;
     }
 
     void _check_validity() const;
 
-    // always store as network order
-    union {
-        sockaddr_in _in;
-        sockaddr_in6 _in6;
-        sockaddr_unknown_t _in_unknown;
-    };
+    InetAddressUnion _in_union;
 };
 
 } // namespace xubinh_server
