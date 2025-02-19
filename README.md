@@ -172,7 +172,7 @@ H/W path    Device    Class      Description
 
 #### `event_loop.h`
 
-- 每个 event loop 封装了一个 event poller, 一个专门为线程间传递 functor 而特化的 blocking queue (或 lock-free queue, 可通过编译选项进行自主选择) 的数组, 与这些 functor queue 配套的 eventfd (其中一个 eventfd 对应一个 functor queue 以降低并发竞争的程度), 一个 timer container, 以及与其配套的 timerfd.
+- 定义了 event loop 类, 用于对事件循环进行抽象. 每个 event loop 封装了一个 event poller, 一个专门为线程间传递 functor 而特化的 blocking queue (或 lock-free queue, 可通过编译选项进行自主选择) 的数组, 与这些 functor queue 配套的 eventfd (其中一个 eventfd 对应一个 functor queue 以降低并发竞争的程度), 一个 timer container, 以及与其配套的 timerfd.
 - event loop 类所封装的最简单但也是最重要的方法是 `.loop()` 方法, 该方法的大意是使用一个无限循环不断轮询 event poller 并获取 event dispatcher, 调用每个 event dispatcher 的回调以分发事件, 然后检查 eventfd 和 timerfd 并调用它们各自的回调.
 - 使用多个 queue 的理由是如果主线程的 event loop 只使用一个 queue 作为外部所有工作线程的交流媒介, 那么这个 queue 可能成为性能的瓶颈 (在本项目中不明显, 但在大规模并发场景下可能发生). 为了能够使主线程的 event loop 能够分别为每个工作线程维护一个 functor queue, 这里直接将 event loop 的 functor queue 从根本上设计为了数量可拓展的, 于是主线程可根据工作线程的数量自由选择配套的 functor queue 的数量, 而工作线程则仍然使用默认的单个 functor queue.
 - 为了进一步降低并发竞争程度, 每个 eventfd 使用了一个配套的 atomic 标志位来表示其是否被触发, 只有在确认没有被触发时才会执行 eventfd 的系统调用; 另一方面 timerfd 也只会在本次更新能够将定时器的触发时间点提前到一定阈值时 (例如提早 3 秒) 才会执行 timerfd 的系统调用.
