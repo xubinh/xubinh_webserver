@@ -154,7 +154,7 @@ void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
         else /* if (connect_socketfd == -1) */ {
             LOG_TRACE << "connection error";
 
-            // non-blocking listen socketfd with ET mode
+            // non-blocking listen socketfd
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 LOG_TRACE << "error: EAGAIN; breaking loop";
 

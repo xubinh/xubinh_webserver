@@ -181,7 +181,7 @@ void PollableFileDescriptor::_register_event() {
 
 void PollableFileDescriptor::_dispatch_active_events(util::TimePoint time_stamp
 ) {
-    // close event first for users set their flags
+    // deal with close event first, for users to set their flags
     if (_active_events & EventPoller::EVENT_TYPE_CLOSE) {
         if (_close_event_callback) {
             _close_event_callback();

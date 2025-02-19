@@ -199,16 +199,12 @@ public:
     SemiLockFreeSlabAllocator &operator=(SemiLockFreeSlabAllocator &&) = delete;
 
     ~SemiLockFreeSlabAllocator() noexcept {
-        {
-            MutexGuard lock(_mutex);
+        if (_allocated_chunks.empty()) {
+            return;
+        }
 
-            if (_allocated_chunks.empty()) {
-                return;
-            }
-
-            for (auto chunk : _allocated_chunks) {
-                ::free(chunk);
-            }
+        for (auto chunk : _allocated_chunks) {
+            ::free(chunk);
         }
     }
 
