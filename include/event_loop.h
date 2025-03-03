@@ -29,6 +29,7 @@ class EventLoop {
 private:
     using TimePoint = util::TimePoint;
     using TimeInterval = util::TimeInterval;
+    using EventfdPilotLampType = struct alignas(64) { std::atomic<bool> flag; };
 
 public:
     using FunctorType = std::function<void()>;
@@ -159,7 +160,7 @@ private:
     const size_t _number_of_functor_blocking_queues;
     std::vector<FunctorQueue *> _functor_blocking_queues;
     std::vector<Eventfd *> _eventfds;
-    std::vector<std::atomic<bool>> _eventfd_pilot_lamps;
+    std::vector<EventfdPilotLampType> _eventfd_pilot_lamps;
     bool _eventfd_triggered = false;
 
     Timerfd _timerfd;

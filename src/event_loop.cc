@@ -26,7 +26,7 @@ EventLoop::EventLoop(
 #endif
 
         _eventfds[i] = new Eventfd(Eventfd::create_eventfd(0), this);
-        auto &eventfd_pilot_lamp = _eventfd_pilot_lamps[i];
+        auto &eventfd_pilot_lamp = _eventfd_pilot_lamps[i].flag;
         _eventfds[i]->register_eventfd_message_callback(
             [this, &eventfd_pilot_lamp](uint64_t value) {
                 eventfd_pilot_lamp.store(false, std::memory_order_relaxed);
@@ -37,7 +37,7 @@ EventLoop::EventLoop(
 
         _eventfds[i]->start();
 
-        _eventfd_pilot_lamps[i].store(false, std::memory_order_relaxed);
+        _eventfd_pilot_lamps[i].flag.store(false, std::memory_order_relaxed);
     }
 
     _timerfd.register_timerfd_message_callback([this](uint64_t value) {
@@ -260,7 +260,7 @@ void EventLoop::_wake_up_this_loop(size_t functor_blocking_queue_index) {
 
     // send to eventfd only when the pilot lamp is off
     if (_eventfd_pilot_lamps[functor_blocking_queue_index]
-            .compare_exchange_strong(
+            .flag.compare_exchange_strong(
                 expected, true, std::memory_order_relaxed
             )) {
 
