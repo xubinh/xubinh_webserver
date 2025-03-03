@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.22)
 
 project(XubinhServer VERSION 1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wconversion -Wshadow")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wconversion -Wshadow -faligned-new")
 
 # set different configs for different build types
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")

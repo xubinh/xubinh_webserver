@@ -156,8 +156,8 @@ private:
         old_tail->_next.store(new_node, std::memory_order_release);
     }
 
-    Node *_head;
-    Node *_tail;
+    alignas(64) Node *_head;
+    alignas(64) Node *_tail;
 };
 
 } // namespace util

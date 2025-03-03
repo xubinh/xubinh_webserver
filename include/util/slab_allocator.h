@@ -176,6 +176,11 @@ private:
 
     using typename _Base::LinkedListNode;
 
+    struct TaggedLinkedListNodePtr {
+        LinkedListNode *node_ptr;
+        uint64_t tag;
+    };
+
 public:
     using typename _Base::value_type;
 
@@ -216,27 +221,26 @@ public:
             throw std::bad_alloc();
         }
 
-        LinkedListNode *old_head;
+        TaggedLinkedListNodePtr old_head =
+            _linked_list_of_free_slabs.load(std::memory_order_acquire);
+        TaggedLinkedListNodePtr new_head;
 
         do {
-            old_head =
-                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
-
             // if saw an empty list, allocates a new chunk and returns the
             // preserved slab directly
-            if (!old_head) {
+            if (!old_head.node_ptr) {
                 auto preserved_slab = _allocate_one_chunk();
 
                 return preserved_slab;
             }
+
+            new_head.node_ptr = old_head.node_ptr->next;
+            new_head.tag = old_head.tag + 1;
         } while (!_linked_list_of_free_slabs.compare_exchange_weak(
-            old_head,
-            old_head->next,
-            std::memory_order_relaxed,
-            std::memory_order_relaxed
+            old_head, new_head, std::memory_order_acquire
         ));
 
-        auto chosen_slab = reinterpret_cast<SlabType *>(old_head);
+        auto chosen_slab = reinterpret_cast<SlabType *>(old_head.node_ptr);
 
         return chosen_slab;
     }
@@ -252,17 +256,20 @@ public:
             ::abort();
         }
 
-        auto head = reinterpret_cast<LinkedListNode *>(slab);
+        TaggedLinkedListNodePtr old_head =
+            _linked_list_of_free_slabs.load(std::memory_order_relaxed);
+        TaggedLinkedListNodePtr new_head;
 
-        LinkedListNode *old_head;
+        new_head.node_ptr = reinterpret_cast<LinkedListNode *>(slab);
 
         do {
-            old_head =
-                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
-
-            head->next = old_head;
+            new_head.node_ptr->next = old_head.node_ptr;
+            new_head.tag = old_head.tag + 1;
         } while (!_linked_list_of_free_slabs.compare_exchange_weak(
-            old_head, head, std::memory_order_relaxed, std::memory_order_relaxed
+            old_head,
+            new_head,
+            std::memory_order_release,
+            std::memory_order_relaxed
         ));
     }
 
@@ -321,20 +328,26 @@ private:
             previous_node = current_node;
         }
 
-        auto head = current_node;
+        TaggedLinkedListNodePtr old_head =
+            _linked_list_of_free_slabs.load(std::memory_order_relaxed);
+        TaggedLinkedListNodePtr new_head;
 
-        LinkedListNode *old_head;
+        new_head.node_ptr = current_node;
 
+        // allocating a chunk is the same as deallocating slabs, so here we use
+        // the releasing semantics
         do {
-            old_head =
-                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
-
-            tail->next = old_head;
+            tail->next = old_head.node_ptr;
+            new_head.tag = old_head.tag + 1;
         } while (!_linked_list_of_free_slabs.compare_exchange_weak(
-            old_head, head, std::memory_order_relaxed, std::memory_order_relaxed
+            old_head,
+            new_head,
+            std::memory_order_release,
+            std::memory_order_relaxed
         ));
 
-        auto preserved_slab = reinterpret_cast<SlabType *>(head) + 1;
+        auto preserved_slab =
+            reinterpret_cast<SlabType *>(new_head.node_ptr) + 1;
 
         return preserved_slab;
     }
@@ -345,9 +358,10 @@ private:
 
     static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 4000;
 
-    std::atomic<LinkedListNode *> _linked_list_of_free_slabs{nullptr};
+    alignas(64) std::atomic<TaggedLinkedListNodePtr> _linked_list_of_free_slabs{
+        nullptr, 0};
 
-    std::vector<void *> _allocated_chunks;
+    alignas(64) std::vector<void *> _allocated_chunks;
     Mutex _mutex;
 };
 
@@ -493,6 +507,11 @@ private:
 
     using typename _Base::LinkedListNode;
 
+    struct TaggedLinkedListNodePtr {
+        LinkedListNode *node_ptr;
+        uint64_t tag;
+    };
+
     struct ChunkManager {
         ChunkManager() noexcept = default;
 
@@ -536,27 +555,26 @@ public:
             throw std::bad_alloc();
         }
 
-        LinkedListNode *old_head;
+        TaggedLinkedListNodePtr old_head =
+            _linked_list_of_free_slabs.load(std::memory_order_acquire);
+        TaggedLinkedListNodePtr new_head;
 
         do {
-            old_head =
-                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
-
             // if saw an empty list, allocates a new chunk and returns the
             // preserved slab directly
-            if (!old_head) {
+            if (!old_head.node_ptr) {
                 auto preserved_slab = _allocate_one_chunk();
 
                 return preserved_slab;
             }
+
+            new_head.node_ptr = old_head.node_ptr->next;
+            new_head.tag = old_head.tag + 1;
         } while (!_linked_list_of_free_slabs.compare_exchange_weak(
-            old_head,
-            old_head->next,
-            std::memory_order_relaxed,
-            std::memory_order_relaxed
+            old_head, new_head, std::memory_order_acquire
         ));
 
-        auto chosen_slab = reinterpret_cast<SlabType *>(old_head);
+        auto chosen_slab = reinterpret_cast<SlabType *>(old_head.node_ptr);
 
         return chosen_slab;
     }
@@ -572,17 +590,20 @@ public:
             ::abort();
         }
 
-        auto head = reinterpret_cast<LinkedListNode *>(slab);
+        TaggedLinkedListNodePtr old_head =
+            _linked_list_of_free_slabs.load(std::memory_order_relaxed);
+        TaggedLinkedListNodePtr new_head;
 
-        LinkedListNode *old_head;
+        new_head.node_ptr = reinterpret_cast<LinkedListNode *>(slab);
 
         do {
-            old_head =
-                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
-
-            head->next = old_head;
+            new_head.node_ptr->next = old_head.node_ptr;
+            new_head.tag = old_head.tag + 1;
         } while (!_linked_list_of_free_slabs.compare_exchange_weak(
-            old_head, head, std::memory_order_relaxed, std::memory_order_relaxed
+            old_head,
+            new_head,
+            std::memory_order_release,
+            std::memory_order_relaxed
         ));
     }
 
@@ -637,20 +658,26 @@ private:
             previous_node = current_node;
         }
 
-        auto head = current_node;
+        TaggedLinkedListNodePtr old_head =
+            _linked_list_of_free_slabs.load(std::memory_order_relaxed);
+        TaggedLinkedListNodePtr new_head;
 
-        LinkedListNode *old_head;
+        new_head.node_ptr = current_node;
 
+        // allocating a chunk is the same as deallocating slabs, so here we use
+        // the releasing semantics
         do {
-            old_head =
-                _linked_list_of_free_slabs.load(std::memory_order_relaxed);
-
-            tail->next = old_head;
+            tail->next = old_head.node_ptr;
+            new_head.tag = old_head.tag + 1;
         } while (!_linked_list_of_free_slabs.compare_exchange_weak(
-            old_head, head, std::memory_order_relaxed, std::memory_order_relaxed
+            old_head,
+            new_head,
+            std::memory_order_release,
+            std::memory_order_relaxed
         ));
 
-        auto preserved_slab = reinterpret_cast<SlabType *>(head) + 1;
+        auto preserved_slab =
+            reinterpret_cast<SlabType *>(new_head.node_ptr) + 1;
 
         return preserved_slab;
     }
@@ -661,16 +688,17 @@ private:
 
     static constexpr const size_t _NUMBER_OF_SLABS_PER_CHUNK = 4000;
 
-    static std::atomic<LinkedListNode *> _linked_list_of_free_slabs;
-    static ChunkManager _allocated_chunks;
+    alignas(64
+    ) static std::atomic<TaggedLinkedListNodePtr> _linked_list_of_free_slabs;
+    alignas(64) static ChunkManager _allocated_chunks;
 };
 
 // initialization of static members
 template <typename SlabType>
 std::atomic<
-    typename StaticSemiLockFreeSlabAllocator<SlabType>::LinkedListNode *>
+    typename StaticSemiLockFreeSlabAllocator<SlabType>::TaggedLinkedListNodePtr>
     StaticSemiLockFreeSlabAllocator<SlabType>::_linked_list_of_free_slabs{
-        nullptr};
+        TaggedLinkedListNodePtr{nullptr, 0}};
 template <typename SlabType>
 typename StaticSemiLockFreeSlabAllocator<SlabType>::ChunkManager
     StaticSemiLockFreeSlabAllocator<SlabType>::_allocated_chunks;

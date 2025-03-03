@@ -287,7 +287,7 @@ H/W path    Device    Class      Description
 
 ##### `lock_free_queue.h`
 
-- 定义了 lock free queue, 采用最简单的单生产者单消费者 (single-producer, single-consumer, spsc) 的形式, 支持按值形式和按指针形式存储对象.
+- 定义了 lock free queue, 采用最简单的单生产者单消费者 (single-producer, single-consumer, SPSC) 的形式 (多生产者多消费者的变种即为 Michael & Scott queue), 支持按值形式和按指针形式存储对象.
 
 ##### `mutex.h`
 
@@ -305,12 +305,16 @@ H/W path    Device    Class      Description
 
 - 定义了一系列 slab allocator, 包括:
   - simple slab allocator: 非静态 (即每个对象均维护一个独立的内存池) 单线程内存池. 内部使用简单的链表形式组织空闲 slab.
-  - semi lock-free slab allocator: 非静态半无锁多线程内存池. 内部使用无锁链表组织空闲 slab, 同时简单使用互斥锁保护 memory chunk 的分配.
+    - 应用于 TCP server 的用于管理 TCP 连接的 `std::map` 中.
+  - semi lock-free slab allocator: 非静态半无锁多线程内存池. 内部使用无锁栈组织空闲 slab, 同时简单使用互斥锁保护 memory chunk 的分配. 此外还使用了计数器以解决 ABA 问题, 并使用了缓存对齐以解决伪共享问题.
   - static simple slab allocator: 静态 (即在类静态成员中维护内存池) 单线程内存池. 内部同样使用简单的链表形式组织空闲 slab, 但为了能够对已分配的 memory chunk 进行释放还额外定义了类静态的帮手类 chunk manager 来管理 memory chunk.
   - static semi lock-free slab allocator: 静态半无锁多线程内存池. 实际上就是半无锁 + 静态二者结合的产物.
-  - static thread local slab allocator: 静态 thread local 多线程内存池. 由于无锁链表仍然无法避免多个线程关于同一个内存池的竞争性, thread local 内存池将内存池以 thread local 变量的形式进行维护, 每个线程拥有自己本地独立的内存池, 仅在必要的时候才会通过一个互斥锁访问一个所有线程共享的中心内存池 (例如其他线程的 slab 在本线程进行释放从而使得本线程的空闲 slab 积累过多的时候或是本线程的 slab 在其他线程进行释放从而导致本线程的 slab 泄漏过多的时候).
+    - 应用于 TCP 对象的 `std::shared_ptr` 的 inplace 内存分配中.
+  - static thread local slab allocator: 静态 thread local 多线程内存池. 由于无锁栈仍然无法避免多个线程关于同一个内存池的竞争性, thread local 内存池将内存池以 thread local 变量的形式进行维护, 每个线程拥有自己本地独立的内存池, 仅在必要的时候才会通过一个互斥锁访问一个所有线程共享的中心内存池 (例如其他线程的 slab 在本线程进行释放从而使得本线程的空闲 slab 积累过多的时候或是本线程的 slab 在其他线程进行释放从而导致本线程的 slab 泄漏过多的时候).
+    - 应用于 TCP 对象的 `std::shared_ptr` 的 inplace 内存分配中.
   - static simple thread local string slab allocator: 静态 thread local 多线程内存池. 每个线程具有自己独立的内存池, 并且内存池中按 2 的幂维护不同大小的空闲 slab 链表. 本类并没有实现线程间的空闲 slab 共享机制 (即中心内存池), 这是因为本类的使用场景一般满足 "本线程分配本线程释放" 的性质, 不存在线程间的 reclaiming 的需求.
-- 此外为了能够使 static simple thread local string slab allocator 用于标准库的 `std::basic_string`, 本文件还定义了一系列适配器函数, 例如 `std::to_string()`, `std::hash` 等等.
+    - 应用于 HTTP request, HTTP response, 以及 TCP buffer 中.
+- 此外为了能够使最后一个 static simple thread local string slab allocator 用于标准库的 `std::basic_string`, 本文件还定义了一系列适配器函数, 例如 `std::to_string()`, `std::hash` 等等.
 
 ##### `this_thread.h`
 
