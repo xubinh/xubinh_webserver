@@ -20,7 +20,7 @@ public:
         CleanUpHelper() = default;
 
         ~CleanUpHelper() {
-            if (_is_instantiated.load(std::memory_order_relaxed)) {
+            if (_is_instantiated.load(std::memory_order_acquire)) {
                 delete _log_collector_singleton_instance;
             }
         }
@@ -41,7 +41,7 @@ public:
             // released by CleanUpHelper instance
             _log_collector_singleton_instance = new LogCollector;
 
-            _is_instantiated.store(true, std::memory_order_relaxed);
+            _is_instantiated.store(true, std::memory_order_release);
 
             return _log_collector_singleton_instance;
         }();
