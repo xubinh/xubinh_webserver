@@ -48,8 +48,6 @@ ListenSocketfd::ListenSocketfd(int fd, EventLoop *event_loop)
 ListenSocketfd::~ListenSocketfd() {
     _close_spare_fd();
 
-    _pollable_file_descriptor.detach_from_poller();
-
     _pollable_file_descriptor.close_fd();
 
     LOG_INFO << "exit destructor: ListenSocketfd";
@@ -69,6 +67,10 @@ void ListenSocketfd::start() {
     _open_spare_fd();
 
     _pollable_file_descriptor.enable_read_event();
+}
+
+void ListenSocketfd::stop() {
+    _pollable_file_descriptor.detach_from_poller();
 }
 
 int ListenSocketfd::_accept_new_connection(

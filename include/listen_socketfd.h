@@ -45,6 +45,8 @@ public:
 
     void start();
 
+    void stop();
+
 private:
     // simple wrapper for `::accept` with return values unchanged
     static int _accept_new_connection(

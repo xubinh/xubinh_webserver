@@ -126,8 +126,9 @@ void TcpServer::stop() {
 
     LOG_INFO << "stopping listening for new connections...";
 
-    // stop accepting new connections
-    _listen_socketfd.reset();
+    // stop listening to new connection event (but still can accept new
+    // connections in the current round of loop)
+    _listen_socketfd->stop();
 
     LOG_INFO << "finished stopping listening for new connections";
 
