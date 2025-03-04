@@ -75,6 +75,8 @@ private:
     NewConnectionCallbackType _new_connection_callback;
 
     PollableFileDescriptor _pollable_file_descriptor;
+
+    bool _is_stopped = false;
 };
 
 } // namespace xubinh_server

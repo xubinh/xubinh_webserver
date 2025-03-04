@@ -70,7 +70,15 @@ void ListenSocketfd::start() {
 }
 
 void ListenSocketfd::stop() {
+    if (_is_stopped) {
+        LOG_ERROR << "listen socketfd stopped twice";
+
+        return;
+    }
+
     _pollable_file_descriptor.detach_from_poller();
+
+    _is_stopped = true;
 }
 
 int ListenSocketfd::_accept_new_connection(
@@ -132,6 +140,15 @@ void ListenSocketfd::_drop_connection_using_spare_fd() {
 
 void ListenSocketfd::_read_event_callback(util::TimePoint time_stamp) {
     LOG_TRACE << "entering ListenSocketfd::_read_event_callback";
+
+    // listen socket might be stopped after the thread pool had been stopped and
+    // joined, so we need to ensure we don't send any callbacks to the worker
+    // thread's already-destroyed functor queue.
+    if (_is_stopped) {
+        LOG_TRACE << "exiting ListenSocketfd::_read_event_callback";
+
+        return;
+    }
 
     for (int i = 0; i < _max_number_of_new_connections_at_a_time; i++) {
         LOG_TRACE << "accepting next connection...";
