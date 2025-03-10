@@ -24,7 +24,8 @@ void LogCollector::flush() {
 void LogCollector::take_this_log(const char *entry_address, size_t entry_size) {
     if (_need_output_directly_to_terminal) {
         ssize_t bytes_written =
-            ::write(STDERR_FILENO, entry_address, entry_size);
+            // ::write(STDERR_FILENO, entry_address, entry_size);
+            ::fwrite(entry_address, 1, entry_size, stderr);
 
         if (bytes_written != static_cast<ssize_t>(entry_size)) {
             ::fprintf(
@@ -150,10 +151,16 @@ void LogCollector::_background_io_thread_worker_functor() {
             _current_chunk_buffer_ptr =
                 std::move(spare_chunk_buffer_for_current_chunk_buffer);
 
-            if (!_spare_chunk_buffer_ptr) {
-                _spare_chunk_buffer_ptr =
-                    std::move(spare_chunk_buffer_for_spare_chunk_buffer);
+            // [TODO]: delete this line
+            if (_spare_chunk_buffer_ptr) {
+                throw std::runtime_error("never reaches here");
             }
+
+            // the spare will always be empty: in the normal case, the spare is
+            // moved to be used; in the flushing case, the spare is used
+            // manually to store the "flush\n" string
+            _spare_chunk_buffer_ptr =
+                std::move(spare_chunk_buffer_for_spare_chunk_buffer);
         }
 
         if (fulled_chunk_buffers_to_be_written.size()
@@ -189,19 +196,19 @@ void LogCollector::_background_io_thread_worker_functor() {
 
         fulled_chunk_buffers_to_be_written.resize(2);
 
-        if (!spare_chunk_buffer_for_current_chunk_buffer) {
-            spare_chunk_buffer_for_current_chunk_buffer =
-                std::move(fulled_chunk_buffers_to_be_written[0]);
-
-            spare_chunk_buffer_for_current_chunk_buffer->reset();
+        // [TODO]: delete this line
+        if (spare_chunk_buffer_for_current_chunk_buffer
+            || spare_chunk_buffer_for_spare_chunk_buffer) {
+            throw std::runtime_error("never reaches here");
         }
 
-        if (!spare_chunk_buffer_for_spare_chunk_buffer) {
-            spare_chunk_buffer_for_spare_chunk_buffer =
-                std::move(fulled_chunk_buffers_to_be_written[1]);
+        spare_chunk_buffer_for_current_chunk_buffer =
+            std::move(fulled_chunk_buffers_to_be_written[0]);
+        spare_chunk_buffer_for_spare_chunk_buffer =
+            std::move(fulled_chunk_buffers_to_be_written[1]);
 
-            spare_chunk_buffer_for_spare_chunk_buffer->reset();
-        }
+        spare_chunk_buffer_for_current_chunk_buffer->reset();
+        spare_chunk_buffer_for_spare_chunk_buffer->reset();
 
         fulled_chunk_buffers_to_be_written.clear();
 
@@ -220,6 +227,8 @@ void LogCollector::_stop(bool also_need_abort) {
     }
 
     _background_thread.join();
+
+    ::fflush(stderr);
 
     if (also_need_abort) {
         ::abort();

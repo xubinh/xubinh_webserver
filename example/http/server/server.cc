@@ -346,7 +346,7 @@ int main(int argc, char *argv[]) {
     xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
 #else
     xubinh_server::LogCollector::set_if_need_output_directly_to_terminal(false);
-    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::FATAL);
+    xubinh_server::LogBuilder::set_log_level(xubinh_server::LogLevel::INFO);
 #endif
     // [NOTE]: logging settings should also be configured as soon as possible so
     // that others can emit logs out without worries

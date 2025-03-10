@@ -186,7 +186,9 @@ H/W path    Device    Class      Description
 - 日志收集的关键是提高收集速度和尽可能降低慢速的硬盘 I/O 对收集速度的负面影响. 对于提高收集速度, log collector 类使用了主副两个日志 chunk 缓冲区来收集日志, 其中主缓冲区负责主要的收集工作, 而副缓冲区负责在高并发时主缓冲区不够用的情况下进行顶替, 如果副缓冲区也不够则直接在堆上动态分配内存. 另一方面, 对于降低硬盘 I/O 的负面影响, log collector 类主要是通过将日志的收集和写入硬盘分开执行来实现的, 其中工作线程负责调用前台的 `.take_this_log()` 收集日志, 而后台的日志线程则负责将日志写入硬盘, 写入硬盘的逻辑位于 `._background_io_thread_worker_functor()` 函数中.
 - log collector 类支持 flush 操作, 这是通过定义一个 atomic 标志位 `._need_flush` 来做到的. 后台的日志线程通过在循环中检查该标志位来判断是否需要 flush.
 - log collector 类还支持 abort 操作, 即直接在日志层面对进程执行终止, 后台线程将负责在终止之前将剩余的日志写入文件.
-- 对于 log collector 单例对象的生命周期的管理, 本项目采用的方案是使用另一个 clean up helper 类来管理 log collector 类的单例对象的析构. 这么做的理由是有的时候全局对象会早于 log collector 的单例对象进行构造并反过来晚于 log collector 的单例对象进行析构, 而该全局对象的析构函数中有可能还要用到 log collector 的单例对象, 但此时单例对象已经被析构, 从而导致悬空指针的问题. 为了解决这一问题, log collector 并不将单例对象以静态全局对象的形式进行创建, 而是在堆上进行动态分配并将单例对象的指针传递给 clean up helper 类来进行手动析构, 这样做用户便能通过手动控制 clean up helper 类对象的构造时机来间接 (且精确地) 控制 log collector 单例对象的析构时机.
+- 对于 log collector 单例对象的生命周期的管理, 本项目采用的方案是使用另一个 clean up helper 类来管理 log collector 类的单例对象的析构. 这么做的原因是有的时候全局对象会早于 log collector 的单例对象进行构造并反过来晚于 log collector 的单例对象进行析构, 而该全局对象的析构函数中有可能还要用到 log collector 的单例对象, 此时单例对象可能已经被析构, 从而导致悬空指针的问题. 为了解决这一问题, log collector 直接手动在堆上对单例对象进行动态分配并将得到的指针交给 clean up helper 类进行析构, 这样便能通过控制 clean up helper 类对象的构造时机来间接 (且精确) 地控制 log collector 单例对象的析构时机.
+  - 但这一方法仅限同一个 translation unit 中的情况, 由于不同 translation unit 中的全局对象的初始化顺序并没有被良定义, 因此用户必须确保其他任何 translation unit 中均不存在引用日志线程单例对象的全局变量, 否则本方法将失效. 这一点很容易做到, 毕竟要引用日志线程单例对象就必然要创建日志线程, 而一个程序员本来就应当避免在全局变量中创建线程.
+  - 如果仍然考虑局部静态变量的单例模式, 那么用户需要确保任何用到 log collector 单例对象的其他对象在 main 函数中被析构. 这可能还不如一开始手动定义一个 clean up helper 类的对象然后撒手不管来得方便.
 
 #### `log_file.h`
 

@@ -122,11 +122,23 @@ public:
     }
 
     LogBuilder &operator<<(const std::string &a_string) {
-        return *this << a_string.c_str();
+        const auto string_length = a_string.length();
+
+        if (string_length > 0) {
+            _entry_buffer.append(a_string.c_str(), string_length);
+        }
+
+        return *this;
     }
 
     LogBuilder &operator<<(const util::string &a_string) {
-        return *this << a_string.c_str();
+        const auto string_length = a_string.length();
+
+        if (string_length > 0) {
+            _entry_buffer.append(a_string.c_str(), string_length);
+        }
+
+        return *this;
     }
 
 private:
