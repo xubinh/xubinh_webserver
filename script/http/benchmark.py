@@ -219,6 +219,19 @@ def main(print_to_terminal: bool = False):
                     file.write(stderr_data or b"<empty>")
                     file.write(b"\n")
 
+        else:
+            assert server_process.stderr
+
+            stderr_data = server_process.stderr.read()
+
+            assert stderr_data
+
+            max_number_of_connections: int = int(
+                re.findall(rb"Max number of connections: (\d+)", stderr_data)[0]
+            )
+
+            print(f"Max number of connections: {max_number_of_connections}")
+
         test_results.append(succeed_number)
 
     # queries per test

@@ -140,6 +140,8 @@ private:
     size_t _thread_pool_capacity = 0;
     ThreadInitializationCallbackType _thread_initialization_callback;
     std::unique_ptr<EventLoopThreadPool> _thread_pool_ptr;
+
+    uint64_t _max_number_of_connections = 0;
 };
 
 } // namespace xubinh_server

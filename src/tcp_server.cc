@@ -45,6 +45,10 @@ TcpServer::~TcpServer() {
     // for the case where worker threads got blocked and thread pool
     // couldn't get destroyed
     LogCollector::flush();
+
+    ::fprintf(
+        stderr, "Max number of connections: %ld\n", _max_number_of_connections
+    );
 }
 
 void TcpServer::start() {
@@ -234,6 +238,9 @@ void TcpServer::_new_connection_callback(
     if (!insert_result.second) {
         LOG_FATAL << "execution flow never reaches here (in real world case)";
     }
+
+    _max_number_of_connections =
+        std::max(_max_number_of_connections, _tcp_connect_socketfds.size());
 
     auto &new_tcp_connect_socketfd_ptr = insert_result.first->second;
 
