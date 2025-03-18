@@ -153,6 +153,9 @@ private:
     void _push(Node *new_node) {
         Node *old_tail = _tail;
         _tail = new_node;
+
+        // here we need to ensure the content of `new_node` is visible to the
+        // consumer when we publish it
         old_tail->_next.store(new_node, std::memory_order_release);
     }
 
