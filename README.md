@@ -1,85 +1,16 @@
 # xubinh's webserver
 
-## <a id="toc"></a>目录
+## 目录
 
-<details><summary><a href="#1">部署本项目</a></summary>
-</details>
+- [部署](#%E9%83%A8%E7%BD%B2)
+- [性能改进与基准测试](#%E6%80%A7%E8%83%BD%E6%94%B9%E8%BF%9B%E4%B8%8E%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
+  - [与其他项目的横向比较](#%E4%B8%8E%E5%85%B6%E4%BB%96%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
+  - [测试机硬件参数](#%E6%B5%8B%E8%AF%95%E6%9C%BA%E7%A1%AC%E4%BB%B6%E5%8F%82%E6%95%B0)
+- [日志框架基准测试](#%E6%97%A5%E5%BF%97%E6%A1%86%E6%9E%B6%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
+- [项目文档](#%E9%A1%B9%E7%9B%AE%E6%96%87%E6%A1%A3)
+- [杂项](#%E6%9D%82%E9%A1%B9)
 
-<details open="open"><summary><a href="#2">HTTP 服务器性能改进 & 基准测试</a></summary>
-
-- <a href="#2.1">与其他项目的横向比较</a>
-
-</details>
-
-<details><summary><a href="#3">日志框架基准测试</a></summary>
-
-- <a href="#3.1">测试机硬件参数</a>
-
-</details>
-
-<details><summary><a href="#4">项目文档</a></summary>
-
-- <a href="#4.1">`include/`</a>
-  - <a href="#4.1.1">`event_loop.h`</a>
-  - <a href="#4.1.2">`event_loop_thread.h`</a>
-  - <a href="#4.1.3">`event_loop_thread_pool.h`</a>
-  - <a href="#4.1.4">`event_poller.h`</a>
-  - <a href="#4.1.5">`eventfd.h`</a>
-  - <a href="#4.1.6">`inet_address.h`</a>
-  - <a href="#4.1.7">`listen_socketfd.h`</a>
-  - <a href="#4.1.8">`log_buffer.h`</a>
-  - <a href="#4.1.9">`log_builder.h`</a>
-  - <a href="#4.1.10">`log_collector.h`</a>
-  - <a href="#4.1.11">`log_file.h`</a>
-  - <a href="#4.1.12">`pollable_file_descriptor.h`</a>
-  - <a href="#4.1.13">`preconnect_socketfd.h`</a>
-  - <a href="#4.1.14">`signalfd.h`</a>
-  - <a href="#4.1.15">`socketfd.h`</a>
-  - <a href="#4.1.16">`tcp_buffer.h`</a>
-  - <a href="#4.1.17">`tcp_client.h`</a>
-  - <a href="#4.1.18">`tcp_connect_socketfd.h`</a>
-  - <a href="#4.1.19">`tcp_server.h`</a>
-  - <a href="#4.1.20">`timer.h`</a>
-  - <a href="#4.1.21">`timer_container.h`</a>
-  - <a href="#4.1.22">`timer_identifier.h`</a>
-  - <a href="#4.1.23">`timerfd.h`</a>
-  - <a href="#4.1.24">`util/`</a>
-    - <a href="#4.1.24.1">`address_of.h`</a>
-    - <a href="#4.1.24.2">`alignment.h`</a>
-    - <a href="#4.1.24.3">`any.h`</a>
-    - <a href="#4.1.24.4">`blocking_queue.h`</a>
-    - <a href="#4.1.24.5">`condition_variable.h`</a>
-    - <a href="#4.1.24.6">`datetime.h`</a>
-    - <a href="#4.1.24.7">`errno.h`</a>
-    - <a href="#4.1.24.8">`format.h`</a>
-    - <a href="#4.1.24.9">`lock_free_queue.h`</a>
-    - <a href="#4.1.24.10">`mutex.h`</a>
-    - <a href="#4.1.24.11">`mutex_guard.h`</a>
-    - <a href="#4.1.24.12">`physical_file.h`</a>
-    - <a href="#4.1.24.13">`slab_allocator.h`</a>
-    - <a href="#4.1.24.14">`this_thread.h`</a>
-    - <a href="#4.1.24.15">`thread.h`</a>
-    - <a href="#4.1.24.16">`time_point.h`</a>
-    - <a href="#4.1.24.17">`type_name.h`</a>
-    - <a href="#4.1.24.18">`type_traits.h`</a>
-
-</details>
-
-<details><summary><a href="#5">杂项</a></summary>
-
-- <a href="#5.1">WebBench</a>
-  - <a href="#5.1.1">安装</a>
-  - <a href="#5.1.2">使用示例</a>
-  - <a href="#5.1.3">参考资料</a>
-- <a href="#5.2">muduo 项目中所采用的抽象</a>
-  - <a href="#5.2.1">参考资料</a>
-- <a href="#5.3">待办</a>
-
-</details>
-
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
-
-## <a id="1"></a>部署本项目
+## 部署
 
 编译并启动 HTTP 服务器:
 
@@ -89,7 +20,7 @@
 
 然后在浏览器中访问 `http://127.0.0.1:8080/` 即可.
 
-## <a id="2"></a>HTTP 服务器性能改进 & 基准测试
+## 性能改进与基准测试
 
 执行以下命令进行基准测试:
 
@@ -97,7 +28,7 @@
 ./script/http/benchmark.py 10 15 # 单次测试持续 10 秒, 连续执行 15 次测试
 ```
 
-| 性能改进描述 (由新到旧 ↓)                                                                                             | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
+| 改进描述 (由新到旧 ↓)                                                                                             | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
 | 将 **TCP 对象**的**析构**工作从主线程**转移**至单独的工作线程                                                         | 51,082     | -          | [`be36b79`](https://github.com/xubinh/xubinh_webserver/commit/be36b790209f679ff0f875d299e49904badb663b) |
 | 实现了**字符串内存分配器** ([slab_allocator.h](include/util/slab_allocator.h)), 并将其应用于 TCP 连接与 HTTP 服务器中 | **53,298**     | -          | [`9c797f6`](https://github.com/xubinh/xubinh_webserver/commit/9c797f6ed348811936dcc555dc6ff3fe8e7c116b) |
@@ -122,15 +53,29 @@
 | 在主线程中为每个工作线程配备独立的回调队列                                                                            | 37,852     | 80,460     | [`c48a407`](https://github.com/xubinh/xubinh_webserver/commit/c48a4075680bf022096cc6e4103ac98512d669dd) |
 | 初代稳定版本                                                                                                          | 38,661     | 84,392     | [`2794336`](https://github.com/xubinh/xubinh_webserver/commit/2794336a6d619f14d15ef84f438e6b60ec934310) |
 
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
-
-### <a id="2.1"></a>与其他项目的横向比较
+### 与其他项目的横向比较
 
 | 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                           |
 | ---------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------ |
 | [linyacool/WebServer](https://github.com/xubinh/WebServer) | 36,062     | 86,438     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
 
-## <a id="3"></a>日志框架基准测试
+### 测试机硬件参数
+
+```text
+$ sudo lshw -short
+H/W path    Device    Class      Description
+============================================
+                      system     Computer
+/0/0                  memory     16GiB System memory
+/0/1                  processor  Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
+/0/7/0.0.0  /dev/sda  volume     388MiB Virtual Disk
+/0/7/0.0.1  /dev/sdb  volume     4GiB Virtual Disk
+/0/7/0.0.2  /dev/sdc  volume     256GiB Virtual Disk
+```
+
+注: 所有测试均在单机环境下完成.
+
+## 日志框架基准测试
 
 执行以下命令进行基准测试:
 
@@ -150,31 +95,11 @@
 | spdlog             | 0.260904 秒 | 3832833 条/秒 |
 | xubinh log builder | 0.177555 秒 | 5632055 条/秒 |
 
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
+## 项目文档
 
-### <a id="3.1"></a>测试机硬件参数
+### `include/`
 
-```text
-$ sudo lshw -short
-H/W path    Device    Class      Description
-============================================
-                      system     Computer
-/0/0                  memory     16GiB System memory
-/0/1                  processor  Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
-/0/7/0.0.0  /dev/sda  volume     388MiB Virtual Disk
-/0/7/0.0.1  /dev/sdb  volume     4GiB Virtual Disk
-/0/7/0.0.2  /dev/sdc  volume     256GiB Virtual Disk
-```
-
-注: 所有测试均在单机环境下完成.
-
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
-
-## <a id="4"></a>项目文档
-
-### <a id="4.1"></a>`include/`
-
-#### <a id="4.1.1"></a>`event_loop.h`
+#### `event_loop.h`
 
 - 定义了 event loop 类, 用于对**事件循环**进行抽象. 每个 event loop 封装了如下成员:
   - 一个 event poller;
@@ -187,14 +112,14 @@ H/W path    Device    Class      Description
 - **使用多个 functor queue** 的理由是如果主线程的 event loop 只使用一个 queue 作为外部所有工作线程的交流媒介, 那么这个 queue 可能成为**性能的瓶颈** (在本项目中不明显, 但在大规模并发场景下可能发生). 为了能够使主线程的 event loop 能够分别为每个工作线程维护一个 functor queue, 这里直接将 event loop 的 functor queue 从根本上设计为了数量可拓展的, 于是主线程可根据工作线程的数量自由选择配套的 functor queue 的数量, 而工作线程则仍然使用默认的单个 functor queue.
 - **为了进一步降低并发竞争程度**, 每个 eventfd 使用了一个配套的 atomic 标志位来表示其是否被触发, 只有在确认没有被触发时才会执行 eventfd 的系统调用; 另一方面 timerfd 也只会在本次更新能够将定时器的触发时间点提前到一定阈值时 (例如提早 3 秒) 才会执行 timerfd 的系统调用.
 
-#### <a id="4.1.2"></a>`event_loop_thread.h`
+#### `event_loop_thread.h`
 
 - event loop thread 类的主要作用是作为**从事件循环** event loop 类**到工作线程** thread 类的**适配器**, 将 event loop 类的 `.loop()` 方法适配为 thread 类能够执行的通用的无参数无返回值的 worker function, 同时也能作为对专门执行事件循环的 (工作) 线程的抽象并为外界提供一个**简单且统一的接口**.
 - 成员函数 `._worker_function()` 的作用便是对 event loop 类的 `.loop()` 方法进行适配, 其大意是在线程栈帧中创建一个 event loop 对象, 通知主线程该对象已经创建, 然后调用该 event loop 对象的 `.loop()` 方法.
 - 成员函数 `.start()` 的大意是主线程创建并启动工作线程, 然后进入睡眠并等待工作线程创建 event loop 对象, 等到工作线程创建好 event loop 对象之后便会唤醒主线程.
   - 之所以主线程需要等待工作线程是因为 event loop 对象是在工作线程的栈帧中创建的, 而为了确保工作线程状态的原子性主线程又必须等待 event loop 对象创建好才能继续执行, 因此主线程必须等待工作线程的信号. 这是通过设置一个对应的信号量来做到的.
 
-#### <a id="4.1.3"></a>`event_loop_thread_pool.h`
+#### `event_loop_thread_pool.h`
 
 - event loop thread pool 类的主要作用是对**线程池**进行抽象. 内部使用了一个 `std::vector` 来管理多个 event loop thread 的 `std::shared_ptr`.
 - 线程池选择**下一个线程**时使用的是 **Round-robin 算法**, 等价于将所有线程排成环然后按顺时针依次选取每一个线程. Round-robin 算法的优点是每个线程的任务的个数平均, 而缺点也是平均, 因为有可能一个任务就耗尽了一个线程的 CPU 时间从而导致其他分配到该线程的任务饥饿, 但在 TCP 服务器的情况下我们可以期望每个 TCP 连接的任务的负载基本上是相同的, 此时 Round-robin 算法是最为合适的.
@@ -202,37 +127,37 @@ H/W path    Device    Class      Description
 - 线程池的停止遵循两步原则, 首先是通过 `.stop()` 方法通知各个工作线程的 event loop 尽快停止执行并跳出循环, 然后通过 `.is_joinable()` 方法轮询线程池中的各个线程是否能够 join 并在确认能够 join 之后再执行 join.
   - 之所以要将线程池的停止分解为 stop 和 join 两步是因为 HTTP 服务器需要支持**优雅停机**, 为了能够在 shutdown 之前处理完所有待处理的 TCP 连接, event loop 仍然有可能 emit 出来一些 functor 至主线程的阻塞队列中, 如果主线程在 stop 之后立即执行 join, 就有可能因为工作线程等待主线程的阻塞队列空出位置并且主线程等待工作线程因而无法将阻塞队列空出位置而导致死锁.
 
-#### <a id="4.1.4"></a>`event_poller.h`
+#### `event_poller.h`
 
 - event poller 类的主要作用是**对 epoll 系列的系统调用进行封装**, 其中构造函数负责创建 epoll fd, `.register_event_for_fd()` 方法负责调用 `epoll_ctl()` 来为指定的普通 fd 注册事件, `.poll_for_active_events_of_all_fds()` 方法负责调用 `epoll_wait()` 来监听活跃事件.
 
-#### <a id="4.1.5"></a>`eventfd.h`
+#### `eventfd.h`
 
 - eventfd 类的主要作用是**封装 eventfd 系列的系统调用**, 其中 `.increment_by_value()` 方法负责向 eventfd 中递增指定的整数值, `._retrieve_the_sum()` 方法负责从 eventfd 中读取整数值.
 
-#### <a id="4.1.6"></a>`inet_address.h`
+#### `inet_address.h`
 
 - inet address 类主要是**对 `sockaddr_xxx` 系列的数据结构以及一些相关的系统调用进行封装**.
 - 每个 inet address 类的对象在创建之后即为有效, 也就是说不允许先创建一个临时的 inet address 对象然后填入相关信息. 这是通过强制删除默认构造函数来做到的. 这么做的理由是 inet address 对象支持对内部的 socket 地址的信息进行查询, 例如是否为 IPv4, 端口号是多少等等, 而强制 inet address 类的对象在创建之后有效则能够确保用户在查询信息时内部的 socket 地址总是有效的, 从而降低思维负担.
 
-#### <a id="4.1.7"></a>`listen_socketfd.h`
+#### `listen_socketfd.h`
 
 - listen socketfd 类的作用是对**监听套接字** (listening socket) 进行抽象, 同时收纳并封装一些与 listening socket 有关的系统调用.
 - listen socketfd 对象**默认运行在 LT 模式且为非阻塞的**. 之所以不选择 ET 模式是因为当系统当前打开的文件描述符达到上限时需要跳出循环并前去关闭已经停止但仍然空占文件描述符的 TCP 连接, 但此时监听队列中可能仍然存在已经建立的 TCP 连接未被读取, 这与 edge-triggered 模式的原则相悖, 并可能导致一种 "客户端等待服务器接起连接, 而服务器等待客户端发来新连接以便重新启动循环" 的死锁情况. 另一方面, 之所以不选择 blocking 则是考虑到并发性能问题, 因为如果选择 blocking, 那么我们就无法通过 "尝试接起连接" 这个动作来判断当前是否还有连接, 于是我们就只能一次接起一条连接并通过 level-triggered 模式的特性来判断当前是否还有连接, 这是十分低效的, 通过选择 non-blocking 我们便能够在同一次循环中连续接起多个连接, 提高并发性能.
 
-#### <a id="4.1.8"></a>`log_buffer.h`
+#### `log_buffer.h`
 
 - log buffer 类提供的是对**定长字符串缓冲区**的抽象. 其中缓冲区的大小通过模板参数在编译期进行指定. 本项目仅仅预定义了两种不同的缓冲区大小, 分别是 log **entry** buffer size (4 KB) 和 log **chunk** buffer size (4 MB), 前者用于单个线程的单条日志字符串的存储, 后者用于收集并存储所有线程发送过来的日志字符串. 两种大小所对应的类型通过模板的显式实例化 (explicit instantiation) 进行定义, 避免代码膨胀.
 - log buffer 类内部封装了一个 `char[]` 内置数组类型的成员, 并封装了一系列查询函数以及一个 `.append()` 成员函数来支持字符串的构建.
 
-#### <a id="4.1.9"></a>`log_builder.h`
+#### `log_builder.h`
 
 - log builder 类是**日志系统向用户开放的接口**, 提供了一系列宏 (例如 `LOG_INFO` 等) 以及一系列流式输出运算符 `<<` 的重载来支持日志信息的构建.
 - 每个形如 `LOG_INFO` 的宏的内部实际上创建了一个临时的 log builder 对象, 然后通过在该对象上调用重载的 `<<` 运算符来格式化字符串并构建日志信息. 当这个临时的 log builder 对象销毁时, 其内部会自动调用 log collector 类的函数以将其构建好的日志信息发送至后台的日志收集线程处.
 - 使用临时对象的好处是存储空间直接在栈上开辟, 无需动态分配内存, 从而能够最大限度提升日志系统的效率, 这也是为什么需要 log buffer 类提供编译期已知的大小的原因.
 - 为了进一步加速日志的构建, 在日志信息的格式化方面本类也下足了功夫, 例如定义了编译期函数来获取 `__FILE__` 和 `__FUNCTION__` 等编译期字符串的属性, 通过 time point 类提供的时间戳缓存机制提高时间戳字符串的构建速度, 通过 this thread 命名空间提供的 tid 缓存机制提高 tid 字符串的构建速度, 以及使用哈希表提高指针字符串的构建速度等等.
 
-#### <a id="4.1.10"></a>`log_collector.h`
+#### `log_collector.h`
 
 - log collector 类使用**单例模式**实现了**日志的后台收集系统**. 其大意是将日志收集系统的逻辑放到一个工作函数 `._background_io_thread_worker_functor()` 中并启动一个 thread 对象来执行, 然后其他线程通过调用 `.get_instance()` 函数来获取单例对象并通过调用 `.take_this_log()` 方法发送日志至后台线程.
 - log collector 类在后台线程的栈中创建了一个 log file 类对象来与硬盘文件进行交互并写入日志.
@@ -245,121 +170,121 @@ H/W path    Device    Class      Description
   - 但这一方法**仅限**同一个 translation unit 中的情况. 由于不同 translation unit 中的全局对象的初始化顺序并没有被良定义, 因此用户必须确保其他任何 translation unit 中均不存在引用日志线程单例对象的全局变量, 否则本方法将失效. **这一点很容易做到**, 毕竟要引用日志线程单例对象就必然要创建日志线程, 而一个程序员本来就应当避免在全局变量中创建线程.
   - 如果仍然考虑**局部静态变量的单例模式**, 那么用户需要确保任何用到 log collector 单例对象的其他对象在 main 函数中被析构. 这可能还**不如**一开始手动定义一个 clean up helper 类的对象然后撒手不管来得方便.
 
-#### <a id="4.1.11"></a>`log_file.h`
+#### `log_file.h`
 
 - log file 类用于**对一个大小无限的物理文件进行抽象**, 其基本思路是在内部维护一个 append only physical file 类型的指针指向当前文件, 并在当前文件的大小超出一定阈值时及时更换文件.
 - 更换文件的条件除了文件大小超出阈值以外, 还包括每天一次的强制切换文件.
 - 此外除了更换文件, log file 类还会每隔一定的时间间隔将内存中的文件内容 flush 至硬盘中.
 
-#### <a id="4.1.12"></a>`pollable_file_descriptor.h`
+#### `pollable_file_descriptor.h`
 
 - pollable file descriptor 类用于**对 "可监听事件的文件描述符" 这一概念进行抽象**, 在文件描述符 fd 和事件循环 event loop 之间建立起桥梁, 并作为各个具体分化的文件描述符类型的基本构成部分.
 - 每个 pollable file descriptor 类的对象通过一组 `.register_xxx_callback()` 方法来允许外部用户将自定义的回调注册至该对象中, 并通过另一组 `.enable_xxx_event()` 方法注册监听事件至 event loop 中. 当 event loop 监听到活跃事件后便会调用 pollable file descriptor 的 `.dispatch_active_events()` 方法对活跃事件进行分发 (即调用各个事件对应的回调).
 - 由于各个事件对应的回调函数是外部用户通过注册进行设置的, pollable file descriptor 对象本身无法确保外部用户用于注册回调的对象的生命周期必然长于其本身, 即有可能出现回调函数执行到一半而外部对象却开始析构, 或是外部对象已经析构而导致回调函数访问悬空指针的问题, 为了解决这一问题, pollable file descriptor 类支持外部用户注册一个 `std::weak_ptr` 弱引用来确保生命周期不变量的正确性. 对于对象依赖于 pollable file descriptor 但与其分离的情况, 这样做能够避免执行回调函数, 而对于对象依赖于 pollable file descriptor 并且将其包含的情况 (例如一个启用了 `std::enable_shared_from_this<T>` 的类), 这样做能够阻止外部对象本身早于 pollable file descriptor 对象被析构.
 
-#### <a id="4.1.13"></a>`preconnect_socketfd.h`
+#### `preconnect_socketfd.h`
 
 - preconnect socketfd 类用于**对客户端连接服务器的过程进行抽象**, 包括连接, 重试, 以及超时退出等等.
 - preconnect socketfd 类并不是对文件描述符的抽象, 这是因为 preconnect socketfd 仅负责连接, 连接成功后底层的 socket fd 则需要转移至真正的文件描述符类型的对象中.
 - 为了支持重试, preconnect socketfd 内部使用了定时器 timer 来注册重试回调, 并在重试一定次数之后执行超时错误处理回调并退出.
 
-#### <a id="4.1.14"></a>`signalfd.h`
+#### `signalfd.h`
 
 - signalfd 类**封装了 signalfd 相关的系统调用**, 包括信号的屏蔽与信号的监听等等. 此外还定义了一个帮手类 signal set 来简化关于信号集合的操作.
 - 使用 signalfd 类的基本流程为: 首先在主线程中 (且在创建任何线程之前) 屏蔽所有信号, 然后初始化 signalfd 对象并注册用户自定义的信号处理函数. 由于信号在主线程中被屏蔽, 任何线程通过继承主线程的信号掩码同样屏蔽了信号, 因此无需关心对信号的处理, 而主线程通过读取 signalfd 来获取由于被屏蔽而转入 pending 队列中的所有信号并进行分发. 由于用户注册给 signalfd 的回调可能涉及到对 signalfd 自身的停止, 因此 signalfd 有可能需要在信号处理函数之前进行定义, 并在信号屏蔽之后再进行初始化 (因为 signalfd 内部有可能创建日志线程), 这可以通过定义一个 `std::unique_ptr` 并惰性构造来做到.
 - 由于 signalfd 的析构函数有可能也使用了日志线程, 因此日志线程的 clean up 对象必须放在 signalfd 的 `st::unique_ptr` 之前进行初始化.
 
-#### <a id="4.1.15"></a>`socketfd.h`
+#### `socketfd.h`
 
 - socketfd 类实际上就是一个归纳了若干个 socket 相关的系统调用的 struct 空结构体.
 
-#### <a id="4.1.16"></a>`tcp_buffer.h`
+#### `tcp_buffer.h`
 
 - tcp buffer 类用于**对变长的字符串缓冲区进行抽象**, 其内部使用了 `std::string` 作为默认容器, 并通过直接对底层的指针进行操作来最大化缓冲区的性能.
 
-#### <a id="4.1.17"></a>`tcp_client.h`
+#### `tcp_client.h`
 
 - tcp client 类用于**对 TCP 客户端进行抽象**, 每个 TCP 客户端对象内部仅包含一条 TCP 连接. TCP 客户端对象首先使用 preconnect socketfd 与服务器进行连接, 然后在连接成功之后将底层的 socket fd 转交给 tcp connect socketfd 来进行处理.
 
-#### <a id="4.1.18"></a>`tcp_connect_socketfd.h`
+#### `tcp_connect_socketfd.h`
 
 - tcp connect socketfd 类用于**对 TCP 连接进行抽象**, 通过精心设计 TCP 连接状态的转移来确保连接的正确性与稳定性. 此外还支持用户注册一个自定义的上下文对象来保持事务在多个离散的事件之间的逻辑上的连续性.
 
-#### <a id="4.1.19"></a>`tcp_server.h`
+#### `tcp_server.h`
 
 - tcp server 类用于**对 TCP 服务器进行抽象**, 支持高并发场景下的连接建立与释放. 其大意是使用 listen socketfd 来建立客户端 TCP 连接, 使用一个 `std::map` 来存储并索引 TCP 连接, 并维护一个线程池来将 TCP 连接的实际工作转移至工作线程.
 - 为了降低高并发情况下动态分配 TCP 连接内存所带来的消耗, tcp server 类使用了 simple slab allocator 类来管理 TCO 连接的内存分配.
 - 此外 tcp server 类还支持将 TCP 连接的析构工作转移至后台线程进行, 主线程只需负责接起连接, 从而提高并发效率.
 
-#### <a id="4.1.20"></a>`timer.h`
+#### `timer.h`
 
 - timer 类负责**对单个定时器元素进行抽象**. 一个定时器包括一个过期时间 expiration time point, 一个重复间隔 repetition time interval, 一个间隔次数 number of repetitions left, 以及一个回调函数 callback.
 
-#### <a id="4.1.21"></a>`timer_container.h`
+#### `timer_container.h`
 
 - timer container 类负责**对定时器容器进行抽象**. 容器默认使用 `std::set` 来对定时器进行存储, 其中每个定时器的内存是动态分配的, 容器仅存储定时器的指针. 而之所以选择 `std::set` 是因为多个定时器有可能具有相同的时间戳, 使用 `std::set` 方便同时关于时间戳以及定时器的指针建立全序, 方便定时器的查找.
 
-#### <a id="4.1.22"></a>`timer_identifier.h`
+#### `timer_identifier.h`
 
 - timer identifier 类用于**对 "定时器的唯一 token" 这一概念进行抽象**, 其中每个 timer identifier 的内部包含一个定时器 timer 的指针, 用户通过 timer identifier 类的对象来标识某个定时器, 从而避免将定时器的指针暴露给用户.
 
-#### <a id="4.1.23"></a>`timerfd.h`
+#### `timerfd.h`
 
 - timerfd 类用于**对 timerfd 相关的系统调用进行封装**, 类似于 signalfd 与 eventfd.
 
-#### <a id="4.1.24"></a>`util/`
+#### `util/`
 
-##### <a id="4.1.24.1"></a>`address_of.h`
+##### `address_of.h`
 
 - 定义了通用的 `address_of` 函数, 用于获取对象的地址. 之所以需要该函数是因为有的类型可能重载了取值运算符 `&`, 无法直接获取地址.
 
-##### <a id="4.1.24.2"></a>`alignment.h`
+##### `alignment.h`
 
 - 封装了**内存对齐**相关的一系列帮手函数, 其中最重要的是 `aalloc` 函数, 用于分配对齐的内存空间.
 
-##### <a id="4.1.24.3"></a>`any.h`
+##### `any.h`
 
 - any 类使用**类型擦除**为用户提供了注册**任意类型的上下文对象**的功能, 主要模仿自 boost::any, 并以此为基础做了一些修改. 主要是优化了使用手法, 例如改为使用 `any_cast<T *>(t_ptr)` 而不是 `any_cast<T>(t_ptr)` 等等.
 - 注: any 类仅经过本项目的示例程序的测试, 未经过全面测试.
 
-##### <a id="4.1.24.4"></a>`blocking_queue.h`
+##### `blocking_queue.h`
 
 - blocking queue 类用于**对大小有限的阻塞队列进行抽象**, 其中对象的存储可以选择按值存储或按指针存储, 这可以通过设置编译选项来进行控制.
 
-##### <a id="4.1.24.5"></a>`condition_variable.h`
+##### `condition_variable.h`
 
 - condition variable 类**封装了 pthread 库的条件变量相关的 API**.
 
-##### <a id="4.1.24.6"></a>`datetime.h`
+##### `datetime.h`
 
 - datetime 类**封装了以毫秒为单位的时间戳相关的 API**.
 
-##### <a id="4.1.24.7"></a>`errno.h`
+##### `errno.h`
 
 - 定义了 `strerror_tl` 函数, 用于以 thread local 的方式获取 errno 的字符串表示, 确保线程安全.
 
-##### <a id="4.1.24.8"></a>`format.h`
+##### `format.h`
 
 - 定义了 format 类用于收纳一系列与编译期字符串格式化相关的函数, 主要用于加速日志的构建.
 
-##### <a id="4.1.24.9"></a>`lock_free_queue.h`
+##### `lock_free_queue.h`
 
 - 定义了 lock free queue, 采用最简单的**单生产者单消费者** (single-producer, single-consumer, **SPSC**) 的形式, 支持按值形式和按指针形式存储对象.
   - 多生产者多消费者的版本即为经典的 Michael & Scott queue, 不过本项目中并没有使用到 MS queue.
 
-##### <a id="4.1.24.10"></a>`mutex.h`
+##### `mutex.h`
 
 - mutex 类**封装了 pthread 库的互斥锁相关的 API**.
 
-##### <a id="4.1.24.11"></a>`mutex_guard.h`
+##### `mutex_guard.h`
 
 - 定义了 mutex guard 类, 用于**为 mutex 类提供 RAII 语义**.
 
-##### <a id="4.1.24.12"></a>`physical_file.h`
+##### `physical_file.h`
 
 - physical file 类用于**对单个物理文件进行抽象**, 使用了用户空间内存缓冲区来批量化文件读写以加速文件 I/O, 支持 flush 操作.
 
-##### <a id="4.1.24.13"></a>`slab_allocator.h`
+##### `slab_allocator.h`
 
 - **定义了一系列 slab allocator**, 包括:
   - simple slab allocator: 非静态 (即每个对象均维护一个独立的内存池) 单线程内存池. 内部使用简单的链表形式组织空闲 slab.
@@ -374,34 +299,32 @@ H/W path    Device    Class      Description
     - 应用于 HTTP request, HTTP response, 以及 TCP buffer 中.
 - 此外为了能够使最后一个 static simple thread local string slab allocator 用于标准库的 `std::basic_string`, 本文件还定义了一系列适配器函数, 例如 `std::to_string()`, `std::hash` 等等.
 
-##### <a id="4.1.24.14"></a>`this_thread.h`
+##### `this_thread.h`
 
 - 定义了 tid 相关的函数, 以及 thread name 相关的函数. 主要用于日志框架和 profiling 工具中.
 
-##### <a id="4.1.24.15"></a>`thread.h`
+##### `thread.h`
 
 - thread 类用于**对线程进行抽象**, 其中用户负责传入一个无参数无返回值的回调, thread 类负责其他杂务 (例如设置 tid 与 thread name 等等) 以及针对 pthread 库的 API 进行适配等等.
 - 当用户的回调函数成功退出后, thread 对象就能够被正常 join 了, 因此 thread 类的包装函数将负责设置一个标志位 `_is_joinable` 以通知外界本对象已经能够被正常 join. 用户既可以通过设置他们自己的标志位来自主控制 thread 对象的 join 时机, 也可以通过轮询 `_is_joinable` 标志位来被动查询 thread 对象是否已经可以被 join.
 
-##### <a id="4.1.24.16"></a>`time_point.h`
+##### `time_point.h`
 
 - 定义了 time point 类和 time interval 类**分别对 "时间点" 以及 "时间区间" 这两个概念进行抽象**, 二者的精度均为纳秒. 其中时间点 time point 类支持向字符串的转换.
 
-##### <a id="4.1.24.17"></a>`type_name.h`
+##### `type_name.h`
 
 - 封装了 type name demangling 相关的函数.
 
-##### <a id="4.1.24.18"></a>`type_traits.h`
+##### `type_traits.h`
 
 - 定义了**类型萃取**相关的工具.
 
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
+## 杂项
 
-## <a id="5"></a>杂项
+### WebBench
 
-### <a id="5.1"></a>WebBench
-
-#### <a id="5.1.1"></a>安装
+#### 安装
 
 ```bash
 git clone https://github.com/EZLippi/WebBench.git
@@ -417,7 +340,7 @@ sudo apt-get install exuberant-ctags # 此为依赖项
 > - 安装之后需要在 MakeFile 中的第 1 行 `CFLAGS` 中添加包含路径 `-I/usr/include/tirpc`, 然后在第 3 行 `OFLAGS` 中添加链接选项 `-ltirpc`.
 > - 在 sub-shell 中执行 webbench 时会出现无限重复的 Request 输出, 原因是 sub-shell 的 stdout 默认为 block-buffered, 导致在 fork 时缓冲区中还留存有一定数据并在此后被复制到每个子进程中. 解决办法是在 `fork()` 前添加一行 `fflush(stdout);` 清空缓冲区.
 
-#### <a id="5.1.2"></a>使用示例
+#### 使用示例
 
 ```bash
 # 短连接 (默认)
@@ -431,16 +354,14 @@ sudo apt-get install exuberant-ctags # 此为依赖项
 >
 > - 经测试, 上述 60 秒的测试时间过长, 非常容易受到操作系统临时 CPU 占用的影响. 一种更好的方案是 "短时多测", 例如 "单次测试 10 秒, 连续测试 10 次, 并以最大值作为结果".
 
-#### <a id="5.1.3"></a>参考资料
+#### 参考资料
 
 - [linyacool/WebServer](https://github.com/linyacool/WebServer)
 - [linyacool/WebBench](https://github.com/linyacool/WebBench)
 - [EZLippi/WebBench](https://github.com/EZLippi/WebBench)
 - [c - GNU Make in Ubuntu giving fatal error: rpc/types.h: No such file or directory - Stack Overflow](https://stackoverflow.com/questions/78944074/gnu-make-in-ubuntu-giving-fatal-error-rpc-types-h-no-such-file-or-directory)
 
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
-
-### <a id="5.2"></a>muduo 项目中所采用的抽象
+### muduo 项目中所采用的抽象
 
 > - **由于下列类型是通过与 ChatGPT 的问答生成的, 因此可能并不与实际在 muduo 中使用的类型的名称完全一致**.
 > - **以下内容仅为个人理解**.
@@ -483,13 +404,11 @@ sudo apt-get install exuberant-ctags # 此为依赖项
 1. `HttpResponse`: 对 HTTP 响应报文的抽象.
 1. `HttpContext`: 对 HTTP 请求解析过程的抽象.
 
-#### <a id="5.2.1"></a>参考资料
+#### 参考资料
 
 - [chenshuo/muduo](https://github.com/chenshuo/muduo)
 
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
-
-### <a id="5.3"></a>待办
+### 待办
 
 - [x] `AppendOnlyPhysicalFile`: 对物理文件的抽象.
   - 为了提高效率使用了带有一个较大 (64 KB) 用户空间缓冲区的 `fwrite` 进行写入.
@@ -719,5 +638,3 @@ sudo apt-get install exuberant-ctags # 此为依赖项
 - [x] 改进时间戳类, 添加高精度的字符串表示.
 - [x] 与其他项目进行横向比较.
 - [x] 优化服务器, 提高 QPS.
-
-<div align="right"><b><a href="#toc">返回顶部↑</a></b></div>
