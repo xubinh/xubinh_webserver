@@ -2,15 +2,17 @@
 
 ## 目录
 
-- [部署](#%E9%83%A8%E7%BD%B2)
-- [性能改进与基准测试](#%E6%80%A7%E8%83%BD%E6%94%B9%E8%BF%9B%E4%B8%8E%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
-  - [与其他项目的横向比较](#%E4%B8%8E%E5%85%B6%E4%BB%96%E9%A1%B9%E7%9B%AE%E7%9A%84%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
-  - [测试机硬件参数](#%E6%B5%8B%E8%AF%95%E6%9C%BA%E7%A1%AC%E4%BB%B6%E5%8F%82%E6%95%B0)
-- [日志框架基准测试](#%E6%97%A5%E5%BF%97%E6%A1%86%E6%9E%B6%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95)
-- [项目文档](#%E9%A1%B9%E7%9B%AE%E6%96%87%E6%A1%A3)
-- [杂项](#%E6%9D%82%E9%A1%B9)
+- [部署本项目](#部署本项目)
+- [HTTP 服务器性能改进](#http-服务器性能改进)
+  - [与其他项目的横向比较](#与其他项目的横向比较)
+  - [测试机硬件参数](#测试机硬件参数)
+- [日志框架基准测试](#日志框架基准测试)
+- [项目文档](#项目文档)
+- [杂项](#杂项)
 
-## 部署
+## 部署本项目
+
+### HTTP 服务器
 
 编译并启动 HTTP 服务器:
 
@@ -20,15 +22,32 @@
 
 然后在浏览器中访问 `http://127.0.0.1:8080/` 即可.
 
-## 性能改进与基准测试
+### echo 服务器
 
-执行以下命令进行基准测试:
+编译并启动 echo 服务器:
 
 ```bash
-./script/http/benchmark.py 10 15 # 单次测试持续 10 秒, 连续执行 15 次测试
+./script/build.sh && ./script/echo/run_server.sh
 ```
 
-| 改进描述 (由新到旧 ↓)                                                                                             | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
+然后在另一窗口中启动 echo 客户端即可:
+
+```bash
+./script/echo/run_client.sh
+```
+
+## HTTP 服务器性能改进
+
+### 流程
+
+| (1) profiling                                                | (2) fixing                     | (3) benchmarking                                                   |
+| ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
+| <img src="./static/profiling.jpg" alt="profiling" width=50%> | ![fixing](./static/fixing.png) | <img src="./static/benchmarking.jpg" alt="benchmarking" width=70%> |
+| perf + Flame Graph 火焰图                                    |                                | WenBench 基准测试                                                  |
+
+### 具体过程
+
+| 改进描述 (由新到旧 ↓)                                                                                                 | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
 | 将 **TCP 对象**的**析构**工作从主线程**转移**至单独的工作线程                                                         | 51,082     | -          | [`be36b79`](https://github.com/xubinh/xubinh_webserver/commit/be36b790209f679ff0f875d299e49904badb663b) |
 | 实现了**字符串内存分配器** ([slab_allocator.h](include/util/slab_allocator.h)), 并将其应用于 TCP 连接与 HTTP 服务器中 | 53,298     | -          | [`9c797f6`](https://github.com/xubinh/xubinh_webserver/commit/9c797f6ed348811936dcc555dc6ff3fe8e7c116b) |
@@ -40,7 +59,7 @@
 | 将 `EventPoller` 用于存储 fd 的容器由 `std::unordered_map` 改为定长的 `bool` 数组                                     | 51,903     | -          | [`aa544e5`](https://github.com/xubinh/xubinh_webserver/commit/aa544e5c0d8e57372cb8677d0325a51dc8fc785e) |
 | 为 `Any` 添加原地初始化方法, 消除不必要的拷贝/移动初始化                                                              | 51,791     | -          | [`4c98acb`](https://github.com/xubinh/xubinh_webserver/commit/4c98acb793fecc7224d6b033bd43f665fe16c183) |
 | 使用右值引用避免关于 `std::function` 的不必要的重复移动                                                               | 52,591     | -          | [`bf42f6f`](https://github.com/xubinh/xubinh_webserver/commit/bf42f6f89cdf2857cc25b9e3267ca02b84efbe6a) |
-| 删除 `HttpRequest` 中关于时间戳的不必要的系统调用                                                                     | **54,888**     | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
+| 删除 `HttpRequest` 中关于时间戳的不必要的系统调用                                                                     | **54,888** | -          | [`afc6e38`](https://github.com/xubinh/xubinh_webserver/commit/afc6e38f4c0f1804fdc85c49999d367ac5d8f13b) |
 | 将 `std::vector` 从 "以值的形式返回" 改为 "按引用传入", 并消除 TCP 服务器中对 `std::shared_ptr` 的重复拷贝            | 54,485     | -          | [`0b33da7`](https://github.com/xubinh/xubinh_webserver/commit/0b33da78ac47c6301b4e256ee432fdfcf1808d2f) |
 | **降低**事件循环的 `timerfd` 与 `eventfd` 系统调用的**执行频率**                                                      | 51,750     | -          | [`85855f8`](https://github.com/xubinh/xubinh_webserver/commit/85855f85c9336a18411e0d44010b4a804963e936) |
 | **降低** TCP 连接的 `clock_gettime` 系统调用的**执行频率**                                                            | 49,534     | -          | [`2efc904`](https://github.com/xubinh/xubinh_webserver/commit/2efc904c2e35509707b320cbcea01dc7f5dd0611) |
