@@ -38,13 +38,13 @@
 
 ## HTTP 服务器性能改进
 
-### 流程
+### 方法
 
-| <div style="text-align: center;">1. perf + Flame Graph (火焰图) 找出问题根源</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WenBench 基准测试</div>                                                  |
+| <div style="text-align: center;">1. perf + Flame Graph (火焰图) 找出性能瓶颈</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WenBench 基准测试</div>                                                  |
 | ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
 | <div align="center"><img src="./static/profiling.jpg" alt="profiling" width="23%"></div> | <div align="center"><img src="./static/fixing.png" alt="fixing" width="50%"></div> | <div align="center"><img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%"></div> |
 
-### 具体过程
+### 改进过程
 
 | 改进描述 (由新到旧 ↓)                                                                                                 | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
