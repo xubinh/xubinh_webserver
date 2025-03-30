@@ -42,8 +42,8 @@
 
 | (1) profiling                                                | (2) fixing                     | (3) benchmarking                                                   |
 | ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
-| <img src="./static/profiling.jpg" alt="profiling" width=50%> | ![fixing](./static/fixing.png) | <img src="./static/benchmarking.jpg" alt="benchmarking" width=70%> |
-| perf + Flame Graph 火焰图                                    |                                | WenBench 基准测试                                                  |
+| <div style="text-align: center;">perf + Flame Graph (火焰图) 找出问题根源</div>                                    | <div style="text-align: center;">修复</div>                               | <div style="text-align: center;">WenBench 基准测试</div>                                                  |
+| <img src="./static/profiling.jpg" alt="profiling" width="23%" style="display:block; margin:auto;"> | <img src="./static/fixing.png" alt="fixing" width="50%" style="display:block; margin:auto;"> | <img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%" style="display:block; margin:auto;"> |
 
 ### 具体过程
 
