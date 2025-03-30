@@ -42,7 +42,7 @@
 
 | <div style="text-align: center;">1. perf + Flame Graph (火焰图) 找出问题根源</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WenBench 基准测试</div>                                                  |
 | ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
-| <img src="./static/profiling.jpg" alt="profiling" width="23%" style="display:block; margin:auto;"> | <img src="./static/fixing.png" alt="fixing" width="50%" style="display:block; margin:auto;"> | <img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%" style="display:block; margin:auto;"> |
+| <div align="center"><img src="./static/profiling.jpg" alt="profiling" width="23%"></div> | <div align="center"><img src="./static/fixing.png" alt="fixing" width="50%"></div> | <div align="center"><img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%"></div> |
 
 ### 具体过程
 
