@@ -5,8 +5,8 @@
 - [部署本项目](#部署本项目)
 - [HTTP 服务器基准测试](#http-服务器基准测试)
   - [与其他项目的横向比较](#与其他项目的横向比较)
-  - [流程概述](#流程概述)
   - [测试机硬件参数](#测试机硬件参数)
+  - [流程概述](#流程概述)
 - [日志框架基准测试](#日志框架基准测试)
 - [项目文档](#项目文档)
 - [杂项](#杂项)
@@ -70,12 +70,6 @@
 | ---------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------ |
 | [linyacool/WebServer](https://github.com/xubinh/WebServer) | 36,062     | 86,438     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
 
-### 流程概述
-
-| <div style="text-align: center;">1. perf + Flame Graph 定位性能瓶颈</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WebBench 基准测试</div>                                                  |
-| ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
-| <div align="center"><img src="./static/profiling.jpg" alt="profiling" width="23%"></div> | <div align="center"><img src="./static/fixing.png" alt="fixing" width="50%"></div> | <div align="center"><img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%"></div> |
-
 ### 测试机硬件参数
 
 ```text
@@ -91,6 +85,12 @@ H/W path    Device    Class      Description
 ```
 
 注: 所有测试均在单机环境下完成.
+
+### 流程概述
+
+| <div style="text-align: center;">1. perf + Flame Graph 定位性能瓶颈</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WebBench 基准测试</div>                                                  |
+| ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
+| <div align="center"><img src="./static/profiling.jpg" alt="profiling" width="23%"></div> | <div align="center"><img src="./static/fixing.png" alt="fixing" width="50%"></div> | <div align="center"><img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%"></div> |
 
 ## 日志框架基准测试
 
