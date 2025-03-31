@@ -3,8 +3,9 @@
 ## 目录
 
 - [部署本项目](#部署本项目)
-- [HTTP 服务器性能改进](#http-服务器性能改进)
+- [HTTP 服务器基准测试](#http-服务器基准测试)
   - [与其他项目的横向比较](#与其他项目的横向比较)
+  - [流程概述](#流程概述)
   - [测试机硬件参数](#测试机硬件参数)
 - [日志框架基准测试](#日志框架基准测试)
 - [项目文档](#项目文档)
@@ -36,17 +37,9 @@
 ./script/echo/run_client.sh
 ```
 
-## HTTP 服务器性能改进
+## HTTP 服务器基准测试
 
-### 方法
-
-| <div style="text-align: center;">1. perf + Flame Graph (火焰图) 找出性能瓶颈</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WenBench 基准测试</div>                                                  |
-| ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
-| <div align="center"><img src="./static/profiling.jpg" alt="profiling" width="23%"></div> | <div align="center"><img src="./static/fixing.png" alt="fixing" width="50%"></div> | <div align="center"><img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%"></div> |
-
-### 改进过程
-
-| 改进描述 (由新到旧 ↓)                                                                                                 | 短连接 QPS | 长连接 QPS | commit (点击链接可跳转)                                                                                 |
+| 改进描述</br>(注: 由新到旧 ↓)                                                                                                 | 短连接 QPS | 长连接 QPS | commit</br>(点击链接可跳转)                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------- |
 | 将 **TCP 对象**的**析构**工作从主线程**转移**至单独的工作线程                                                         | 51,082     | -          | [`be36b79`](https://github.com/xubinh/xubinh_webserver/commit/be36b790209f679ff0f875d299e49904badb663b) |
 | 实现了**字符串内存分配器** ([slab_allocator.h](include/util/slab_allocator.h)), 并将其应用于 TCP 连接与 HTTP 服务器中 | 53,298     | -          | [`9c797f6`](https://github.com/xubinh/xubinh_webserver/commit/9c797f6ed348811936dcc555dc6ff3fe8e7c116b) |
@@ -76,6 +69,12 @@
 | 项目名称                                                   | 短连接 QPS | 长连接 QPS | commit                                                                                           |
 | ---------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------ |
 | [linyacool/WebServer](https://github.com/xubinh/WebServer) | 36,062     | 86,438     | [`a50d635`](https://github.com/xubinh/WebServer/commit/a50d635f48178c89f78b4be9d2579613b2c7debf) |
+
+### 流程概述
+
+| <div style="text-align: center;">1. perf + Flame Graph 定位性能瓶颈</div>                                    | <div style="text-align: center;">2. 修复</div>                               | <div style="text-align: center;">3. WebBench 基准测试</div>                                                  |
+| ------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------ |
+| <div align="center"><img src="./static/profiling.jpg" alt="profiling" width="23%"></div> | <div align="center"><img src="./static/fixing.png" alt="fixing" width="50%"></div> | <div align="center"><img src="./static/benchmarking.jpg" alt="benchmarking" width="47.5%"></div> |
 
 ### 测试机硬件参数
 
